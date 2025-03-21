@@ -1879,24 +1879,20 @@ function setupScrollControls() {
 // Função para iniciar o arrasto
 function dragStart(e) {
     isDragging = true;
-    const container = document.getElementById('imageContainer');
-    const viewer = document.getElementById('viewer');
+    const viewer = document.querySelector('.viewer');
+    const container = document.querySelector('.image-container');
     
-    // Pega a posição inicial do mouse
-    startX = e.pageX - container.offsetLeft;
-    startY = e.pageY - container.offsetTop;
+    // Capturar a posição inicial do mouse/touch
+    startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+    startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
     
-    // Salva a posição inicial do scroll
-    scrollLeft = container.scrollLeft;
-    scrollTop = container.scrollTop;
+    // Capturar a posição inicial do scroll
+    scrollLeft = viewer.scrollLeft;
+    scrollTop = viewer.scrollTop;
     
-    // Adiciona classes para feedback visual
+    // Adicionar classe visual de feedback
     container.classList.add('dragging');
     viewer.classList.add('dragging');
-    document.querySelector('.viewer-container').classList.add('dragging');
-    
-    // Previne seleção de texto durante o arrasto
-    e.preventDefault();
 }
 
 // Função para mover durante o arrasto
@@ -1904,91 +1900,65 @@ function drag(e) {
     if (!isDragging) return;
     
     e.preventDefault();
-    const container = document.getElementById('imageContainer');
     
-    // Calcula a nova posição
-    const x = e.pageX - container.offsetLeft;
-    const y = e.pageY - container.offsetTop;
+    const viewer = document.querySelector('.viewer');
+    const container = document.querySelector('.image-container');
     
-    // Calcula o deslocamento
-    const walkX = x - startX;
-    const walkY = y - startY;
+    // Calcular o deslocamento do mouse/touch
+    const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+    const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
     
-    // Aplica o deslocamento
-    container.style.transform = `translate(${walkX}px, ${walkY}px)`;
+    // Calcular o delta do movimento
+    const deltaX = currentX - startX;
+    const deltaY = currentY - startY;
     
-    // Atualiza a posição atual
-    currentX = walkX;
-    currentY = walkY;
+    // Aplicar o scroll com o movimento do mouse
+    viewer.scrollLeft = scrollLeft - deltaX;
+    viewer.scrollTop = scrollTop - deltaY;
 }
 
 // Função para finalizar o arrasto
 function dragEnd() {
     isDragging = false;
-    const container = document.getElementById('imageContainer');
-    const viewer = document.getElementById('viewer');
+    const container = document.querySelector('.image-container');
+    const viewer = document.querySelector('.viewer');
     
-    // Remove classes de feedback visual
+    // Remover classes de feedback
     container.classList.remove('dragging');
     viewer.classList.remove('dragging');
-    document.querySelector('.viewer-container').classList.remove('dragging');
-    
-    // Mantém a posição final
-    container.style.transform = `translate(${currentX}px, ${currentY}px)`;
 }
 
 // Configurar eventos de arrasto e zoom
 function setupDragAndZoom() {
-    const container = document.getElementById('imageContainer');
-    const viewer = document.getElementById('viewer');
+    const viewer = document.querySelector('.viewer');
+    const container = document.querySelector('.image-container');
     
     // Eventos de mouse
-    container.addEventListener('mousedown', dragStart);
+    viewer.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
     
     // Eventos de touch
-    container.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        dragStart(e.touches[0]);
-    });
-    
-    document.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        drag(e.touches[0]);
-    });
-    
+    viewer.addEventListener('touchstart', dragStart);
+    document.addEventListener('touchmove', drag);
     document.addEventListener('touchend', dragEnd);
     
-    // Prevenir comportamento padrão de arrasto
-    container.addEventListener('dragstart', (e) => e.preventDefault());
-    
-    // Adicionar suporte a gestos de touch
-    let touchStartDistance = 0;
-    let initialScale = 1;
-    
-    container.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            touchStartDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            initialScale = container.style.transform ? 
-                parseFloat(container.style.transform.replace(/[^0-9.-]+/g, '')) : 1;
-        }
-    });
-    
-    container.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
+    // Prevenir comportamento padrão de scroll em touch
+    viewer.addEventListener('touchmove', (e) => {
+        if (isDragging) {
             e.preventDefault();
-            const currentDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            const scale = initialScale * (currentDistance / touchStartDistance);
-            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
         }
-    });
+    }, { passive: false });
+    
+    // Configurar zoom com wheel
+    viewer.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY * -0.01;
+            const newZoom = Math.min(Math.max(currentZoom + delta, 0.1), 5);
+            updateZoom(newZoom);
+        }
+    }, { passive: false });
 }
 
 // Inicializar arrasto e zoom quando o DOM estiver carregado
