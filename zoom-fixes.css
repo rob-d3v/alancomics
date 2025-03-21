@@ -1,0 +1,118 @@
+/* Estilos para correções de zoom e centralização */
+
+/* Garantir que o container de imagens tenha a transformação aplicada corretamente */
+.image-container {
+    transform-origin: center top !important;
+    will-change: transform;
+    transition: transform 0.2s ease-out;
+    /* Evitar problemas de pixels em alguns navegadores */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* Ajustar a origem da transformação com base na direção */
+.vertical-scroll .image-container {
+    transform-origin: center top !important;
+}
+
+.horizontal-scroll .image-container {
+    transform-origin: left center !important;
+}
+
+/* Estilo para o indicador de zoom */
+#zoomIndicator {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(var(--primary-color-rgb, 67, 97, 238), 0.6);
+}
+
+/* Adicionar feedback visual no controle de zoom */
+#zoomInBtn:hover, #zoomOutBtn:hover, #resetZoomBtn:hover {
+    transform: scale(1.2);
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Estilo do indicador de limites de zoom */
+.zoom-limit-indicator {
+    position: fixed;
+    bottom: 85px;
+    right: 85px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.zoom-limit-indicator.visible {
+    opacity: 1;
+    animation: fadeOut 2s forwards;
+    animation-delay: 0.8s;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Melhorar a aparência do viewer quando em full screen */
+.fullscreen-viewer .image-container {
+    padding: 10px;
+}
+
+/* Corrigir o problema de posicionamento durante o zoom */
+.image-item {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s ease;
+}
+
+/* Garantir que imagens em tamanho real não fiquem cortadas */
+.image-item img {
+    max-width: none; /* Permitir que a imagem mantenha seu tamanho real durante o zoom */
+    height: auto;
+}
+
+/* Quando no zoom out mínimo, garantir que as imagens fiquem visíveis */
+.horizontal-scroll .image-item img {
+    max-height: 90vh;
+    width: auto;
+}
+
+/* Adicionar uma borda suave nas imagens para melhor visibilidade */
+.image-item img {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+/* Ajustar a transição para tornar o zoom mais suave */
+.image-container {
+    transition: transform 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Exibir feedback quando atingir limites de zoom */
+.zoom-feedback {
+    position: fixed;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.zoom-feedback.visible {
+    opacity: 1;
+    animation: fadeOut 1s forwards;
+    animation-delay: 0.8s;
+}
