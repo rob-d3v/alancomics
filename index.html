@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alan Comics - Visualizador de Imagens</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Adicione este script antes de styles.css para verificar tema preferido -->
+    <script>
+        // Verificar se o sistema do usuário está em modo escuro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark-theme');
+        }
+        // Restaurar tema salvo se existir
+        const savedTheme = localStorage.getItem('alanComicsTheme');
+        if (savedTheme) {
+            document.documentElement.className = savedTheme;
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Indicador de carregamento -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Carregando...</div>
+    </div>
+
+    <!-- Background personalizado -->
+    <div class="custom-background" id="customBackground"></div>
+
+    <!-- Indicador de progresso -->
+    <div class="progress-indicator" id="progressIndicator"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <!-- O logo será gerado dinamicamente pelo JavaScript -->
+                <h1>Alan Comics</h1>
+            </div>
+            <div class="theme-selector">
+                <div class="theme-option light active" title="Tema Claro" data-theme="light"></div>
+                <div class="theme-option dark" title="Tema Escuro" data-theme="dark"></div>
+                <div class="theme-option comics" title="Tema Comics" data-theme="comics"></div>
+                <div class="theme-option neon" title="Tema Neon" data-theme="neon"></div>
+            </div>
+        </header>
+
+        <div class="content">
+            <button class="toggle-sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="sidebar">
+                <div class="section">
+                    <div class="section-title">Upload de Imagens</div>
+                    <div class="upload-area" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arraste imagens aqui ou clique para selecionar</p>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    <button class="btn" id="uploadBtn">Escolher Arquivos</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Controles</div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="speedControl">Velocidade de Rolagem</label>
+                        <input type="range" id="speedControl" class="slider" min="1" max="10" value="3">
+                        <div id="speedValue">3</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="spacingControl">Espaçamento entre Imagens</label>
+                        <input type="range" id="spacingControl" class="slider" min="0" max="100" value="10">
+                        <div id="spacingValue">10px</div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Direção de Rolagem</label>
+                        <div class="direction-buttons">
+                            <div class="direction-btn active" id="verticalBtn">
+                                <i class="fas fa-arrows-alt-v"></i> Vertical
+                            </div>
+                            <div class="direction-btn" id="horizontalBtn">
+                                <i class="fas fa-arrows-alt-h"></i> Horizontal
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <button class="btn" id="startScrollingBtn">
+                            <i class="fas fa-play"></i> Iniciar Rolagem Automática
+                        </button>
+                        <button class="btn" id="stopScrollingBtn">
+                            <i class="fas fa-stop"></i> Parar Rolagem
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Imagens Carregadas</div>
+                    <div class="thumbnail-container" id="thumbnailContainer">
+                        <!-- As miniaturas serão adicionadas aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewer" id="viewer">
+                <div class="image-container" id="imageContainer">
+                    <!-- As imagens serão adicionadas aqui -->
+                </div>
+
+                <div class="zoom-controls">
+                    <button class="control-button" id="zoomInBtn" title="Aumentar Zoom">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="control-button" id="zoomOutBtn" title="Diminuir Zoom">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="control-button" id="resetZoomBtn" title="Resetar Zoom">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="control-button" id="centerBtn" title="Centralizar Imagens">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button class="control-button" id="fullscreenBtn" title="Tela Cheia">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+
+                <div class="navigation-controls">
+                    <button class="control-button" id="scrollUpBtn" title="Rolar para Cima">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="control-button" id="scrollDownBtn" title="Rolar para Baixo">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button class="control-button" id="scrollLeftBtn" title="Rolar para Esquerda">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="control-button" id="scrollRightBtn" title="Rolar para Direita">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="image-counter" id="imageCounter">0 imagens</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Esconde o indicador de carregamento após a inicialização
+        window.addEventListener('load', function () {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+
+    <!-- Adicionar um script separado para as correções -->
+    <script src="fixes.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>

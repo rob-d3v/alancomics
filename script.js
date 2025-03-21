@@ -1,0 +1,1121 @@
+let db;
+const dbName = 'AlanComicsDB';
+const storeName = 'images';
+
+let images = [];
+let currentZoom = 1;
+let isVertical = true;
+let scrollSpeed = 3;
+let imageSpacing = 10;
+let scrollInterval;
+let scrollPosition = 0;
+let autoScrolling = false;
+let manualScrollStep = 50;
+
+function init() {
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const dropArea = document.getElementById('dropArea');
+    const thumbnailContainer = document.getElementById('thumbnailContainer');
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    const speedControl = document.getElementById('speedControl');
+    const speedValue = document.getElementById('speedValue');
+    const spacingControl = document.getElementById('spacingControl');
+    const spacingValue = document.getElementById('spacingValue');
+    const verticalBtn = document.getElementById('verticalBtn');
+    const horizontalBtn = document.getElementById('horizontalBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    const imageCounter = document.getElementById('imageCounter');
+    const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const startScrollingBtn = document.getElementById('startScrollingBtn');
+    const stopScrollingBtn = document.getElementById('stopScrollingBtn');
+    const scrollUpBtn = document.getElementById('scrollUpBtn');
+    const scrollDownBtn = document.getElementById('scrollDownBtn');
+    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn = document.getElementById('scrollRightBtn');
+    const themeOptions = document.querySelectorAll('.theme-option');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const zoomControls = document.querySelector('.zoom-controls');
+
+    if (!document.getElementById('centerBtn')) {
+        const centerBtn = document.createElement('button');
+        centerBtn.className = 'control-button';
+        centerBtn.id = 'centerBtn';
+        centerBtn.title = 'Centralizar Imagens';
+        centerBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+        centerBtn.addEventListener('click', centerImages);
+
+        if (zoomControls && fullscreenBtn) {
+            zoomControls.insertBefore(centerBtn, fullscreenBtn);
+        }
+    }
+
+    const elements = {
+        fileInput, uploadBtn, dropArea, thumbnailContainer, imageContainer, viewer,
+        speedControl, speedValue, spacingControl, spacingValue, verticalBtn, horizontalBtn,
+        zoomInBtn, zoomOutBtn, resetZoomBtn, imageCounter, toggleSidebarBtn, sidebar,
+        startScrollingBtn, stopScrollingBtn, scrollUpBtn, scrollDownBtn, scrollLeftBtn,
+        scrollRightBtn, themeOptions, fullscreenBtn
+    };
+
+    const missingElements = [];
+    for (const [name, element] of Object.entries(elements)) {
+        if (!element && name !== 'themeOptions') {
+            missingElements.push(name);
+        }
+    }
+
+    if (missingElements.length > 0) {
+        alert(`Erro: Elementos HTML não encontrados. Verifique o console para mais detalhes.`);
+        return;
+    }
+
+    initDB();
+
+    speedValue.textContent = scrollSpeed;
+    spacingValue.textContent = `${imageSpacing}px`;
+
+    if (!document.fullscreenEnabled &&
+        !document.webkitFullscreenEnabled &&
+        !document.mozFullScreenEnabled &&
+        !document.msFullscreenEnabled) {
+        if (fullscreenBtn) fullscreenBtn.style.display = 'none';
+    }
+
+    updateNavigationButtons();
+
+    uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        processFiles(e.target.files);
+    });
+
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#b264e9';
+        dropArea.style.backgroundColor = 'rgba(74, 108, 247, 0.1)';
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.style.borderColor = '#4a6cf7';
+        dropArea.style.backgroundColor = '';
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = '#4a6cf7';
+        dropArea.style.backgroundColor = '';
+        processFiles(e.dataTransfer.files);
+    });
+
+    dropArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    speedControl.addEventListener('input', (e) => {
+        scrollSpeed = parseInt(e.target.value);
+        speedValue.textContent = scrollSpeed;
+
+        if (autoScrolling) {
+            startScrolling();
+        }
+    });
+
+    spacingControl.addEventListener('input', (e) => {
+        imageSpacing = parseInt(e.target.value);
+        spacingValue.textContent = `${imageSpacing}px`;
+        renderImages();
+    });
+
+    verticalBtn.addEventListener('click', () => {
+        if (!isVertical) {
+            isVertical = true;
+            verticalBtn.classList.add('active');
+            horizontalBtn.classList.remove('active');
+            renderImages();
+        }
+    });
+
+    horizontalBtn.addEventListener('click', () => {
+        if (isVertical) {
+            isVertical = false;
+            horizontalBtn.classList.add('active');
+            verticalBtn.classList.remove('active');
+            renderImages();
+        }
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+        currentZoom += 0.1;
+        updateZoom();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        if (currentZoom > 0.1) {
+            currentZoom -= 0.1;
+            updateZoom();
+        }
+    });
+
+    resetZoomBtn.addEventListener('click', () => {
+        currentZoom = 1;
+        updateZoom();
+    });
+
+    startScrollingBtn.addEventListener('click', () => {
+        startScrolling();
+    });
+
+    stopScrollingBtn.addEventListener('click', () => {
+        stopScrolling();
+    });
+
+    scrollUpBtn.addEventListener('click', () => {
+        scrollManually('up');
+    });
+
+    scrollDownBtn.addEventListener('click', () => {
+        scrollManually('down');
+    });
+
+    scrollLeftBtn.addEventListener('click', () => {
+        scrollManually('left');
+    });
+
+    scrollRightBtn.addEventListener('click', () => {
+        scrollManually('right');
+    });
+
+    toggleSidebarBtn.addEventListener('click', toggleSidebar);
+
+    themeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const theme = option.dataset.theme;
+
+            themeOptions.forEach(btn => btn.classList.remove('active'));
+            option.classList.add('active');
+
+            changeTheme(theme);
+
+            localStorage.setItem('alanComicsTheme', theme === 'light' ? '' : `${theme}-theme`);
+
+            if (typeof createThemeBackground === 'function') {
+                createThemeBackground();
+            }
+        });
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+        toggleFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+    window.addEventListener('resize', () => {
+        adjustImageContainer();
+    });
+
+    setupLogoAndBackground();
+    setupProgressIndicator();
+    setupThemePersistence();
+
+    updateImageCounter();
+    renderThumbnails();
+    renderImages();
+}
+
+function initDB() {
+    try {
+        const request = indexedDB.open(dbName, 1);
+
+        request.onerror = function (event) {
+            images = [];
+            updateImageCounter();
+            renderThumbnails();
+            renderImages();
+        };
+
+        request.onupgradeneeded = function (event) {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                const store = db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+                store.createIndex('name', 'name', { unique: false });
+            }
+        };
+
+        request.onsuccess = function (event) {
+            db = event.target.result;
+            loadImagesFromDB();
+        };
+    } catch (error) {
+        images = [];
+        updateImageCounter();
+        renderThumbnails();
+        renderImages();
+    }
+}
+
+function loadImagesFromDB() {
+    try {
+        if (!db) {
+            return;
+        }
+
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+
+        request.onsuccess = function (event) {
+            images = event.target.result;
+            updateImageCounter();
+            renderThumbnails();
+            renderImages();
+        };
+
+        request.onerror = function (event) {
+            images = [];
+            updateImageCounter();
+            renderThumbnails();
+            renderImages();
+        };
+    } catch (error) {
+        images = [];
+        updateImageCounter();
+        renderThumbnails();
+        renderImages();
+    }
+}
+
+function saveImageToDB(imageData) {
+    try {
+        if (!db) {
+            alert("Erro ao salvar imagem: banco de dados não inicializado");
+            return;
+        }
+
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.add(imageData);
+
+        request.onsuccess = function () {
+            loadImagesFromDB();
+        };
+
+        request.onerror = function (event) {
+            alert("Erro ao salvar imagem no banco de dados");
+        };
+    } catch (error) {
+        alert("Erro ao salvar imagem: " + error.message);
+    }
+}
+
+function deleteImageFromDB(id) {
+    try {
+        if (!db) {
+            alert("Erro ao excluir imagem: banco de dados não inicializado");
+            return;
+        }
+
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(id);
+
+        request.onsuccess = function () {
+            loadImagesFromDB();
+        };
+
+        request.onerror = function (event) {
+            alert("Erro ao excluir imagem do banco de dados");
+        };
+    } catch (error) {
+        alert("Erro ao excluir imagem: " + error.message);
+    }
+}
+
+function processFiles(files) {
+    if (files.length === 0) {
+        return;
+    }
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const imageData = {
+                    name: file.name,
+                    type: file.type,
+                    data: e.target.result,
+                    date: new Date().toISOString()
+                };
+
+                saveImageToDB(imageData);
+            };
+
+            reader.onerror = function (e) {
+                alert(`Erro ao ler arquivo ${file.name}`);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+}
+
+function renderThumbnails() {
+    const thumbnailContainer = document.getElementById('thumbnailContainer');
+    if (!thumbnailContainer) {
+        return;
+    }
+
+    thumbnailContainer.innerHTML = '';
+
+    if (images.length === 0) {
+        thumbnailContainer.innerHTML = '<p>Nenhuma imagem carregada ainda.</p>';
+        return;
+    }
+
+    images.forEach(image => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'thumbnail-wrapper';
+
+        const img = document.createElement('img');
+        img.src = image.data;
+        img.className = 'thumbnail';
+        img.title = image.name;
+        img.alt = image.name;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+        deleteBtn.title = 'Excluir imagem';
+        deleteBtn.onclick = function (e) {
+            e.stopPropagation();
+            deleteImageFromDB(image.id);
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(deleteBtn);
+        thumbnailContainer.appendChild(wrapper);
+
+        img.addEventListener('click', function () {
+            const allThumbnails = document.querySelectorAll('.thumbnail');
+            allThumbnails.forEach(thumb => thumb.classList.remove('selected'));
+            img.classList.add('selected');
+        });
+    });
+}
+
+function renderImages() {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+
+    if (!imageContainer || !viewer) {
+        return;
+    }
+
+    imageContainer.innerHTML = '';
+    stopScrolling();
+
+    if (images.length === 0) {
+        const noImages = document.createElement('div');
+        noImages.className = 'no-images';
+        noImages.textContent = 'Nenhuma imagem carregada. Adicione imagens usando o painel à esquerda.';
+        imageContainer.appendChild(noImages);
+        return;
+    }
+
+    viewer.classList.remove('vertical-scroll', 'horizontal-scroll');
+    viewer.classList.add(isVertical ? 'vertical-scroll' : 'horizontal-scroll');
+
+    if (isVertical) {
+        imageContainer.style.width = 'fit-content';
+        imageContainer.style.maxWidth = '100%';
+        imageContainer.style.height = 'auto';
+        imageContainer.style.display = 'flex';
+        imageContainer.style.flexDirection = 'column';
+        imageContainer.style.alignItems = 'center';
+    } else {
+        imageContainer.style.width = 'auto';
+        imageContainer.style.height = 'fit-content';
+        imageContainer.style.maxHeight = '100%';
+        imageContainer.style.display = 'flex';
+        imageContainer.style.flexDirection = 'row';
+        imageContainer.style.alignItems = 'center';
+    }
+
+    images.forEach(image => {
+        const imageItem = document.createElement('div');
+        imageItem.className = 'image-item';
+        imageItem.style.margin = isVertical ? `${imageSpacing}px 0` : `0 ${imageSpacing}px`;
+
+        const img = document.createElement('img');
+        img.src = image.data;
+        img.alt = image.name;
+        img.loading = "lazy";
+
+        img.onload = function () {
+            adjustImageContainer();
+            centerImages();
+        };
+
+        imageItem.appendChild(img);
+        imageContainer.appendChild(imageItem);
+    });
+
+    resetScrollPosition();
+    adjustImageContainer();
+    centerImages();
+    updateNavigationButtons();
+}
+
+function updateImageCounter() {
+    const imageCounter = document.getElementById('imageCounter');
+    if (!imageCounter) {
+        return;
+    }
+
+    imageCounter.textContent = `${images.length} imagens`;
+}
+
+function updateZoom() {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+
+    if (!imageContainer || !viewer) {
+        return;
+    }
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+
+    const viewCenterX = viewerRect.width / 2;
+    const viewCenterY = viewerRect.height / 2;
+
+    const relativeX = (viewCenterX - containerRect.left) / currentZoom;
+    const relativeY = (viewCenterY - containerRect.top) / currentZoom;
+
+    if (isVertical) {
+        imageContainer.style.transform = `scale(${currentZoom})`;
+        scrollPosition = Math.max(0, (relativeY * currentZoom) - viewCenterY);
+    } else {
+        imageContainer.style.transform = `scale(${currentZoom})`;
+        scrollPosition = Math.max(0, (relativeX * currentZoom) - viewCenterX);
+    }
+
+    updateScrollPosition();
+    adjustImageContainer();
+}
+
+function startScrolling() {
+    stopScrolling();
+
+    if (images.length === 0) {
+        return;
+    }
+
+    autoScrolling = true;
+
+    if (scrollPosition <= 0) {
+        scrollPosition = 0;
+    }
+
+    const startBtn = document.getElementById('startScrollingBtn');
+    if (startBtn) {
+        startBtn.innerHTML = '<i class="fas fa-play"></i> Rolando...';
+        startBtn.style.opacity = '0.7';
+    }
+
+    let lastTime = null;
+
+    function animate(timestamp) {
+        if (!autoScrolling) return;
+
+        if (!lastTime) lastTime = timestamp;
+        const deltaTime = timestamp - lastTime;
+
+        const pixelsPerSecond = scrollSpeed * 15;
+        const increment = (pixelsPerSecond * deltaTime) / 1000;
+
+        scrollPosition += increment;
+        updateScrollPosition();
+        updateProgressIndicator();
+
+        lastTime = timestamp;
+        scrollInterval = requestAnimationFrame(animate);
+    }
+
+    scrollInterval = requestAnimationFrame(animate);
+}
+
+function stopScrolling() {
+    if (scrollInterval) {
+        if (typeof scrollInterval === 'number') {
+            cancelAnimationFrame(scrollInterval);
+        } else {
+            clearInterval(scrollInterval);
+        }
+        autoScrolling = false;
+        scrollInterval = null;
+
+        const startBtn = document.getElementById('startScrollingBtn');
+        if (startBtn) {
+            startBtn.innerHTML = '<i class="fas fa-play"></i> Iniciar Rolagem Automática';
+            startBtn.style.opacity = '1';
+        }
+    }
+}
+
+function updateScrollPosition() {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+
+    if (!imageContainer || !viewer) {
+        return;
+    }
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = {
+        width: imageContainer.scrollWidth * currentZoom,
+        height: imageContainer.scrollHeight * currentZoom
+    };
+
+    let maxScroll;
+    if (isVertical) {
+        maxScroll = Math.max(0, containerRect.height - viewerRect.height);
+    } else {
+        maxScroll = Math.max(0, containerRect.width - viewerRect.width);
+    }
+
+    scrollPosition = Math.max(0, Math.min(scrollPosition, maxScroll));
+
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+    }
+
+    if (scrollPosition >= maxScroll && autoScrolling) {
+        stopScrolling();
+    }
+
+    updateProgressIndicator();
+}
+
+function scrollManually(direction) {
+    if (images.length === 0) return;
+
+    switch (direction) {
+        case 'up':
+            if (isVertical) scrollPosition -= manualScrollStep;
+            break;
+        case 'down':
+            if (isVertical) scrollPosition += manualScrollStep;
+            break;
+        case 'left':
+            if (!isVertical) scrollPosition -= manualScrollStep;
+            break;
+        case 'right':
+            if (!isVertical) scrollPosition += manualScrollStep;
+            break;
+    }
+
+    if (scrollPosition < 0) scrollPosition = 0;
+    updateScrollPosition();
+}
+
+function getImageContainerSize() {
+    if (images.length === 0) return { width: 0, height: 0 };
+
+    const items = document.querySelectorAll('.image-item');
+    let totalWidth = 0;
+    let totalHeight = 0;
+
+    items.forEach(item => {
+        totalWidth += item.offsetWidth + imageSpacing;
+        totalHeight += item.offsetHeight + imageSpacing;
+    });
+
+    return {
+        width: totalWidth,
+        height: totalHeight
+    };
+}
+
+function adjustImageContainer() {
+    const imageContainer = document.getElementById('imageContainer');
+    if (!imageContainer) {
+        return;
+    }
+
+    if (images.length === 0) return;
+
+    const size = getImageContainerSize();
+
+    if (isVertical) {
+        imageContainer.style.width = '100%';
+        imageContainer.style.height = `${size.height}px`;
+    } else {
+        imageContainer.style.width = `${size.width}px`;
+        imageContainer.style.height = '100%';
+    }
+}
+
+function resetScrollPosition() {
+    scrollPosition = 0;
+    updateScrollPosition();
+}
+
+function centerImages() {
+    const viewer = document.getElementById('viewer');
+    const imageContainer = document.getElementById('imageContainer');
+
+    if (!viewer || !imageContainer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+
+    if (autoScrolling) return;
+
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (containerRect.width * currentZoom < viewerRect.width) {
+        offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
+    }
+
+    if (containerRect.height * currentZoom < viewerRect.height) {
+        offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
+    }
+
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(${offsetY - scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(${offsetX - scrollPosition}px) scale(${currentZoom})`;
+    }
+}
+
+function changeTheme(theme) {
+    document.body.classList.remove('dark-theme', 'comics-theme', 'neon-theme');
+
+    if (theme !== 'light') {
+        document.body.classList.add(`${theme}-theme`);
+    }
+
+    const themeOptions = document.querySelectorAll('.theme-option');
+    themeOptions.forEach(option => {
+        option.classList.remove('active');
+        if (option.dataset.theme === theme) {
+            option.classList.add('active');
+        }
+    });
+
+    if (typeof createThemeBackground === 'function') {
+        createThemeBackground();
+    }
+}
+
+function toggleFullscreen() {
+    const viewer = document.getElementById('viewer');
+    if (!viewer) return;
+
+    if (!document.fullscreenElement) {
+        try {
+            document.querySelector('header').classList.add('fullscreen-hidden');
+            document.querySelector('.sidebar').classList.add('fullscreen-hidden');
+            document.querySelector('.toggle-sidebar').classList.add('fullscreen-hidden');
+
+            viewer.classList.add('fullscreen-viewer');
+
+            document.querySelector('.zoom-controls').classList.add('fullscreen');
+            document.querySelector('.navigation-controls').classList.add('fullscreen');
+
+            if (viewer.requestFullscreen) {
+                viewer.requestFullscreen();
+            } else if (viewer.mozRequestFullScreen) {
+                viewer.mozRequestFullScreen();
+            } else if (viewer.webkitRequestFullscreen) {
+                viewer.webkitRequestFullscreen();
+            } else if (viewer.msRequestFullscreen) {
+                viewer.msRequestFullscreen();
+            }
+        } catch (error) {
+            console.error("Erro ao entrar em tela cheia:", error);
+        }
+    } else {
+        try {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+
+            setTimeout(() => {
+                document.querySelector('header').classList.remove('fullscreen-hidden');
+                document.querySelector('.sidebar').classList.remove('fullscreen-hidden');
+                document.querySelector('.toggle-sidebar').classList.remove('fullscreen-hidden');
+                viewer.classList.remove('fullscreen-viewer');
+                document.querySelector('.zoom-controls').classList.remove('fullscreen');
+                document.querySelector('.navigation-controls').classList.remove('fullscreen');
+            }, 100);
+        } catch (error) {
+            console.error("Erro ao sair da tela cheia:", error);
+        }
+    }
+}
+
+function updateFullscreenButton() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (!fullscreenBtn) return;
+
+    if (document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement) {
+        fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        fullscreenBtn.title = "Sair da Tela Cheia";
+    } else {
+        fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        fullscreenBtn.title = "Tela Cheia";
+    }
+}
+
+function updateNavigationButtons() {
+    const scrollUpBtn = document.getElementById('scrollUpBtn');
+    const scrollDownBtn = document.getElementById('scrollDownBtn');
+    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn = document.getElementById('scrollRightBtn');
+
+    if (!scrollUpBtn || !scrollDownBtn || !scrollLeftBtn || !scrollRightBtn) {
+        return;
+    }
+
+    if (isVertical) {
+        scrollUpBtn.style.display = 'flex';
+        scrollDownBtn.style.display = 'flex';
+        scrollLeftBtn.style.display = 'none';
+        scrollRightBtn.style.display = 'none';
+    } else {
+        scrollUpBtn.style.display = 'none';
+        scrollDownBtn.style.display = 'none';
+        scrollLeftBtn.style.display = 'flex';
+        scrollRightBtn.style.display = 'flex';
+    }
+}
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    const viewer = document.getElementById('viewer');
+
+    if (!sidebar || !toggleSidebarBtn || !viewer) return;
+
+    sidebar.classList.toggle('collapsed');
+    toggleSidebarBtn.classList.toggle('collapsed');
+
+    if (sidebar.classList.contains('collapsed')) {
+        toggleSidebarBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        viewer.classList.add('expanded-viewer');
+    } else {
+        toggleSidebarBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        viewer.classList.remove('expanded-viewer');
+    }
+
+    setTimeout(() => {
+        adjustImageContainer();
+        centerImages();
+    }, 300);
+}
+
+function setupLogo() {
+    const logoContainer = document.querySelector('.logo-container');
+    if (!logoContainer) return;
+
+    logoContainer.innerHTML = '';
+
+    const svgContainer = document.createElement('div');
+    svgContainer.className = 'logo-svg';
+    svgContainer.innerHTML = 'AC';
+
+    const title = document.createElement('h1');
+    title.textContent = "Alan Comics";
+
+    logoContainer.appendChild(svgContainer);
+    logoContainer.appendChild(title);
+}
+
+function setupBackground() {
+    const bgElement = document.getElementById('customBackground');
+    if (!bgElement) return;
+
+    const testImage = new Image();
+    testImage.src = 'background.png';
+
+    testImage.onload = function () {
+        bgElement.style.backgroundImage = 'url("background.png")';
+        bgElement.style.display = 'block';
+    };
+
+    testImage.onerror = function () {
+        createThemeBackground();
+    };
+}
+
+function createThemeBackground() {
+    const bgElement = document.getElementById('customBackground');
+    if (!bgElement) return;
+
+    let pattern;
+
+    if (document.body.classList.contains('comics-theme')) {
+        pattern = createComicPattern();
+    } else if (document.body.classList.contains('neon-theme')) {
+        pattern = createNeonPattern();
+    } else if (document.body.classList.contains('dark-theme')) {
+        pattern = createDarkPattern();
+    } else {
+        pattern = createLightPattern();
+    }
+
+    bgElement.innerHTML = '';
+    bgElement.appendChild(pattern);
+    bgElement.style.display = 'block';
+}
+
+function createComicPattern() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+    pattern.setAttribute("id", "comicDots");
+    pattern.setAttribute("width", "20");
+    pattern.setAttribute("height", "20");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", "10");
+    dot.setAttribute("cy", "10");
+    dot.setAttribute("r", "1.5");
+    dot.setAttribute("fill", "#e63946");
+
+    pattern.appendChild(dot);
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "url(#comicDots)");
+
+    svg.appendChild(rect);
+    return svg;
+}
+
+function createNeonPattern() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+    pattern.setAttribute("id", "neonGrid");
+    pattern.setAttribute("width", "40");
+    pattern.setAttribute("height", "40");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+
+    const hLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    hLine.setAttribute("x1", "0");
+    hLine.setAttribute("y1", "0");
+    hLine.setAttribute("x2", "40");
+    hLine.setAttribute("y2", "0");
+    hLine.setAttribute("stroke", "#00ff9d");
+    hLine.setAttribute("stroke-width", "0.5");
+    hLine.setAttribute("opacity", "0.3");
+
+    const vLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    vLine.setAttribute("x1", "0");
+    vLine.setAttribute("y1", "0");
+    vLine.setAttribute("x2", "0");
+    vLine.setAttribute("y2", "40");
+    vLine.setAttribute("stroke", "#ff00f5");
+    vLine.setAttribute("stroke-width", "0.5");
+    vLine.setAttribute("opacity", "0.3");
+
+    pattern.appendChild(hLine);
+    pattern.appendChild(vLine);
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "url(#neonGrid)");
+
+    svg.appendChild(rect);
+    return svg;
+}
+
+function createDarkPattern() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+    pattern.setAttribute("id", "starryPattern");
+    pattern.setAttribute("width", "200");
+    pattern.setAttribute("height", "200");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+
+    for (let i = 0; i < 20; i++) {
+        const x = Math.floor(Math.random() * 200);
+        const y = Math.floor(Math.random() * 200);
+        const size = Math.random() * 1.5 + 0.5;
+        const opacity = Math.random() * 0.5 + 0.3;
+
+        const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        star.setAttribute("cx", x);
+        star.setAttribute("cy", y);
+        star.setAttribute("r", size);
+        star.setAttribute("fill", "#ffffff");
+        star.setAttribute("opacity", opacity);
+
+        pattern.appendChild(star);
+    }
+
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "url(#starryPattern)");
+
+    svg.appendChild(rect);
+    return svg;
+}
+
+function createLightPattern() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+    pattern.setAttribute("id", "wavyPattern");
+    pattern.setAttribute("width", "100");
+    pattern.setAttribute("height", "100");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M0,20 C20,40 30,0 50,20 C70,40 80,0 100,20 L100,100 L0,100 Z");
+    path.setAttribute("fill", "#4a6cf7");
+    path.setAttribute("opacity", "0.05");
+
+    pattern.appendChild(path);
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "url(#wavyPattern)");
+
+    svg.appendChild(rect);
+    return svg;
+}
+
+function setupLogoAndBackground() {
+    setupLogo();
+    setupBackground();
+}
+
+function setupProgressIndicator() {
+    let progressIndicator = document.getElementById('progressIndicator');
+
+    if (!progressIndicator) {
+        progressIndicator = document.createElement('div');
+        progressIndicator.id = 'progressIndicator';
+        progressIndicator.className = 'progress-indicator';
+        document.body.appendChild(progressIndicator);
+    }
+}
+
+function updateProgressIndicator() {
+    const progressIndicator = document.getElementById('progressIndicator');
+    if (!progressIndicator) return;
+
+    const viewer = document.getElementById('viewer');
+    const imageContainer = document.getElementById('imageContainer');
+
+    if (!viewer || !imageContainer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = {
+        width: imageContainer.scrollWidth * currentZoom,
+        height: imageContainer.scrollHeight * currentZoom
+    };
+
+    let maxScroll;
+    if (isVertical) {
+        maxScroll = Math.max(0, containerRect.height - viewerRect.height);
+    } else {
+        maxScroll = Math.max(0, containerRect.width - viewerRect.width);
+    }
+
+    const progress = maxScroll > 0 ? (scrollPosition / maxScroll) * 100 : 0;
+    progressIndicator.style.width = `${progress}%`;
+}
+
+function setupThemePersistence() {
+    const themeOptions = document.querySelectorAll('.theme-option');
+    themeOptions.forEach(option => {
+        option.addEventListener('click', function () {
+            const theme = this.dataset.theme;
+
+            themeOptions.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            changeTheme(theme);
+
+            localStorage.setItem('alanComicsTheme', theme === 'light' ? '' : `${theme}-theme`);
+
+            createThemeBackground();
+        });
+    });
+}
+
+window.onerror = function (message, source, lineno, colno, error) {
+    console.error("Erro detectado:", message, "na linha:", lineno, "coluna:", colno);
+    console.error("Stack trace:", error && error.stack);
+
+    alert(`Erro detectado: ${message}. Verifique o console para mais detalhes.`);
+
+    images = [];
+    updateImageCounter();
+    renderThumbnails();
+    renderImages();
+
+    return true;
+};
+
+document.addEventListener('DOMContentLoaded', init);
