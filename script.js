@@ -1070,7 +1070,9 @@ function getImageContainerSize() {
 function adjustImageContainer() {
     const imageContainer = document.getElementById('imageContainer');
     const viewer = document.getElementById('viewer');
-    if (!imageContainer || !viewer) return;
+    const viewerWrapper = document.querySelector('.viewer-wrapper');
+    
+    if (!imageContainer || !viewer || !viewerWrapper) return;
 
     if (images.length === 0) return;
 
@@ -1080,9 +1082,10 @@ function adjustImageContainer() {
     // Resetar transformações anteriores
     imageContainer.style.transform = '';
     
-    // Definir margens laterais (10% de cada lado)
-    const lateralMargin = viewerRect.width * 0.1;
-    const maxWidth = viewerRect.width - (lateralMargin * 2);
+    // Definir margens (20% à direita, 10% à esquerda)
+    const leftMargin = viewerRect.width * 0.1;
+    const rightMargin = viewerRect.width * 0.2;
+    const maxWidth = viewerRect.width - (leftMargin + rightMargin);
     
     // Calcular dimensões totais necessárias
     let totalWidth = 0;
@@ -1096,15 +1099,12 @@ function adjustImageContainer() {
             let width, height;
             
             if (isVertical) {
-                // Para rolagem vertical, a largura é limitada pela largura do viewer menos as margens
                 width = Math.min(maxWidth, img.naturalWidth);
                 height = width / aspectRatio;
             } else {
-                // Para rolagem horizontal, a altura é limitada pela altura do viewer
                 height = Math.min(viewerRect.height * 0.95, img.naturalHeight);
                 width = height * aspectRatio;
                 
-                // Se a largura for maior que o máximo permitido, ajustar
                 if (width > maxWidth) {
                     width = maxWidth;
                     height = width / aspectRatio;
@@ -1135,10 +1135,11 @@ function adjustImageContainer() {
     if (isVertical) {
         imageContainer.style.width = `${maxWidth}px`;
         imageContainer.style.height = `${totalHeight}px`;
-        imageContainer.style.margin = `0 auto`; // Centralizar horizontalmente
+        imageContainer.style.margin = `0 auto 0 ${leftMargin}px`; // Margem à esquerda
     } else {
         imageContainer.style.width = `${totalWidth}px`;
         imageContainer.style.height = '100%';
+        imageContainer.style.marginLeft = `${leftMargin}px`; // Margem à esquerda
     }
     
     // Resetar a posição de rolagem para começar pela primeira imagem
@@ -1185,9 +1186,8 @@ function toggleFullscreen() {
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
-    const imageContainer = document.getElementById('imageContainer');
 
-    if (!viewer || !imageContainer) return;
+    if (!viewer) return;
 
     if (!document.fullscreenElement &&
         !document.webkitFullscreenElement &&
@@ -1212,21 +1212,6 @@ function toggleFullscreen() {
             } else if (viewer.msRequestFullscreen) {
                 viewer.msRequestFullscreen();
             }
-
-            // Resetar a posição de rolagem para começar pela primeira imagem
-            scrollPosition = 0;
-            
-            // Aplicar a transformação inicial
-            if (isVertical) {
-                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
-            } else {
-                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
-            }
-
-            // Ajustar o container após entrar em tela cheia
-            setTimeout(() => {
-                adjustImageContainer();
-            }, 100);
         } catch (error) {
             console.error("Erro ao entrar em tela cheia:", error);
         }
@@ -1242,21 +1227,6 @@ function toggleFullscreen() {
             } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
             }
-
-            // Resetar a posição de rolagem para começar pela primeira imagem
-            scrollPosition = 0;
-            
-            // Aplicar a transformação inicial
-            if (isVertical) {
-                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
-            } else {
-                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
-            }
-
-            // Ajustar o container após sair da tela cheia
-            setTimeout(() => {
-                adjustImageContainer();
-            }, 100);
         } catch (error) {
             console.error("Erro ao sair da tela cheia:", error);
         }
@@ -1276,7 +1246,7 @@ function setupFullscreenListeners() {
     });
 }
 
-// Atualizar a função handleFullscreenChange para ajustar o container
+// Atualizar a função handleFullscreenChange para não manipular posição ou zoom
 function handleFullscreenChange() {
     updateFullscreenButton();
 
@@ -1284,7 +1254,6 @@ function handleFullscreenChange() {
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
     const viewer = document.getElementById('viewer');
-    const imageContainer = document.getElementById('imageContainer');
 
     // Se não estamos mais em modo tela cheia, restaurar elementos
     if (!document.fullscreenElement &&
@@ -1297,23 +1266,6 @@ function handleFullscreenChange() {
         if (sidebar) sidebar.classList.remove('fullscreen-hidden');
         if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
         if (viewer) viewer.classList.remove('fullscreen-viewer');
-
-        // Resetar a posição de rolagem para começar pela primeira imagem
-        if (imageContainer) {
-            scrollPosition = 0;
-            
-            // Aplicar a transformação inicial
-            if (isVertical) {
-                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
-            } else {
-                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
-            }
-
-            // Ajustar o container após sair da tela cheia
-            setTimeout(() => {
-                adjustImageContainer();
-            }, 100);
-        }
     }
 }
 
