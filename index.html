@@ -7,18 +7,6 @@
     <title>Quadrinhos do Alan</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <!-- Adicione este script antes de styles.css para verificar tema preferido -->
-    <script>
-        // Verificar se o sistema do usuário está em modo escuro
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark-theme');
-        }
-        // Restaurar tema salvo se existir
-        const savedTheme = localStorage.getItem('alanComicsTheme');
-        if (savedTheme) {
-            document.documentElement.className = savedTheme;
-        }
-    </script>
 </head>
 
 <body>
@@ -41,16 +29,21 @@
                 <h1>Quadrinhos do Alan</h1>
             </div>
             <div class="theme-selector">
-                <div class="theme-option light active" title="Tema Claro" data-theme="light"></div>
-                <div class="theme-option dark" title="Tema Escuro" data-theme="dark"></div>
-                <div class="theme-option comics" title="Tema Comics" data-theme="comics"></div>
-                <div class="theme-option neon" title="Tema Neon" data-theme="neon"></div>
-                <div class="theme-option cyberpunk" title="Tema Cyberpunk" data-theme="cyberpunk"></div>
-                <div class="theme-option retro" title="Tema Retro" data-theme="retro"></div>
-                <div class="theme-option minimal" title="Tema Minimalista" data-theme="minimal"></div>
-                <div class="theme-option nature" title="Tema Natureza" data-theme="nature"></div>
-                <div class="theme-option ocean" title="Tema Ocean" data-theme="ocean"></div>
-                <div class="theme-option sunset" title="Tema Sunset" data-theme="sunset"></div>
+                <div class="theme-option light" title="Tema Claro"></div>
+                <div class="theme-option dark" title="Tema Escuro"></div>
+                <div class="theme-option comics" title="Tema Comics"></div>
+                <div class="theme-option neon" title="Tema Neon"></div>
+                <div class="theme-option cyberpunk" title="Tema Cyberpunk"></div>
+                <div class="theme-option retro" title="Tema Retro"></div>
+                <div class="theme-option minimal" title="Tema Minimalista"></div>
+                <div class="theme-option nature" title="Tema Natureza"></div>
+                <div class="theme-option ocean" title="Tema Ocean"></div>
+                <div class="theme-option sunset" title="Tema Sunset"></div>
+                <div class="theme-option matrix" title="Tema Matrix"></div>
+                <div class="theme-option rainbow" title="Tema Rainbow"></div>
+                <div class="theme-option galaxy" title="Tema Galaxy"></div>
+                <div class="theme-option forest" title="Tema Forest"></div>
+                <div class="theme-option desert" title="Tema Desert"></div>
             </div>
         </header>
 
@@ -159,6 +152,19 @@
     </div>
 
     <script>
+        // Inicialização do tema após o DOM estar carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se o sistema do usuário está em modo escuro
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-theme');
+            }
+            // Restaurar tema salvo se existir
+            const savedTheme = localStorage.getItem('alanComicsTheme');
+            if (savedTheme) {
+                document.body.className = savedTheme;
+            }
+        });
+
         // Esconde o indicador de carregamento após a inicialização
         window.addEventListener('load', function () {
             const loading = document.getElementById('loading');

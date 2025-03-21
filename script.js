@@ -27,6 +27,10 @@ let currentY = 0;
 let dragThreshold = 5; // Pixels mínimos para iniciar o drag
 let boundaryPadding = 50; // Pixels de padding nas bordas
 
+// Variável para controlar o debounce da troca de temas
+let themeChangeTimeout;
+let currentTheme = 'light-theme';
+
 // Function to limit scrolling to keep images visible
 function limitScrollPosition() {
     const imageContainer = document.getElementById('imageContainer');
@@ -812,18 +816,8 @@ function init() {
 
     themeOptions.forEach(option => {
         option.addEventListener('click', () => {
-            const theme = option.dataset.theme;
-
-            themeOptions.forEach(btn => btn.classList.remove('active'));
-            option.classList.add('active');
-
-            changeTheme(theme);
-
-            localStorage.setItem('alanComicsTheme', theme === 'light' ? '' : `${theme}-theme`);
-
-            if (typeof createThemeBackground === 'function') {
-                createThemeBackground();
-            }
+            const themeName = option.classList[1] + '-theme';
+            changeTheme(themeName);
         });
     });
 
@@ -1166,25 +1160,71 @@ function resetScrollPosition() {
     updateScrollPosition();
 }
 
-function changeTheme(theme) {
-    document.body.classList.remove('dark-theme', 'comics-theme', 'neon-theme');
-
-    if (theme !== 'light') {
-        document.body.classList.add(`${theme}-theme`);
+// Função otimizada para troca de temas
+function changeTheme(themeName) {
+    // Limpa o timeout anterior se existir
+    if (themeChangeTimeout) {
+        clearTimeout(themeChangeTimeout);
     }
 
-    const themeOptions = document.querySelectorAll('.theme-option');
-    themeOptions.forEach(option => {
-        option.classList.remove('active');
-        if (option.dataset.theme === theme) {
-            option.classList.add('active');
-        }
-    });
+    // Se o tema selecionado é o mesmo do atual, não faz nada
+    if (themeName === currentTheme) {
+        return;
+    }
 
-    if (typeof createThemeBackground === 'function') {
-        createThemeBackground();
+    // Usa requestAnimationFrame para melhor performance
+    requestAnimationFrame(() => {
+        // Remove todas as classes de tema anteriores
+        document.body.classList.remove(
+            'light-theme', 'dark-theme', 'comics-theme', 'neon-theme',
+            'cyberpunk-theme', 'retro-theme', 'minimal-theme', 'nature-theme',
+            'ocean-theme', 'sunset-theme', 'matrix-theme', 'rainbow-theme',
+            'galaxy-theme', 'forest-theme', 'desert-theme'
+        );
+
+        // Adiciona a nova classe de tema
+        document.body.classList.add(themeName);
+        currentTheme = themeName;
+
+        // Atualiza o indicador de tema ativo
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+            option.classList.remove('active');
+            if (option.classList.contains(themeName.replace('-theme', ''))) {
+                option.classList.add('active');
+            }
+        });
+
+        // Salva a preferência do usuário
+        localStorage.setItem('alanComicsTheme', themeName);
+    });
+}
+
+// Inicializa o tema baseado na preferência do usuário
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('alanComicsTheme');
+    if (savedTheme) {
+        changeTheme(savedTheme);
+    } else {
+        // Verifica se o sistema está em modo escuro
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        changeTheme(prefersDark ? 'dark-theme' : 'light-theme');
     }
 }
+
+// Adiciona event listeners para os botões de tema
+document.addEventListener('DOMContentLoaded', () => {
+    const themeOptions = document.querySelectorAll('.theme-option');
+    themeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const themeName = option.classList[1] + '-theme';
+            changeTheme(themeName);
+        });
+    });
+
+    // Inicializa o tema
+    initializeTheme();
+});
 
 function toggleFullscreen() {
     const viewer = document.getElementById('viewer');
@@ -1666,16 +1706,8 @@ function setupThemePersistence() {
     const themeOptions = document.querySelectorAll('.theme-option');
     themeOptions.forEach(option => {
         option.addEventListener('click', function () {
-            const theme = this.dataset.theme;
-
-            themeOptions.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-
-            changeTheme(theme);
-
-            localStorage.setItem('alanComicsTheme', theme === 'light' ? '' : `${theme}-theme`);
-
-            createThemeBackground();
+            const themeName = this.classList[1] + '-theme';
+            changeTheme(themeName);
         });
     });
 }

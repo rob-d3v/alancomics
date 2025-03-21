@@ -138,6 +138,76 @@
     --control-bg: #ffeaa7;
 }
 
+/* Tema Matrix */
+.matrix-theme {
+    --primary-color: #00ff00;
+    --secondary-color: #003300;
+    --text-color: #00ff00;
+    --bg-color: #000000;
+    --card-bg: #001100;
+    --shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: repeating-linear-gradient(0deg, #001100 0px, #001100 1px, #002200 1px, #002200 2px);
+    --border-color: #003300;
+    --control-bg: #001100;
+}
+
+/* Tema Rainbow */
+.rainbow-theme {
+    --primary-color: #ff0000;
+    --secondary-color: #00ff00;
+    --text-color: #000000;
+    --bg-color: #ffffff;
+    --card-bg: #f8f9fa;
+    --shadow: 0 4px 15px rgba(255, 0, 0, 0.2);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+    --border-color: #e0e0e0;
+    --control-bg: #f1f3f5;
+}
+
+/* Tema Galaxy */
+.galaxy-theme {
+    --primary-color: #9b59b6;
+    --secondary-color: #8e44ad;
+    --text-color: #ffffff;
+    --bg-color: #1a1a1a;
+    --card-bg: #2c2c2c;
+    --shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: radial-gradient(circle at center, #9b59b6 0%, #8e44ad 50%, #000000 100%);
+    --border-color: #3a3a3a;
+    --control-bg: #2c2c2c;
+}
+
+/* Tema Forest */
+.forest-theme {
+    --primary-color: #2ecc71;
+    --secondary-color: #27ae60;
+    --text-color: #ffffff;
+    --bg-color: #1a472a;
+    --card-bg: #2c3e50;
+    --shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    --viewer-bg: #1a472a;
+    --viewer-bg-pattern: linear-gradient(135deg, #1a472a 0%, #2ecc71 100%);
+    --border-color: #27ae60;
+    --control-bg: #2c3e50;
+}
+
+/* Tema Desert */
+.desert-theme {
+    --primary-color: #e67e22;
+    --secondary-color: #d35400;
+    --text-color: #ffffff;
+    --bg-color: #f39c12;
+    --card-bg: #f1c40f;
+    --shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+    --viewer-bg: #d35400;
+    --viewer-bg-pattern: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+    --border-color: #f39c12;
+    --control-bg: #f1c40f;
+}
+
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -767,6 +837,8 @@ header::before {
     border-radius: 50px;
     backdrop-filter: blur(8px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .theme-option {
@@ -774,11 +846,13 @@ header::before {
     height: 36px;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 2px solid rgba(255, 255, 255, 0.3);
     position: relative;
     flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 /* Restaurar as cores dos temas */
@@ -1169,5 +1243,345 @@ select:focus {
 
     h1 {
         font-size: 1.8rem;
+    }
+}
+
+/* Otimização das transições */
+body, .sidebar, .viewer, .image-container, .image-item, .theme-option {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Ajuste dos botões de tema */
+.theme-option.matrix {
+    background: linear-gradient(135deg, #00ff00, #003300);
+}
+
+.theme-option.rainbow {
+    background: linear-gradient(135deg, #ff0000, #00ff00);
+}
+
+.theme-option.galaxy {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+.theme-option.forest {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.theme-option.desert {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+/* Estilos base para o body */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Tema Claro (padrão) */
+body.light-theme {
+    --primary-color: #4a6cf7;
+    --secondary-color: #2c3e50;
+    --text-color: #333;
+    --bg-color: #ffffff;
+    --card-bg: #f8f9fa;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --viewer-bg: #f8f9fa;
+    --viewer-bg-pattern: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    --border-color: #dee2e6;
+    --control-bg: #ffffff;
+}
+
+/* Tema Escuro */
+body.dark-theme {
+    --primary-color: #6c5ce7;
+    --secondary-color: #a8a4e6;
+    --text-color: #ffffff;
+    --bg-color: #1a1a1a;
+    --card-bg: #2c2c2c;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+    --border-color: #3a3a3a;
+    --control-bg: #2c2c2c;
+}
+
+/* Tema Comics */
+body.comics-theme {
+    --primary-color: #e63946;
+    --secondary-color: #1d3557;
+    --text-color: #1d3557;
+    --bg-color: #f1faee;
+    --card-bg: #ffffff;
+    --shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    --viewer-bg: #f1faee;
+    --viewer-bg-pattern: repeating-linear-gradient(45deg, #e63946 0px, #e63946 2px, transparent 2px, transparent 4px);
+    --border-color: #e63946;
+    --control-bg: #ffffff;
+}
+
+/* Tema Neon */
+body.neon-theme {
+    --primary-color: #00ff9d;
+    --secondary-color: #ff00f5;
+    --text-color: #ffffff;
+    --bg-color: #0a0a0a;
+    --card-bg: #1a1a1a;
+    --shadow: 0 4px 15px rgba(0, 255, 157, 0.3);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: linear-gradient(135deg, #00ff9d 0%, #ff00f5 100%);
+    --border-color: #00ff9d;
+    --control-bg: #1a1a1a;
+}
+
+/* Tema Cyberpunk */
+body.cyberpunk-theme {
+    --primary-color: #ff2e63;
+    --secondary-color: #08d9d6;
+    --text-color: #ffffff;
+    --bg-color: #252a34;
+    --card-bg: #393e46;
+    --shadow: 0 4px 15px rgba(255, 46, 99, 0.3);
+    --viewer-bg: #1a1a1a;
+    --viewer-bg-pattern: linear-gradient(135deg, #ff2e63 0%, #08d9d6 100%);
+    --border-color: #ff2e63;
+    --control-bg: #393e46;
+}
+
+/* Tema Retro */
+body.retro-theme {
+    --primary-color: #ff6b6b;
+    --secondary-color: #4ecdc4;
+    --text-color: #2d3436;
+    --bg-color: #f7f7f7;
+    --card-bg: #ffffff;
+    --shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
+    --viewer-bg: #f7f7f7;
+    --viewer-bg-pattern: repeating-linear-gradient(45deg, #ff6b6b 0px, #ff6b6b 2px, transparent 2px, transparent 4px);
+    --border-color: #ff6b6b;
+    --control-bg: #ffffff;
+}
+
+/* Tema Minimal */
+body.minimal-theme {
+    --primary-color: #2d3436;
+    --secondary-color: #636e72;
+    --text-color: #2d3436;
+    --bg-color: #ffffff;
+    --card-bg: #f5f6fa;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --viewer-bg: #f5f6fa;
+    --viewer-bg-pattern: linear-gradient(135deg, #ffffff 0%, #f5f6fa 100%);
+    --border-color: #dfe6e9;
+    --control-bg: #ffffff;
+}
+
+/* Tema Nature */
+body.nature-theme {
+    --primary-color: #2ecc71;
+    --secondary-color: #27ae60;
+    --text-color: #ffffff;
+    --bg-color: #1a472a;
+    --card-bg: #2c3e50;
+    --shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    --viewer-bg: #1a472a;
+    --viewer-bg-pattern: linear-gradient(135deg, #1a472a 0%, #2ecc71 100%);
+    --border-color: #27ae60;
+    --control-bg: #2c3e50;
+}
+
+/* Tema Ocean */
+body.ocean-theme {
+    --primary-color: #00b894;
+    --secondary-color: #0984e3;
+    --text-color: #ffffff;
+    --bg-color: #1e3d59;
+    --card-bg: #2c3e50;
+    --shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+    --viewer-bg: #1e3d59;
+    --viewer-bg-pattern: linear-gradient(135deg, #1e3d59 0%, #00b894 100%);
+    --border-color: #0984e3;
+    --control-bg: #2c3e50;
+}
+
+/* Tema Sunset */
+body.sunset-theme {
+    --primary-color: #e17055;
+    --secondary-color: #fdcb6e;
+    --text-color: #ffffff;
+    --bg-color: #2d3436;
+    --card-bg: #636e72;
+    --shadow: 0 4px 15px rgba(225, 112, 85, 0.3);
+    --viewer-bg: #2d3436;
+    --viewer-bg-pattern: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%);
+    --border-color: #e17055;
+    --control-bg: #636e72;
+}
+
+/* Tema Matrix */
+body.matrix-theme {
+    --primary-color: #00ff00;
+    --secondary-color: #003300;
+    --text-color: #00ff00;
+    --bg-color: #000000;
+    --card-bg: #001100;
+    --shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: repeating-linear-gradient(0deg, #001100 0px, #001100 1px, #002200 1px, #002200 2px);
+    --border-color: #003300;
+    --control-bg: #001100;
+}
+
+/* Tema Rainbow */
+body.rainbow-theme {
+    --primary-color: #ff0000;
+    --secondary-color: #00ff00;
+    --text-color: #000000;
+    --bg-color: #ffffff;
+    --card-bg: #f8f9fa;
+    --shadow: 0 4px 15px rgba(255, 0, 0, 0.2);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+    --border-color: #e0e0e0;
+    --control-bg: #f1f3f5;
+}
+
+/* Tema Galaxy */
+body.galaxy-theme {
+    --primary-color: #9b59b6;
+    --secondary-color: #8e44ad;
+    --text-color: #ffffff;
+    --bg-color: #1a1a1a;
+    --card-bg: #2c2c2c;
+    --shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+    --viewer-bg: #000000;
+    --viewer-bg-pattern: radial-gradient(circle at center, #9b59b6 0%, #8e44ad 50%, #000000 100%);
+    --border-color: #3a3a3a;
+    --control-bg: #2c2c2c;
+}
+
+/* Tema Forest */
+body.forest-theme {
+    --primary-color: #2ecc71;
+    --secondary-color: #27ae60;
+    --text-color: #ffffff;
+    --bg-color: #1a472a;
+    --card-bg: #2c3e50;
+    --shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    --viewer-bg: #1a472a;
+    --viewer-bg-pattern: linear-gradient(135deg, #1a472a 0%, #2ecc71 100%);
+    --border-color: #27ae60;
+    --control-bg: #2c3e50;
+}
+
+/* Tema Desert */
+body.desert-theme {
+    --primary-color: #e67e22;
+    --secondary-color: #d35400;
+    --text-color: #ffffff;
+    --bg-color: #f39c12;
+    --card-bg: #f1c40f;
+    --shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+    --viewer-bg: #d35400;
+    --viewer-bg-pattern: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+    --border-color: #f39c12;
+    --control-bg: #f1c40f;
+}
+
+/* Estilos dos botões de tema */
+.theme-option {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+
+.theme-option:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.theme-option.active {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    animation: pulse 2s infinite;
+}
+
+/* Cores dos temas */
+.theme-option.light {
+    background: linear-gradient(135deg, #4a6cf7, #2c3e50);
+}
+
+.theme-option.dark {
+    background: linear-gradient(135deg, #6c5ce7, #a8a4e6);
+}
+
+.theme-option.comics {
+    background: linear-gradient(135deg, #e63946, #1d3557);
+}
+
+.theme-option.neon {
+    background: linear-gradient(135deg, #00ff9d, #ff00f5);
+}
+
+.theme-option.cyberpunk {
+    background: linear-gradient(135deg, #ff2e63, #08d9d6);
+}
+
+.theme-option.retro {
+    background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+}
+
+.theme-option.minimal {
+    background: linear-gradient(135deg, #2d3436, #636e72);
+}
+
+.theme-option.nature {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.theme-option.ocean {
+    background: linear-gradient(135deg, #00b894, #0984e3);
+}
+
+.theme-option.sunset {
+    background: linear-gradient(135deg, #e17055, #fdcb6e);
+}
+
+.theme-option.matrix {
+    background: linear-gradient(135deg, #00ff00, #003300);
+}
+
+.theme-option.rainbow {
+    background: linear-gradient(135deg, #ff0000, #00ff00);
+}
+
+.theme-option.galaxy {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+.theme-option.forest {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.theme-option.desert {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+/* Animação de pulso para o tema ativo */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
     }
 }
