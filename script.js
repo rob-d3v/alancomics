@@ -1883,8 +1883,8 @@ function dragStart(e) {
     viewer.classList.add('dragging');
     
     // Capturar posição inicial
-    startX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-    startY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
     
     // Capturar posição inicial do scroll
     scrollLeft = viewer.scrollLeft;
@@ -1898,8 +1898,8 @@ function drag(e) {
     const viewer = document.querySelector('.viewer');
     
     // Calcular movimento
-    const x = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-    const y = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
+    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
     
     // Calcular distância percorrida
     const walkX = x - startX;
@@ -1928,6 +1928,13 @@ function setupDragAndZoom() {
     viewer.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
+    
+    // Prevenir comportamento padrão do scroll
+    viewer.addEventListener('scroll', (e) => {
+        if (isDragging) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 }
 
 // Inicializar arrasto e zoom quando o DOM estiver carregado

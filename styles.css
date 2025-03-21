@@ -409,7 +409,7 @@ header::before {
     z-index: 997;
     cursor: grab;
     white-space: nowrap;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -681,7 +681,7 @@ header::before {
     max-width: none;
     margin: 0;
     will-change: transform;
-    transition: transform 0.1s ease-out;
+    transition: none;
     padding-left: 20px;
     white-space: nowrap;
 }
