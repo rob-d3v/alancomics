@@ -626,41 +626,6 @@ function fixImageSpacing() {
     };
 }
 
-// Adicionar diagnóstico para facilitar solução de problemas
-function addDiagnosticTools() {
-    window.diagnoseCSSIssues = function () {
-        const imageContainer = document.getElementById('imageContainer');
-        const viewer = document.getElementById('viewer');
-
-        console.log("=== DIAGNÓSTICO ===");
-        console.log("Zoom atual:", currentZoom);
-        console.log("Posição de rolagem:", scrollPosition);
-        console.log("Rolagem automática:", autoScrolling);
-
-        if (imageContainer) {
-            console.log("Transform:", imageContainer.style.transform);
-            console.log("TransformOrigin:", imageContainer.style.transformOrigin);
-            const rect = imageContainer.getBoundingClientRect();
-            console.log("Dimensões:", rect.width, "x", rect.height);
-        }
-
-        if (viewer) {
-            const rect = viewer.getBoundingClientRect();
-            console.log("Dimensões do Viewer:", rect.width, "x", rect.height);
-        }
-
-        console.log("Número de imagens:", images.length);
-        console.log("===================");
-    };
-
-    // Ativar com Alt+I para inspecionar estado
-    document.addEventListener('keydown', function (e) {
-        if (e.altKey && e.key === 'i') {
-            window.diagnoseCSSIssues();
-        }
-    });
-}
-
 // Inicializar todas as correções quando o documento estiver pronto
 function initializeAllFixes() {
     console.log("Aplicando correções para problemas de rolagem...");

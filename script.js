@@ -231,56 +231,6 @@ function toggleSidebarControls(disabled) {
     }
 }
 
-// Update the startScrolling and stopScrolling functions
-function startScrolling() {
-    stopScrolling();
-
-    if (images.length === 0) {
-        return;
-    }
-
-    autoScrolling = true;
-
-    // Disable sidebar controls while scrolling
-    toggleSidebarControls(true);
-
-    if (scrollPosition <= 0) {
-        scrollPosition = 0;
-    }
-
-    const startBtn = document.getElementById('startScrollingBtn');
-    if (startBtn) {
-        startBtn.innerHTML = '<i class="fas fa-play"></i> Rolando...';
-        startBtn.style.opacity = '0.7';
-    }
-
-    let lastTime = null;
-
-    function animate(timestamp) {
-        if (!autoScrolling) return;
-
-        if (!lastTime) lastTime = timestamp;
-        const deltaTime = timestamp - lastTime;
-
-        // Velocidade de rolagem melhorada
-        const pixelsPerSecond = scrollSpeed * 5;
-        const increment = (pixelsPerSecond * deltaTime) / 1000;
-
-        scrollPosition += increment;
-        updateScrollPosition();
-
-        // Check image visibility after position update
-        limitScrollPosition();
-
-        updateProgressIndicator();
-
-        lastTime = timestamp;
-        scrollInterval = requestAnimationFrame(animate);
-    }
-
-    scrollInterval = requestAnimationFrame(animate);
-}
-
 function stopScrolling() {
     if (scrollInterval) {
         if (typeof scrollInterval === 'number') {
