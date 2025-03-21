@@ -254,6 +254,9 @@ function init() {
     updateImageCounter();
     renderThumbnails();
     renderImages();
+    setupFullscreenListeners();
+    checkAndFixScrolling();
+    enhanceUserExperience();
 }
 
 function initDB() {
@@ -476,10 +479,32 @@ function renderImages() {
         imageContainer.style.alignItems = 'center';
     }
 
-    images.forEach(image => {
+    // Calcular a largura/altura total para espaçamento negativo
+    let totalOffset = 0;
+
+    images.forEach((image, index) => {
         const imageItem = document.createElement('div');
         imageItem.className = 'image-item';
-        imageItem.style.margin = isVertical ? `${imageSpacing}px 0` : `0 ${imageSpacing}px`;
+
+        // Aplicar espaçamento, garantindo que mesmo com valores negativos a visualização seja correta
+        if (index > 0) {
+            if (isVertical) {
+                imageItem.style.marginTop = `${imageSpacing}px`;
+                // Para espaçamento negativo, usamos técnica de sobreposição com posição relativa
+                if (imageSpacing < 0) {
+                    imageItem.style.position = 'relative';
+                    imageItem.style.marginTop = `${imageSpacing}px`;
+                    totalOffset += imageSpacing;
+                }
+            } else {
+                imageItem.style.marginLeft = `${imageSpacing}px`;
+                if (imageSpacing < 0) {
+                    imageItem.style.position = 'relative';
+                    imageItem.style.marginLeft = `${imageSpacing}px`;
+                    totalOffset += imageSpacing;
+                }
+            }
+        }
 
         const img = document.createElement('img');
         img.src = image.data;
@@ -566,7 +591,7 @@ function startScrolling() {
         if (!lastTime) lastTime = timestamp;
         const deltaTime = timestamp - lastTime;
 
-        // Modificamos esta linha para permitir velocidades lentas (multiplica por 5 em vez de 15)
+        // Velocidade de rolagem melhorada
         const pixelsPerSecond = scrollSpeed * 5;
         const increment = (pixelsPerSecond * deltaTime) / 1000;
 
@@ -608,11 +633,14 @@ function updateScrollPosition() {
     }
 
     const viewerRect = viewer.getBoundingClientRect();
+
+    // Calcular as dimensões reais considerando o zoom
     const containerRect = {
         width: imageContainer.scrollWidth * currentZoom,
         height: imageContainer.scrollHeight * currentZoom
     };
 
+    // Calcular o máximo de rolagem possível
     let maxScroll;
     if (isVertical) {
         maxScroll = Math.max(0, containerRect.height - viewerRect.height);
@@ -620,19 +648,27 @@ function updateScrollPosition() {
         maxScroll = Math.max(0, containerRect.width - viewerRect.width);
     }
 
+    // Limitar a posição de rolagem para não ultrapassar os limites
     scrollPosition = Math.max(0, Math.min(scrollPosition, maxScroll));
 
+    // Aplicar transformação com base na direção
     if (isVertical) {
         imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
     } else {
         imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
     }
 
+    // Parar rolagem automática se chegou ao final
     if (scrollPosition >= maxScroll && autoScrolling) {
         stopScrolling();
     }
 
     updateProgressIndicator();
+}
+function checkAndFixScrolling() {
+    if (autoScrolling && !scrollInterval) {
+        startScrolling();
+    }
 }
 
 function scrollManually(direction) {
@@ -748,18 +784,18 @@ function changeTheme(theme) {
     }
 }
 
-// Corrigir o comportamento do modo tela cheia
 function toggleFullscreen() {
     const viewer = document.getElementById('viewer');
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
-    const zoomControls = document.querySelector('.zoom-controls');
-    const navigationControls = document.querySelector('.navigation-controls');
-    
+
     if (!viewer) return;
 
-    if (!document.fullscreenElement) {
+    if (!document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
+        !document.msFullscreenElement) {
         try {
             // Adicionar classe para esconder elementos
             if (header) header.classList.add('fullscreen-hidden');
@@ -768,10 +804,6 @@ function toggleFullscreen() {
 
             // Adicionar classe para o viewer em tela cheia
             viewer.classList.add('fullscreen-viewer');
-
-            // Ajustar posição dos controles em tela cheia
-            if (zoomControls) zoomControls.classList.add('fullscreen');
-            if (navigationControls) navigationControls.classList.add('fullscreen');
 
             // Solicitar tela cheia
             if (viewer.requestFullscreen) {
@@ -803,6 +835,7 @@ function toggleFullscreen() {
         }
     }
 }
+
 function setupFullscreenListeners() {
     const fullscreenEvents = [
         'fullscreenchange',
@@ -810,35 +843,88 @@ function setupFullscreenListeners() {
         'mozfullscreenchange',
         'MSFullscreenChange'
     ];
-    
+
     fullscreenEvents.forEach(eventName => {
         document.addEventListener(eventName, handleFullscreenChange);
     });
 }
+// Certifique-se de que o handler de mudança de tela cheia funciona corretamente
 function handleFullscreenChange() {
     updateFullscreenButton();
-    
+
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
     const viewer = document.getElementById('viewer');
-    const zoomControls = document.querySelector('.zoom-controls');
-    const navigationControls = document.querySelector('.navigation-controls');
-    
+
     // Se não estamos mais em modo tela cheia, restaurar elementos
-    if (!document.fullscreenElement && 
-        !document.webkitFullscreenElement && 
-        !document.mozFullScreenElement && 
+    if (!document.fullscreenElement &&
+        !document.webkitFullscreenElement &&
+        !document.mozFullScreenElement &&
         !document.msFullscreenElement) {
-        
+
         // Restaurar elementos ocultos
         if (header) header.classList.remove('fullscreen-hidden');
         if (sidebar) sidebar.classList.remove('fullscreen-hidden');
         if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
         if (viewer) viewer.classList.remove('fullscreen-viewer');
-        if (zoomControls) zoomControls.classList.remove('fullscreen');
-        if (navigationControls) navigationControls.classList.remove('fullscreen');
     }
+}
+function enhanceUserExperience() {
+    // 1. Melhorar o suporte a rolagem com espaçamento negativo
+    const spacingControl = document.getElementById('spacingControl');
+    if (spacingControl) {
+        spacingControl.addEventListener('change', function () {
+            // Quando o usuário finaliza a mudança de espaçamento, reajusta as imagens
+            setTimeout(() => {
+                adjustImageContainer();
+                centerImages();
+
+                // Se estava rolando, garante que continua rolando com o novo layout
+                if (autoScrolling) {
+                    stopScrolling();
+                    startScrolling();
+                }
+            }, 50);
+        });
+    }
+
+    // 2. Adicionar feedback visual ao botão de toggle sidebar
+    const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    if (toggleSidebarBtn) {
+        // Adiciona efeito de hover para melhorar a visibilidade
+        toggleSidebarBtn.addEventListener('mouseenter', function () {
+            this.style.transform = this.classList.contains('collapsed') ? 'scale(1.1)' : 'scale(1.1) rotate(0deg)';
+        });
+
+        toggleSidebarBtn.addEventListener('mouseleave', function () {
+            this.style.transform = this.classList.contains('collapsed') ? '' : 'rotate(0deg)';
+        });
+    }
+
+    // 3. Adicionar verificação periódica para garantir consistência da UI
+    setInterval(() => {
+        // Verificar estado de rolagem automática
+        if (autoScrolling && !scrollInterval) {
+            // A rolagem automática está ativa mas o intervalo não existe
+            startScrolling();
+        }
+
+        // Verificar estado de tela cheia
+        const isFullscreen = document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement;
+
+        const viewer = document.getElementById('viewer');
+        if (viewer) {
+            if (isFullscreen && !viewer.classList.contains('fullscreen-viewer')) {
+                viewer.classList.add('fullscreen-viewer');
+            } else if (!isFullscreen && viewer.classList.contains('fullscreen-viewer')) {
+                viewer.classList.remove('fullscreen-viewer');
+            }
+        }
+    }, 1000);
 }
 function enhanceInit() {
     // Substituir os listeners de tela cheia antigos
@@ -846,10 +932,6 @@ function enhanceInit() {
     document.removeEventListener('webkitfullscreenchange', updateFullscreenButton);
     document.removeEventListener('mozfullscreenchange', updateFullscreenButton);
     document.removeEventListener('MSFullscreenChange', updateFullscreenButton);
-    
-    // Adicionar nossos novos listeners
-    setupFullscreenListeners();
-    
     // Adicionar setup para controles de velocidade
     setupSpeedControl();
 }
@@ -1208,7 +1290,7 @@ window.onerror = function (message, source, lineno, colno, error) {
     return true;
 };
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     init();
     enhanceInit();
 });
