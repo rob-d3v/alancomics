@@ -184,17 +184,18 @@ h1 {
     background-color: var(--secondary-color);
 }
 
-
 .viewer {
-    flex: 1;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
     background-color: var(--viewer-bg);
     display: flex;
     justify-content: center;
     align-items: center;
     transition: margin-left 0.3s ease;
     margin-left: 0;
+    touch-action: none;
 }
 
 .expanded-viewer {
@@ -416,8 +417,20 @@ h1 {
 }
 
 .image-container {
-    transform-origin: center center !important;
-    transition: transform 0.2s ease-out;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    overflow: visible;
 }
 
 .fullscreen-hidden {
@@ -432,25 +445,39 @@ h1 {
     background-color: var(--viewer-bg);
 }
 
+/* Layout vertical */
 .vertical-scroll .image-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
-    transform-origin: top center;
+    transform-origin: center center;
 }
 
-.vertical-scroll .image-item {
-    margin: var(--item-spacing, 12px) 0;
-}
-
+/* Layout horizontal */
 .horizontal-scroll .image-container {
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: fit-content;
-    transform-origin: left center;
+    height: 100%;
+    max-height: 100%;
+    transform-origin: center center;
+}
+
+.image-item {
+    position: relative;
+    transition: all 0.3s ease;
+    z-index: 1;
+    margin: var(--item-spacing, 12px) 0;
+}
+
+.image-item img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
 }
 
 .horizontal-scroll .image-item {
@@ -458,25 +485,9 @@ h1 {
     flex-shrink: 0;
 }
 
-
-.image-item {
-    position: relative;
-    transition: all 0.3s ease;
-    z-index: 1;
-}
-
-
-.image-item img {
-    max-width: 100%;
-    height: auto;
-    object-fit: contain;
-    border-radius: 4px;
-}
-
 .horizontal-scroll .image-item img {
     max-height: 90vh;
     width: auto;
-    display: block;
 }
 
 /* Controles de navegação e zoom - redesenhados para melhor visibilidade */
@@ -525,6 +536,30 @@ h1 {
     background-color: var(--primary-color);
     color: white;
     transform: scale(1.1);
+}
+
+.control-button.active {
+    background-color: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 3px white, 0 0 0 5px var(--primary-color);
+}
+
+#centerBtn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 67, 97, 238), 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(var(--primary-color-rgb, 67, 97, 238), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb, 67, 97, 238), 0);
+    }
 }
 
 #startScrollingBtn {

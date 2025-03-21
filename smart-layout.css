@@ -1,0 +1,212 @@
+/* Estilos para o layout inteligente */
+.image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+}
+
+/* Item de imagem */
+.image-item {
+    position: relative;
+    margin: var(--item-spacing, 12px) 0;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.image-item img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+}
+
+/* Layout vertical */
+.vertical-scroll .image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    transform-origin: top center;
+}
+
+.vertical-scroll .image-item {
+    margin: var(--item-spacing, 12px) 0;
+}
+
+/* Layout horizontal */
+.horizontal-scroll .image-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: fit-content;
+    transform-origin: left center;
+}
+
+.horizontal-scroll .image-item {
+    margin: 0 var(--item-spacing, 12px);
+    flex-shrink: 0;
+}
+
+.horizontal-scroll .image-item img {
+    max-height: 90vh;
+    width: auto;
+}
+
+/* Feedback de zoom */
+.zoom-feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    z-index: 2000;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    pointer-events: none;
+}
+
+.zoom-feedback.visible {
+    opacity: 1;
+}
+
+/* Botões de controle */
+.control-button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+.control-button:hover {
+    background-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.control-button:active {
+    transform: scale(0.95);
+}
+
+/* Controles de zoom */
+.zoom-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+/* Controles de navegação */
+.navigation-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+/* Contador de imagens */
+.image-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+/* Modo tela cheia */
+.fullscreen-hidden {
+    display: none !important;
+}
+
+.fullscreen-viewer {
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: var(--viewer-bg);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .control-button {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .zoom-feedback {
+        font-size: 0.9rem;
+        padding: 12px 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .control-button {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .image-counter {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+}
+
+/* Viewer e container */
+.viewer {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: var(--viewer-bg);
+}
+
+/* Transições suaves */
+.image-container {
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Otimizações de performance */
+.image-item {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Ajustes para modo tela cheia */
+.fullscreen-viewer .image-container {
+    padding: 10px;
+} 

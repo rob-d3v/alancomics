@@ -11,6 +11,7 @@ let scrollInterval;
 let scrollPosition = 0;
 let autoScrolling = false;
 let manualScrollStep = 50;
+let autoCenter = true;
 // Function to limit scrolling to keep images visible
 function limitScrollPosition() {
     const imageContainer = document.getElementById('imageContainer');
@@ -177,6 +178,11 @@ function updateScrollPosition() {
     // Parar rolagem automática se chegou ao final
     if (scrollPosition >= maxScroll && autoScrolling) {
         stopScrolling();
+    }
+
+    // Manter centralização se estiver ativa
+    if (autoCenter) {
+        centerImages();
     }
 
     updateProgressIndicator();
@@ -423,31 +429,33 @@ function setupWheelZoom() {
 
 // Update centerImages to check limitations after centering
 function centerImages() {
+    if (!autoCenter) return;
+
     const viewer = document.getElementById('viewer');
     const imageContainer = document.getElementById('imageContainer');
-
+    
     if (!viewer || !imageContainer) return;
-
+    
     const viewerRect = viewer.getBoundingClientRect();
     const containerRect = imageContainer.getBoundingClientRect();
-
+    
     if (autoScrolling) return;
-
+    
     let offsetX = 0;
     let offsetY = 0;
-
+    
     if (containerRect.width * currentZoom < viewerRect.width) {
         offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
     }
-
+    
     if (containerRect.height * currentZoom < viewerRect.height) {
         offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
     }
-
+    
     if (isVertical) {
-        imageContainer.style.transform = `translateY(${offsetY - scrollPosition}px) scale(${currentZoom})`;
+        imageContainer.style.transform = `translateX(${offsetX / currentZoom}px) translateY(${offsetY / currentZoom - scrollPosition}px) scale(${currentZoom})`;
     } else {
-        imageContainer.style.transform = `translateX(${offsetX - scrollPosition}px) scale(${currentZoom})`;
+        imageContainer.style.transform = `translateX(${offsetX / currentZoom - scrollPosition}px) translateY(${offsetY / currentZoom}px) scale(${currentZoom})`;
     }
 
     // Apply limitations after centering
@@ -595,6 +603,7 @@ function init() {
     const themeOptions = document.querySelectorAll('.theme-option');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const zoomControls = document.querySelector('.zoom-controls');
+    const centerBtn = document.getElementById('centerBtn');
 
     if (!document.getElementById('centerBtn')) {
         const centerBtn = document.createElement('button');
@@ -602,7 +611,13 @@ function init() {
         centerBtn.id = 'centerBtn';
         centerBtn.title = 'Centralizar Imagens';
         centerBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
-        centerBtn.addEventListener('click', centerImages);
+        centerBtn.addEventListener('click', () => {
+            autoCenter = !autoCenter;
+            centerBtn.classList.toggle('active');
+            if (autoCenter) {
+                centerImages();
+            }
+        });
 
         if (zoomControls && fullscreenBtn) {
             zoomControls.insertBefore(centerBtn, fullscreenBtn);

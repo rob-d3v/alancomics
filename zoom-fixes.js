@@ -20,7 +20,16 @@ function enhancedZoomControl() {
             // Limitar o zoom máximo
             if (currentZoom < ZOOM_MAX) {
                 currentZoom = Math.min(currentZoom + 0.1, ZOOM_MAX);
-                zoomAtPoint(centerX, centerY);
+                
+                // Aplicar zoom mantendo a posição atual
+                const imageContainer = document.getElementById('imageContainer');
+                if (imageContainer) {
+                    if (isVertical) {
+                        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+                    } else {
+                        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+                    }
+                }
                 
                 console.log(`Zoom in: ${currentZoom.toFixed(1)}`);
             }
@@ -41,7 +50,16 @@ function enhancedZoomControl() {
             // Limitar o zoom mínimo
             if (currentZoom > ZOOM_MIN) {
                 currentZoom = Math.max(currentZoom - 0.1, ZOOM_MIN);
-                zoomAtPoint(centerX, centerY);
+                
+                // Aplicar zoom mantendo a posição atual
+                const imageContainer = document.getElementById('imageContainer');
+                if (imageContainer) {
+                    if (isVertical) {
+                        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+                    } else {
+                        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+                    }
+                }
                 
                 console.log(`Zoom out: ${currentZoom.toFixed(1)}`);
             }
@@ -135,12 +153,10 @@ function enhancedZoomAtPoint(pointX, pointY) {
     const containerRect = imageContainer.getBoundingClientRect();
     
     // Calcular ponto em coordenadas não-escaladas
-    // Isso considera a posição atual de deslocamento (scrollPosition)
     const unscaledX = (pointX - containerRect.left + (isVertical ? 0 : scrollPosition)) / oldZoom;
     const unscaledY = (pointY - containerRect.top + (isVertical ? scrollPosition : 0)) / oldZoom;
     
     // Aplicar nova escala
-    // Primeiro vamos obter os valores atuais de translação
     let translateX = 0;
     let translateY = 0;
     
@@ -160,26 +176,23 @@ function enhancedZoomAtPoint(pointX, pointY) {
     const deltaX = scaledX - pointX;
     const deltaY = scaledY - pointY;
     
-    // Atualizar posição de rolagem para compensar
+    // Atualizar posição de rolagem para compensar, mas apenas para a imagem atual
     if (isVertical) {
-        scrollPosition += deltaY / currentZoom;
-    } else {
-        scrollPosition += deltaX / currentZoom;
-    }
-    
-    // Garantir que scrollPosition não seja negativo
-    scrollPosition = Math.max(0, scrollPosition);
-    
-    // Aplicar transformação atualizada
-    if (isVertical) {
+        // Manter a posição Y atual e apenas ajustar o zoom
         imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
     } else {
+        // Manter a posição X atual e apenas ajustar o zoom
         imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
     }
     
     // Atualizar indicador de progresso e ajustar contêiner
     updateProgressIndicator();
     adjustImageContainer();
+    
+    // Manter centralização se estiver ativa
+    if (autoCenter) {
+        centerImages();
+    }
     
     // Adicionar efeito visual para indicar o ponto de zoom
     showZoomIndicator(pointX, pointY);
