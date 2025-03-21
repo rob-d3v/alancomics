@@ -12,6 +12,18 @@ let scrollPosition = 0;
 let autoScrolling = false;
 let manualScrollStep = 50;
 let autoCenter = true;
+let currentIndex = 0;
+let isFullscreen = false;
+let spacing = 20;
+
+// Variáveis para controle de arrasto
+let isDragging = false;
+let startX, startY;
+let initialScrollX, initialScrollY;
+let currentX, currentY;
+let xOffset = 0;
+let yOffset = 0;
+
 // Function to limit scrolling to keep images visible
 function limitScrollPosition() {
     const imageContainer = document.getElementById('imageContainer');
@@ -299,48 +311,89 @@ function stopScrolling() {
 function zoomAtPoint(pointX, pointY) {
     const imageContainer = document.getElementById('imageContainer');
     const viewer = document.getElementById('viewer');
-
     if (!imageContainer || !viewer) return;
 
-    // Store old scale to calculate ratio
+    // Armazenar a escala anterior
     const oldZoom = parseFloat(imageContainer.style.transform.match(/scale\(([^)]+)\)/)
         ? parseFloat(imageContainer.style.transform.match(/scale\(([^)]+)\)/)[1])
         : 1);
 
-    // Calculate the point's position relative to image in "unscaled" coordinates
-    const unscaledX = pointX / oldZoom;
-    const unscaledY = pointY / oldZoom;
-
-    // Apply the new scale
-    imageContainer.style.transform = `scale(${currentZoom})`;
-
-    // Calculate new position after scaling
-    const scaledX = unscaledX * currentZoom;
-    const scaledY = unscaledY * currentZoom;
-
-    // Calculate how much the point moved
-    const deltaX = scaledX - pointX;
-    const deltaY = scaledY - pointY;
-
-    // Update scroll position to compensate
+    // Calcular o ponto relativo ao container antes do zoom
+    const containerRect = imageContainer.getBoundingClientRect();
+    const viewerRect = viewer.getBoundingClientRect();
+    
+    // Calcular o centro do viewer
+    const viewerCenterX = viewerRect.width / 2;
+    const viewerCenterY = viewerRect.height / 2;
+    
+    // Calcular o ponto relativo ao container
+    const containerX = pointX - containerRect.left;
+    const containerY = pointY - containerRect.top;
+    
+    // Calcular a proporção do zoom
+    const scaleRatio = currentZoom / oldZoom;
+    
+    // Calcular o novo ponto após o zoom
+    const newContainerX = containerX * scaleRatio;
+    const newContainerY = containerY * scaleRatio;
+    
+    // Calcular o deslocamento necessário para manter o ponto sob o cursor
+    const deltaX = newContainerX - containerX;
+    const deltaY = newContainerY - containerY;
+    
+    // Atualizar a posição de rolagem
     if (isVertical) {
         scrollPosition += deltaY;
     } else {
-        scrollPosition += deltaX;
+        // Limitar o deslocamento para a direita
+        const maxScroll = (containerRect.width * currentZoom - viewerRect.width) / 2;
+        scrollPosition = Math.max(0, Math.min(maxScroll, scrollPosition + deltaX));
     }
-
-    // Apply the scroll position
+    
+    // Aplicar a transformação mantendo o ponto sob o cursor
     if (isVertical) {
-        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+        imageContainer.style.transform = `translateY(${currentY - deltaY}px) scale(${currentZoom})`;
     } else {
-        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+        // Garantir que não ultrapasse o limite direito
+        const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
+        const limitedX = Math.max(-maxX, Math.min(0, currentX - deltaX));
+        imageContainer.style.transform = `translateX(${limitedX}px) scale(${currentZoom})`;
+    }
+    
+    // Centralizar o conteúdo após o zoom
+    centerContent();
+    
+    // Atualizar a barra de progresso
+    updateProgressIndicator();
+}
+
+// Função para centralizar o conteúdo
+function centerContent() {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    if (!imageContainer || !viewer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+
+    // Calcular os offsets para centralização
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (isVertical) {
+        // Para rolagem vertical, centralizar horizontalmente
+        offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
+    } else {
+        // Para rolagem horizontal, centralizar verticalmente
+        offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
     }
 
-    // Limit scroll to keep images visible
-    limitScrollPosition();
-
-    adjustImageContainer();
-    updateProgressIndicator();
+    // Aplicar a transformação mantendo o zoom atual
+    if (isVertical) {
+        imageContainer.style.transform = `translateX(${offsetX}px) translateY(${currentY}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(${currentX}px) translateY(${offsetY}px) scale(${currentZoom})`;
+    }
 }
 
 // Update scrollManually to use the limit
@@ -466,8 +519,6 @@ function setupWheelZoom() {
 
 // Update centerImages to check limitations after centering
 function centerImages() {
-    if (!autoCenter) return;
-
     const viewer = document.getElementById('viewer');
     const imageContainer = document.getElementById('imageContainer');
     
@@ -478,25 +529,28 @@ function centerImages() {
     
     if (autoScrolling) return;
     
+    // Calcular offsets para centralização
     let offsetX = 0;
     let offsetY = 0;
     
-    if (containerRect.width * currentZoom < viewerRect.width) {
-        offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
-    }
-    
-    if (containerRect.height * currentZoom < viewerRect.height) {
-        offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
-    }
-    
     if (isVertical) {
-        imageContainer.style.transform = `translateX(${offsetX / currentZoom}px) translateY(${offsetY / currentZoom - scrollPosition}px) scale(${currentZoom})`;
+        // Para rolagem vertical, centralizar horizontalmente
+        if (containerRect.width < viewerRect.width) {
+            offsetX = (viewerRect.width - containerRect.width) / 2;
+        }
     } else {
-        imageContainer.style.transform = `translateX(${offsetX / currentZoom - scrollPosition}px) translateY(${offsetY / currentZoom}px) scale(${currentZoom})`;
+        // Para rolagem horizontal, centralizar verticalmente
+        if (containerRect.height < viewerRect.height) {
+            offsetY = (viewerRect.height - containerRect.height) / 2;
+        }
     }
-
-    // Apply limitations after centering
-    limitScrollPosition();
+    
+    // Aplicar transformação mantendo o zoom atual
+    if (isVertical) {
+        imageContainer.style.transform = `translateX(${offsetX}px) translateY(${offsetY - scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(${offsetX - scrollPosition}px) translateY(${offsetY}px) scale(${currentZoom})`;
+    }
 }
 
 // Call limitScrollPosition when rendering images
@@ -522,46 +576,32 @@ function renderImages() {
     viewer.classList.remove('vertical-scroll', 'horizontal-scroll');
     viewer.classList.add(isVertical ? 'vertical-scroll' : 'horizontal-scroll');
 
+    // Configurar o container baseado na direção
     if (isVertical) {
-        imageContainer.style.width = 'fit-content';
-        imageContainer.style.maxWidth = '100%';
+        imageContainer.style.width = '100%';
         imageContainer.style.height = 'auto';
         imageContainer.style.display = 'flex';
         imageContainer.style.flexDirection = 'column';
         imageContainer.style.alignItems = 'center';
     } else {
         imageContainer.style.width = 'auto';
-        imageContainer.style.height = 'fit-content';
-        imageContainer.style.maxHeight = '100%';
+        imageContainer.style.height = '100%';
         imageContainer.style.display = 'flex';
         imageContainer.style.flexDirection = 'row';
         imageContainer.style.alignItems = 'center';
     }
 
-    // Calcular a largura/altura total para espaçamento negativo
-    let totalOffset = 0;
-
+    // Renderizar cada imagem
     images.forEach((image, index) => {
         const imageItem = document.createElement('div');
         imageItem.className = 'image-item';
 
-        // Aplicar espaçamento, garantindo que mesmo com valores negativos a visualização seja correta
+        // Aplicar espaçamento
         if (index > 0) {
             if (isVertical) {
                 imageItem.style.marginTop = `${imageSpacing}px`;
-                // Para espaçamento negativo, usamos técnica de sobreposição com posição relativa
-                if (imageSpacing < 0) {
-                    imageItem.style.position = 'relative';
-                    imageItem.style.marginTop = `${imageSpacing}px`;
-                    totalOffset += imageSpacing;
-                }
             } else {
                 imageItem.style.marginLeft = `${imageSpacing}px`;
-                if (imageSpacing < 0) {
-                    imageItem.style.position = 'relative';
-                    imageItem.style.marginLeft = `${imageSpacing}px`;
-                    totalOffset += imageSpacing;
-                }
             }
         }
 
@@ -570,23 +610,37 @@ function renderImages() {
         img.alt = image.name;
         img.loading = "lazy";
 
-        img.onload = function () {
+        // Configurar o carregamento da imagem
+        img.onload = function() {
+            // Ajustar dimensões após o carregamento
             adjustImageContainer();
-            centerImages();
-            limitScrollPosition();
+            
+            // Centralizar se necessário
+            if (autoCenter) {
+                centerImages();
+            }
+            
+            // Atualizar a barra de progresso
+            updateProgressIndicator();
         };
 
         imageItem.appendChild(img);
         imageContainer.appendChild(imageItem);
     });
 
-    resetScrollPosition();
+    // Ajustar dimensões iniciais
     adjustImageContainer();
-    centerImages();
+    
+    // Centralizar se necessário
+    if (autoCenter) {
+        centerImages();
+    }
+    
+    // Atualizar botões de navegação
     updateNavigationButtons();
-
-    // Apply limitations after rendering
-    limitScrollPosition();
+    
+    // Atualizar a barra de progresso
+    updateProgressIndicator();
 }
 
 function init() {
@@ -1051,21 +1105,83 @@ function getImageContainerSize() {
 
 function adjustImageContainer() {
     const imageContainer = document.getElementById('imageContainer');
-    if (!imageContainer) {
-        return;
-    }
+    const viewer = document.getElementById('viewer');
+    if (!imageContainer || !viewer) return;
 
     if (images.length === 0) return;
 
-    const size = getImageContainerSize();
-
+    const viewerRect = viewer.getBoundingClientRect();
+    const items = document.querySelectorAll('.image-item');
+    
+    // Resetar transformações anteriores
+    imageContainer.style.transform = '';
+    
+    // Definir margens laterais (10% de cada lado)
+    const lateralMargin = viewerRect.width * 0.1;
+    const maxWidth = viewerRect.width - (lateralMargin * 2);
+    
+    // Calcular dimensões totais necessárias
+    let totalWidth = 0;
+    let totalHeight = 0;
+    
+    items.forEach(item => {
+        const img = item.querySelector('img');
+        if (img) {
+            // Calcular dimensões mantendo a proporção
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            let width, height;
+            
+            if (isVertical) {
+                // Para rolagem vertical, a largura é limitada pela largura do viewer menos as margens
+                width = Math.min(maxWidth, img.naturalWidth);
+                height = width / aspectRatio;
+            } else {
+                // Para rolagem horizontal, a altura é limitada pela altura do viewer
+                height = Math.min(viewerRect.height * 0.95, img.naturalHeight);
+                width = height * aspectRatio;
+                
+                // Se a largura for maior que o máximo permitido, ajustar
+                if (width > maxWidth) {
+                    width = maxWidth;
+                    height = width / aspectRatio;
+                }
+            }
+            
+            // Atualizar dimensões da imagem
+            img.style.width = `${width}px`;
+            img.style.height = `${height}px`;
+            
+            // Adicionar ao total considerando o espaçamento
+            if (isVertical) {
+                totalHeight += height + imageSpacing;
+            } else {
+                totalWidth += width + imageSpacing;
+            }
+        }
+    });
+    
+    // Remover o espaçamento extra do último item
     if (isVertical) {
-        imageContainer.style.width = '100%';
-        imageContainer.style.height = `${size.height}px`;
+        totalHeight -= imageSpacing;
     } else {
-        imageContainer.style.width = `${size.width}px`;
+        totalWidth -= imageSpacing;
+    }
+    
+    // Aplicar dimensões ao container
+    if (isVertical) {
+        imageContainer.style.width = `${maxWidth}px`;
+        imageContainer.style.height = `${totalHeight}px`;
+        imageContainer.style.margin = `0 auto`; // Centralizar horizontalmente
+    } else {
+        imageContainer.style.width = `${totalWidth}px`;
         imageContainer.style.height = '100%';
     }
+    
+    // Centralizar o conteúdo
+    centerImages();
+    
+    // Atualizar a barra de progresso
+    updateProgressIndicator();
 }
 
 function resetScrollPosition() {
@@ -1760,4 +1876,180 @@ function setupScrollControls() {
             updateProgressIndicator();
         });
     }
+}
+
+// Função para iniciar o arrasto
+function dragStart(e) {
+    if (autoScrolling) return;
+    
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    if (!imageContainer || !viewer) return;
+
+    if (e.type === "touchstart") {
+        startX = e.touches[0].clientX - xOffset;
+        startY = e.touches[0].clientY - yOffset;
+    } else {
+        startX = e.clientX - xOffset;
+        startY = e.clientY - yOffset;
+    }
+
+    if (e.target === imageContainer) {
+        isDragging = true;
+        imageContainer.classList.add('dragging');
+    }
+}
+
+// Função para arrastar
+function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    if (!imageContainer || !viewer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const containerRect = imageContainer.getBoundingClientRect();
+
+    if (e.type === "touchmove") {
+        currentX = e.touches[0].clientX - startX;
+        currentY = e.touches[0].clientY - startY;
+    } else {
+        currentX = e.clientX - startX;
+        currentY = e.clientY - startY;
+    }
+
+    // Calcular limites de arrasto
+    const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
+    const maxY = (containerRect.height * currentZoom - viewerRect.height) / 2;
+
+    // Limitar o arrasto dentro dos limites
+    // Para X, não permitir arrastar para a direita além do limite
+    currentX = Math.max(-maxX, Math.min(0, currentX)); // Alterado aqui para limitar a direita
+    currentY = Math.max(-maxY, Math.min(maxY, currentY));
+
+    xOffset = currentX;
+    yOffset = currentY;
+
+    // Aplicar a transformação mantendo o zoom atual
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(${currentY}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(${currentX}px) scale(${currentZoom})`;
+    }
+}
+
+// Função para parar o arrasto
+function dragEnd() {
+    const imageContainer = document.getElementById('imageContainer');
+    if (!imageContainer) return;
+
+    isDragging = false;
+    imageContainer.classList.remove('dragging');
+}
+
+// Configurar eventos de arrasto e zoom
+function setupDragAndZoom() {
+    const imageContainer = document.getElementById('imageContainer');
+    if (!imageContainer) return;
+
+    // Eventos de mouse
+    imageContainer.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Eventos de touch
+    imageContainer.addEventListener('touchstart', dragStart);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('touchend', dragEnd);
+
+    // Eventos de zoom
+    imageContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = imageContainer.getBoundingClientRect();
+        const pointX = e.clientX - rect.left;
+        const pointY = e.clientY - rect.top;
+        
+        if (e.deltaY < 0) {
+            currentZoom *= 1.1;
+        } else {
+            currentZoom *= 0.9;
+        }
+        
+        zoomAtPoint(pointX, pointY);
+    });
+}
+
+// Inicializar arrasto e zoom quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', setupDragAndZoom);
+
+function startScrolling() {
+    if (autoScrolling) return;
+
+    // Criar overlay de contagem regressiva
+    const overlay = document.createElement('div');
+    overlay.className = 'countdown-overlay';
+    document.body.appendChild(overlay);
+
+    // Função para mostrar número
+    const showNumber = (num) => {
+        overlay.innerHTML = `<div class="countdown-number">${num}</div>`;
+        overlay.classList.add('visible');
+    };
+
+    // Função para mostrar texto de início
+    const showStart = () => {
+        overlay.innerHTML = `<div class="countdown-start">COMEÇANDO!</div>`;
+    };
+
+    // Função para remover overlay
+    const removeOverlay = () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => {
+            overlay.remove();
+        }, 300);
+    };
+
+    // Iniciar contagem regressiva
+    showNumber(3);
+    
+    setTimeout(() => {
+        showNumber(2);
+    }, 1000);
+    
+    setTimeout(() => {
+        showNumber(1);
+    }, 2000);
+    
+    setTimeout(() => {
+        showStart();
+    }, 3000);
+    
+    setTimeout(() => {
+        removeOverlay();
+        // Iniciar rolagem após a contagem
+        autoScrolling = true;
+        toggleSidebarControls(true);
+        
+        const startBtn = document.getElementById('startScrollingBtn');
+        if (startBtn) {
+            startBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Rolagem';
+            startBtn.style.opacity = '0.7';
+        }
+
+        if (scrollInterval) {
+            clearInterval(scrollInterval);
+        }
+
+        scrollInterval = setInterval(() => {
+            if (isVertical) {
+                scrollPosition += scrollSpeed;
+            } else {
+                scrollPosition += scrollSpeed;
+            }
+
+            updateScrollPosition();
+        }, 16);
+    }, 4000);
 }
