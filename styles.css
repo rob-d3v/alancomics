@@ -435,15 +435,21 @@ h1 {
 
 .image-item {
     position: relative;
-    margin: 10px 0;
-    width: 100%;
     display: flex;
     justify-content: center;
-    transition: transform 0.2s ease;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+    max-height: 100%;
+    cursor: grab;
+    user-select: none;
 }
 
 .image-item img {
     max-width: 100%;
+    max-height: 100%;
+    width: auto;
     height: auto;
     object-fit: contain;
     display: block;

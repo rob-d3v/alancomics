@@ -11,7 +11,7 @@ let scrollInterval;
 let scrollPosition = 0;
 let autoScrolling = false;
 let manualScrollStep = 50;
-let autoCenter = true;
+let autoCenter = false;
 let currentIndex = 0;
 let isFullscreen = false;
 let spacing = 20;
@@ -341,85 +341,72 @@ function zoomAtPoint(pointX, pointY) {
     const deltaX = newContainerX - containerX;
     const deltaY = newContainerY - containerY;
     
-    // Atualizar a posição de rolagem
+    // Calcular o centro do container
+    const containerCenterX = containerRect.width / 2;
+    const containerCenterY = containerRect.height / 2;
+    
+    // Calcular o deslocamento do centro
+    const centerOffsetX = containerCenterX - viewerCenterX;
+    const centerOffsetY = containerCenterY - viewerCenterY;
+    
+    // Atualizar a posição de rolagem mantendo o centro
     if (isVertical) {
-        scrollPosition += deltaY;
+        scrollPosition = centerOffsetY + deltaY;
     } else {
-        // Limitar o deslocamento para a direita
-        const maxScroll = (containerRect.width * currentZoom - viewerRect.width) / 2;
-        scrollPosition = Math.max(0, Math.min(maxScroll, scrollPosition + deltaX));
+        scrollPosition = centerOffsetX + deltaX;
     }
     
-    // Aplicar a transformação mantendo o ponto sob o cursor
+    // Limitar a posição de rolagem
+    const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
+    const maxY = (containerRect.height * currentZoom - viewerRect.height) / 2;
+    
     if (isVertical) {
-        imageContainer.style.transform = `translateY(${currentY - deltaY}px) scale(${currentZoom})`;
+        scrollPosition = Math.max(0, Math.min(scrollPosition, maxY));
     } else {
-        // Garantir que não ultrapasse o limite direito
-        const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
-        const limitedX = Math.max(-maxX, Math.min(0, currentX - deltaX));
-        imageContainer.style.transform = `translateX(${limitedX}px) scale(${currentZoom})`;
+        scrollPosition = Math.max(0, Math.min(scrollPosition, maxX));
     }
     
-    // Centralizar o conteúdo após o zoom
-    centerContent();
+    // Aplicar a transformação mantendo o centro
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+    }
     
     // Atualizar a barra de progresso
     updateProgressIndicator();
-}
-
-// Função para centralizar o conteúdo
-function centerContent() {
-    const imageContainer = document.getElementById('imageContainer');
-    const viewer = document.getElementById('viewer');
-    if (!imageContainer || !viewer) return;
-
-    const viewerRect = viewer.getBoundingClientRect();
-    const containerRect = imageContainer.getBoundingClientRect();
-
-    // Calcular os offsets para centralização
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if (isVertical) {
-        // Para rolagem vertical, centralizar horizontalmente
-        offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
-    } else {
-        // Para rolagem horizontal, centralizar verticalmente
-        offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
-    }
-
-    // Aplicar a transformação mantendo o zoom atual
-    if (isVertical) {
-        imageContainer.style.transform = `translateX(${offsetX}px) translateY(${currentY}px) scale(${currentZoom})`;
-    } else {
-        imageContainer.style.transform = `translateX(${currentX}px) translateY(${offsetY}px) scale(${currentZoom})`;
-    }
 }
 
 // Update scrollManually to use the limit
 function scrollManually(direction) {
     if (images.length === 0) return;
 
+    const viewer = document.getElementById('viewer');
+    if (!viewer) return;
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const pageSize = isVertical ? viewerRect.height : viewerRect.width;
+    
+    // Aumentar o tamanho do passo para uma rolagem mais forte
+    const strongScrollStep = pageSize * 0.8; // 80% da altura/largura da tela
+
     switch (direction) {
         case 'up':
-            if (isVertical) scrollPosition -= manualScrollStep;
+            if (isVertical) scrollPosition -= strongScrollStep;
             break;
         case 'down':
-            if (isVertical) scrollPosition += manualScrollStep;
+            if (isVertical) scrollPosition += strongScrollStep;
             break;
         case 'left':
-            if (!isVertical) scrollPosition -= manualScrollStep;
+            if (!isVertical) scrollPosition -= strongScrollStep;
             break;
         case 'right':
-            if (!isVertical) scrollPosition += manualScrollStep;
+            if (!isVertical) scrollPosition += strongScrollStep;
             break;
     }
 
     if (scrollPosition < 0) scrollPosition = 0;
     updateScrollPosition();
-
-    // Limit scroll to keep images visible
-    limitScrollPosition();
 }
 
 // Update enhanceZoomControls to use the limit
@@ -615,9 +602,14 @@ function renderImages() {
             // Ajustar dimensões após o carregamento
             adjustImageContainer();
             
-            // Centralizar se necessário
-            if (autoCenter) {
-                centerImages();
+            // Resetar a posição de rolagem para começar pela primeira imagem
+            scrollPosition = 0;
+            
+            // Aplicar a transformação inicial
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
             }
             
             // Atualizar a barra de progresso
@@ -630,11 +622,6 @@ function renderImages() {
 
     // Ajustar dimensões iniciais
     adjustImageContainer();
-    
-    // Centralizar se necessário
-    if (autoCenter) {
-        centerImages();
-    }
     
     // Atualizar botões de navegação
     updateNavigationButtons();
@@ -694,26 +681,6 @@ function init() {
     const themeOptions = document.querySelectorAll('.theme-option');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const zoomControls = document.querySelector('.zoom-controls');
-    const centerBtn = document.getElementById('centerBtn');
-
-    if (!document.getElementById('centerBtn')) {
-        const centerBtn = document.createElement('button');
-        centerBtn.className = 'control-button';
-        centerBtn.id = 'centerBtn';
-        centerBtn.title = 'Centralizar Imagens';
-        centerBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
-        centerBtn.addEventListener('click', () => {
-            autoCenter = !autoCenter;
-            centerBtn.classList.toggle('active');
-            if (autoCenter) {
-                centerImages();
-            }
-        });
-
-        if (zoomControls && fullscreenBtn) {
-            zoomControls.insertBefore(centerBtn, fullscreenBtn);
-        }
-    }
 
     const elements = {
         fileInput, uploadBtn, dropArea, thumbnailContainer, imageContainer, viewer,
@@ -811,9 +778,6 @@ function init() {
             renderImages();
         }
     });
-
-    // Removemos os event listeners de zoom aqui, pois serão substituídos pelo enhanceZoomControls
-    // O resto do código permanece igual
 
     startScrollingBtn.addEventListener('click', () => {
         startScrolling();
@@ -1177,8 +1141,15 @@ function adjustImageContainer() {
         imageContainer.style.height = '100%';
     }
     
-    // Centralizar o conteúdo
-    centerImages();
+    // Resetar a posição de rolagem para começar pela primeira imagem
+    scrollPosition = 0;
+    
+    // Aplicar a transformação inicial
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
+    }
     
     // Atualizar a barra de progresso
     updateProgressIndicator();
@@ -1214,8 +1185,9 @@ function toggleFullscreen() {
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    const imageContainer = document.getElementById('imageContainer');
 
-    if (!viewer) return;
+    if (!viewer || !imageContainer) return;
 
     if (!document.fullscreenElement &&
         !document.webkitFullscreenElement &&
@@ -1240,6 +1212,21 @@ function toggleFullscreen() {
             } else if (viewer.msRequestFullscreen) {
                 viewer.msRequestFullscreen();
             }
+
+            // Resetar a posição de rolagem para começar pela primeira imagem
+            scrollPosition = 0;
+            
+            // Aplicar a transformação inicial
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
+            }
+
+            // Ajustar o container após entrar em tela cheia
+            setTimeout(() => {
+                adjustImageContainer();
+            }, 100);
         } catch (error) {
             console.error("Erro ao entrar em tela cheia:", error);
         }
@@ -1255,6 +1242,21 @@ function toggleFullscreen() {
             } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
             }
+
+            // Resetar a posição de rolagem para começar pela primeira imagem
+            scrollPosition = 0;
+            
+            // Aplicar a transformação inicial
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
+            }
+
+            // Ajustar o container após sair da tela cheia
+            setTimeout(() => {
+                adjustImageContainer();
+            }, 100);
         } catch (error) {
             console.error("Erro ao sair da tela cheia:", error);
         }
@@ -1273,7 +1275,8 @@ function setupFullscreenListeners() {
         document.addEventListener(eventName, handleFullscreenChange);
     });
 }
-// Certifique-se de que o handler de mudança de tela cheia funciona corretamente
+
+// Atualizar a função handleFullscreenChange para ajustar o container
 function handleFullscreenChange() {
     updateFullscreenButton();
 
@@ -1281,6 +1284,7 @@ function handleFullscreenChange() {
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
     const viewer = document.getElementById('viewer');
+    const imageContainer = document.getElementById('imageContainer');
 
     // Se não estamos mais em modo tela cheia, restaurar elementos
     if (!document.fullscreenElement &&
@@ -1293,8 +1297,26 @@ function handleFullscreenChange() {
         if (sidebar) sidebar.classList.remove('fullscreen-hidden');
         if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
         if (viewer) viewer.classList.remove('fullscreen-viewer');
+
+        // Resetar a posição de rolagem para começar pela primeira imagem
+        if (imageContainer) {
+            scrollPosition = 0;
+            
+            // Aplicar a transformação inicial
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(0) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(0) scale(${currentZoom})`;
+            }
+
+            // Ajustar o container após sair da tela cheia
+            setTimeout(() => {
+                adjustImageContainer();
+            }, 100);
+        }
     }
 }
+
 function enhanceUserExperience() {
     // 1. Melhorar o suporte a rolagem com espaçamento negativo
     const spacingControl = document.getElementById('spacingControl');
@@ -1351,6 +1373,7 @@ function enhanceUserExperience() {
         }
     }, 1000);
 }
+
 function enhanceInit() {
     // Substituir os listeners de tela cheia antigos
     document.removeEventListener('fullscreenchange', updateFullscreenButton);
@@ -1361,6 +1384,7 @@ function enhanceInit() {
     setupSpeedControl();
     enhanceZoomControls();
 }
+
 function updateFullscreenButton() {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (!fullscreenBtn) return;
@@ -1643,6 +1667,7 @@ function setupProgressIndicator() {
         document.body.appendChild(progressIndicator);
     }
 }
+
 function setupSpeedControl() {
     const speedControl = document.getElementById('speedControl');
     const speedValue = document.getElementById('speedValue');
@@ -1658,6 +1683,7 @@ function setupSpeedControl() {
         }
     });
 }
+
 function updateProgressIndicator() {
     const progressIndicator = document.getElementById('progressIndicator');
     if (!progressIndicator) return;
@@ -1887,17 +1913,21 @@ function dragStart(e) {
     if (!imageContainer || !viewer) return;
 
     if (e.type === "touchstart") {
-        startX = e.touches[0].clientX - xOffset;
-        startY = e.touches[0].clientY - yOffset;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        initialScrollX = scrollPosition;
+        initialScrollY = scrollPosition;
     } else {
-        startX = e.clientX - xOffset;
-        startY = e.clientY - yOffset;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialScrollX = scrollPosition;
+        initialScrollY = scrollPosition;
     }
 
-    if (e.target === imageContainer) {
-        isDragging = true;
-        imageContainer.classList.add('dragging');
-    }
+    // Permitir arrastar de qualquer lugar do container
+    isDragging = true;
+    imageContainer.classList.add('dragging');
+    e.preventDefault();
 }
 
 // Função para arrastar
@@ -1912,32 +1942,43 @@ function drag(e) {
     const viewerRect = viewer.getBoundingClientRect();
     const containerRect = imageContainer.getBoundingClientRect();
 
+    let deltaX, deltaY;
     if (e.type === "touchmove") {
-        currentX = e.touches[0].clientX - startX;
-        currentY = e.touches[0].clientY - startY;
+        deltaX = e.touches[0].clientX - startX;
+        deltaY = e.touches[0].clientY - startY;
     } else {
-        currentX = e.clientX - startX;
-        currentY = e.clientY - startY;
+        deltaX = e.clientX - startX;
+        deltaY = e.clientY - startY;
     }
 
-    // Calcular limites de arrasto
+    // Calcular limites de arrasto baseados no zoom atual
     const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
     const maxY = (containerRect.height * currentZoom - viewerRect.height) / 2;
 
-    // Limitar o arrasto dentro dos limites
-    // Para X, não permitir arrastar para a direita além do limite
-    currentX = Math.max(-maxX, Math.min(0, currentX)); // Alterado aqui para limitar a direita
-    currentY = Math.max(-maxY, Math.min(maxY, currentY));
-
-    xOffset = currentX;
-    yOffset = currentY;
-
-    // Aplicar a transformação mantendo o zoom atual
+    // Calcular nova posição de rolagem
+    let newScrollPosition;
     if (isVertical) {
-        imageContainer.style.transform = `translateY(${currentY}px) scale(${currentZoom})`;
+        newScrollPosition = initialScrollY - deltaY;
     } else {
-        imageContainer.style.transform = `translateX(${currentX}px) scale(${currentZoom})`;
+        newScrollPosition = initialScrollX - deltaX;
     }
+
+    // Limitar a posição de rolagem
+    if (isVertical) {
+        newScrollPosition = Math.max(0, Math.min(newScrollPosition, maxY));
+    } else {
+        newScrollPosition = Math.max(0, Math.min(newScrollPosition, maxX));
+    }
+
+    // Aplicar a transformação
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(-${newScrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(-${newScrollPosition}px) scale(${currentZoom})`;
+    }
+
+    // Atualizar a barra de progresso
+    updateProgressIndicator();
 }
 
 // Função para parar o arrasto
@@ -1947,6 +1988,15 @@ function dragEnd() {
 
     isDragging = false;
     imageContainer.classList.remove('dragging');
+
+    // Atualizar a posição final de rolagem
+    const transform = imageContainer.style.transform;
+    if (transform) {
+        const match = transform.match(/translate[XY]\(-(\d+)px\)/);
+        if (match) {
+            scrollPosition = parseInt(match[1]);
+        }
+    }
 }
 
 // Configurar eventos de arrasto e zoom
@@ -1958,6 +2008,7 @@ function setupDragAndZoom() {
     imageContainer.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('mouseleave', dragEnd);
 
     // Eventos de touch
     imageContainer.addEventListener('touchstart', dragStart);
@@ -1966,18 +2017,20 @@ function setupDragAndZoom() {
 
     // Eventos de zoom
     imageContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const rect = imageContainer.getBoundingClientRect();
-        const pointX = e.clientX - rect.left;
-        const pointY = e.clientY - rect.top;
-        
-        if (e.deltaY < 0) {
-            currentZoom *= 1.1;
-        } else {
-            currentZoom *= 0.9;
+        if (e.ctrlKey) {
+            e.preventDefault();
+            const rect = imageContainer.getBoundingClientRect();
+            const pointX = e.clientX - rect.left;
+            const pointY = e.clientY - rect.top;
+            
+            if (e.deltaY < 0) {
+                currentZoom = Math.min(3, currentZoom * 1.1);
+            } else {
+                currentZoom = Math.max(0.5, currentZoom * 0.9);
+            }
+            
+            zoomAtPoint(pointX, pointY);
         }
-        
-        zoomAtPoint(pointX, pointY);
     });
 }
 
