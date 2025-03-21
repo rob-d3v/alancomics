@@ -484,7 +484,7 @@ function updateImageCounter() {
         return;
     }
 
-    imageCounter.textContent = `${images.length} imagens`;
+    imageCounter.textContent = `${images.length}`;
 }
 
 function updateZoom() {
