@@ -21,8 +21,31 @@ function init() {
     const viewer = document.getElementById('viewer');
     const speedControl = document.getElementById('speedControl');
     const speedValue = document.getElementById('speedValue');
+
+    // Modificar o range para suportar valores decimais (0.1 a 10)
+    if (speedControl) {
+        speedControl.min = "0.1";  // Valor mínimo de 0.1
+        speedControl.max = "10";   // Mantém o máximo em 10
+        speedControl.step = "0.1"; // Incremento de 0.1
+        speedControl.value = scrollSpeed.toString(); // Define o valor inicial
+
+        if (speedValue) {
+            speedValue.textContent = scrollSpeed;
+        }
+    }
+
     const spacingControl = document.getElementById('spacingControl');
     const spacingValue = document.getElementById('spacingValue');
+
+    if (spacingControl) {
+        spacingControl.min = "-30"; // Valor mínimo de -30px
+        spacingControl.max = "100"; // Mantém o máximo em 100px
+        spacingControl.value = imageSpacing.toString(); // Define o valor inicial
+
+        if (spacingValue) {
+            spacingValue.textContent = `${imageSpacing}px`;
+        }
+    }
     const verticalBtn = document.getElementById('verticalBtn');
     const horizontalBtn = document.getElementById('horizontalBtn');
     const zoomInBtn = document.getElementById('zoomInBtn');
@@ -543,7 +566,8 @@ function startScrolling() {
         if (!lastTime) lastTime = timestamp;
         const deltaTime = timestamp - lastTime;
 
-        const pixelsPerSecond = scrollSpeed * 15;
+        // Modificamos esta linha para permitir velocidades lentas (multiplica por 5 em vez de 15)
+        const pixelsPerSecond = scrollSpeed * 5;
         const increment = (pixelsPerSecond * deltaTime) / 1000;
 
         scrollPosition += increment;
@@ -724,21 +748,32 @@ function changeTheme(theme) {
     }
 }
 
+// Corrigir o comportamento do modo tela cheia
 function toggleFullscreen() {
     const viewer = document.getElementById('viewer');
+    const header = document.querySelector('header');
+    const sidebar = document.querySelector('.sidebar');
+    const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    const zoomControls = document.querySelector('.zoom-controls');
+    const navigationControls = document.querySelector('.navigation-controls');
+    
     if (!viewer) return;
 
     if (!document.fullscreenElement) {
         try {
-            document.querySelector('header').classList.add('fullscreen-hidden');
-            document.querySelector('.sidebar').classList.add('fullscreen-hidden');
-            document.querySelector('.toggle-sidebar').classList.add('fullscreen-hidden');
+            // Adicionar classe para esconder elementos
+            if (header) header.classList.add('fullscreen-hidden');
+            if (sidebar) sidebar.classList.add('fullscreen-hidden');
+            if (toggleSidebarBtn) toggleSidebarBtn.classList.add('fullscreen-hidden');
 
+            // Adicionar classe para o viewer em tela cheia
             viewer.classList.add('fullscreen-viewer');
 
-            document.querySelector('.zoom-controls').classList.add('fullscreen');
-            document.querySelector('.navigation-controls').classList.add('fullscreen');
+            // Ajustar posição dos controles em tela cheia
+            if (zoomControls) zoomControls.classList.add('fullscreen');
+            if (navigationControls) navigationControls.classList.add('fullscreen');
 
+            // Solicitar tela cheia
             if (viewer.requestFullscreen) {
                 viewer.requestFullscreen();
             } else if (viewer.mozRequestFullScreen) {
@@ -753,6 +788,7 @@ function toggleFullscreen() {
         }
     } else {
         try {
+            // Sair do modo tela cheia
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.mozCancelFullScreen) {
@@ -762,21 +798,61 @@ function toggleFullscreen() {
             } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
             }
-
-            setTimeout(() => {
-                document.querySelector('header').classList.remove('fullscreen-hidden');
-                document.querySelector('.sidebar').classList.remove('fullscreen-hidden');
-                document.querySelector('.toggle-sidebar').classList.remove('fullscreen-hidden');
-                viewer.classList.remove('fullscreen-viewer');
-                document.querySelector('.zoom-controls').classList.remove('fullscreen');
-                document.querySelector('.navigation-controls').classList.remove('fullscreen');
-            }, 100);
         } catch (error) {
             console.error("Erro ao sair da tela cheia:", error);
         }
     }
 }
-
+function setupFullscreenListeners() {
+    const fullscreenEvents = [
+        'fullscreenchange',
+        'webkitfullscreenchange',
+        'mozfullscreenchange',
+        'MSFullscreenChange'
+    ];
+    
+    fullscreenEvents.forEach(eventName => {
+        document.addEventListener(eventName, handleFullscreenChange);
+    });
+}
+function handleFullscreenChange() {
+    updateFullscreenButton();
+    
+    const header = document.querySelector('header');
+    const sidebar = document.querySelector('.sidebar');
+    const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+    const viewer = document.getElementById('viewer');
+    const zoomControls = document.querySelector('.zoom-controls');
+    const navigationControls = document.querySelector('.navigation-controls');
+    
+    // Se não estamos mais em modo tela cheia, restaurar elementos
+    if (!document.fullscreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.msFullscreenElement) {
+        
+        // Restaurar elementos ocultos
+        if (header) header.classList.remove('fullscreen-hidden');
+        if (sidebar) sidebar.classList.remove('fullscreen-hidden');
+        if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
+        if (viewer) viewer.classList.remove('fullscreen-viewer');
+        if (zoomControls) zoomControls.classList.remove('fullscreen');
+        if (navigationControls) navigationControls.classList.remove('fullscreen');
+    }
+}
+function enhanceInit() {
+    // Substituir os listeners de tela cheia antigos
+    document.removeEventListener('fullscreenchange', updateFullscreenButton);
+    document.removeEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.removeEventListener('mozfullscreenchange', updateFullscreenButton);
+    document.removeEventListener('MSFullscreenChange', updateFullscreenButton);
+    
+    // Adicionar nossos novos listeners
+    setupFullscreenListeners();
+    
+    // Adicionar setup para controles de velocidade
+    setupSpeedControl();
+}
 function updateFullscreenButton() {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (!fullscreenBtn) return;
@@ -1059,7 +1135,21 @@ function setupProgressIndicator() {
         document.body.appendChild(progressIndicator);
     }
 }
+function setupSpeedControl() {
+    const speedControl = document.getElementById('speedControl');
+    const speedValue = document.getElementById('speedValue');
 
+    if (!speedControl || !speedValue) return;
+
+    speedControl.addEventListener('input', (e) => {
+        scrollSpeed = parseFloat(e.target.value);
+        speedValue.textContent = scrollSpeed.toFixed(1);
+
+        if (autoScrolling) {
+            startScrolling();
+        }
+    });
+}
 function updateProgressIndicator() {
     const progressIndicator = document.getElementById('progressIndicator');
     if (!progressIndicator) return;
@@ -1118,4 +1208,7 @@ window.onerror = function (message, source, lineno, colno, error) {
     return true;
 };
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+    enhanceInit();
+});
