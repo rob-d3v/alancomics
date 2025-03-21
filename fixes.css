@@ -1,0 +1,116 @@
+/* Estilo para o botão de limpar todas as imagens */
+.clear-all-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    margin-left: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.clear-all-btn:hover {
+    background-color: #ff3b30;
+    transform: scale(1.1);
+}
+
+/* Estilo para o timer de contagem regressiva */
+.countdown-timer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    color: var(--primary-color);
+    background-color: rgba(0, 0, 0, 0.7);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    animation: pulse 1s infinite alternate;
+    backdrop-filter: blur(5px);
+    border: 3px solid var(--primary-color);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+}
+
+@keyframes pulse {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+/* Melhorias para garantir espaçamento consistente no topo */
+.vertical-scroll .image-container {
+    padding-top: 10px !important;
+}
+
+/* Destacar visualmente o botão de rolagem ativa */
+#startScrollingBtn.active {
+    animation: glow 1.5s infinite alternate;
+    background: linear-gradient(135deg, #38b000, #70e000);
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 5px rgba(56, 176, 0, 0.7);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(56, 176, 0, 0.9);
+    }
+}
+
+/* Indicador visual para o zoom */
+#zoomIndicator {
+    animation: fadeZoomIndicator 0.5s ease;
+}
+
+@keyframes fadeZoomIndicator {
+    from {
+        transform: scale(0.5);
+        opacity: 0.5;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Remover qualquer espaçamento excessivo */
+.image-item:first-child {
+    margin-top: 10px !important;
+}
+
+/* Fixar problemas de scrolling e zoom inconsistente */
+.viewer {
+    overflow: hidden !important;
+    position: relative;
+}
+
+.image-container {
+    will-change: transform;
+    transform-origin: top center !important;
+}
+
+/* Indicação visual de progresso da rolagem mais evidente */
+.progress-indicator {
+    height: 6px !important;
+    opacity: 0.8;
+}
