@@ -1878,87 +1878,56 @@ function setupScrollControls() {
 
 // Função para iniciar o arrasto
 function dragStart(e) {
-    isDragging = true;
     const viewer = document.querySelector('.viewer');
-    const container = document.querySelector('.image-container');
+    isDragging = true;
+    viewer.classList.add('dragging');
     
-    // Capturar a posição inicial do mouse/touch
-    startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-    startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+    // Capturar posição inicial
+    startX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
+    startY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
     
-    // Capturar a posição inicial do scroll
+    // Capturar posição inicial do scroll
     scrollLeft = viewer.scrollLeft;
     scrollTop = viewer.scrollTop;
-    
-    // Adicionar classe visual de feedback
-    container.classList.add('dragging');
-    viewer.classList.add('dragging');
 }
 
-// Função para mover durante o arrasto
 function drag(e) {
     if (!isDragging) return;
-    
     e.preventDefault();
     
     const viewer = document.querySelector('.viewer');
-    const container = document.querySelector('.image-container');
     
-    // Calcular o deslocamento do mouse/touch
-    const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-    const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+    // Calcular movimento
+    const x = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
+    const y = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
     
-    // Calcular o delta do movimento
-    const deltaX = currentX - startX;
-    const deltaY = currentY - startY;
+    // Calcular distância percorrida
+    const walkX = x - startX;
+    const walkY = y - startY;
     
-    // Aplicar o scroll com o movimento do mouse
-    viewer.scrollLeft = scrollLeft - deltaX;
-    viewer.scrollTop = scrollTop - deltaY;
+    // Atualizar scroll
+    viewer.scrollLeft = scrollLeft - walkX;
+    viewer.scrollTop = scrollTop - walkY;
 }
 
-// Função para finalizar o arrasto
 function dragEnd() {
     isDragging = false;
-    const container = document.querySelector('.image-container');
     const viewer = document.querySelector('.viewer');
-    
-    // Remover classes de feedback
-    container.classList.remove('dragging');
     viewer.classList.remove('dragging');
 }
 
-// Configurar eventos de arrasto e zoom
 function setupDragAndZoom() {
     const viewer = document.querySelector('.viewer');
-    const container = document.querySelector('.image-container');
     
     // Eventos de mouse
     viewer.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
     
-    // Eventos de touch
-    viewer.addEventListener('touchstart', dragStart);
-    document.addEventListener('touchmove', drag);
+    // Eventos de toque
+    viewer.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
-    
-    // Prevenir comportamento padrão de scroll em touch
-    viewer.addEventListener('touchmove', (e) => {
-        if (isDragging) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    // Configurar zoom com wheel
-    viewer.addEventListener('wheel', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            const delta = e.deltaY * -0.01;
-            const newZoom = Math.min(Math.max(currentZoom + delta, 0.1), 5);
-            updateZoom(newZoom);
-        }
-    }, { passive: false });
 }
 
 // Inicializar arrasto e zoom quando o DOM estiver carregado
@@ -2002,14 +1971,26 @@ function startScrolling() {
             setTimeout(() => {
                 removeOverlay();
                 // Iniciar a rolagem após a contagem
-                isScrolling = true;
-                const speed = parseFloat(document.getElementById('speedInput').value);
-                const spacing = parseFloat(document.getElementById('spacingInput').value);
-                const direction = document.querySelector('.direction-btn.active').dataset.direction;
+                autoScrolling = true;
+                toggleSidebarControls(true);
+                
+                const startBtn = document.getElementById('startScrollingBtn');
+                if (startBtn) {
+                    startBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Rolagem';
+                    startBtn.style.opacity = '0.7';
+                }
+
+                if (scrollInterval) {
+                    clearInterval(scrollInterval);
+                }
+
+                const speed = parseFloat(document.getElementById('speedInput').value) || 1;
+                const spacing = parseFloat(document.getElementById('spacingInput').value) || 16;
+                const direction = document.querySelector('.direction-btn.active')?.dataset.direction || 'down';
                 const isVertical = direction === 'up' || direction === 'down';
                 
                 scrollInterval = setInterval(() => {
-                    if (!isScrolling) return;
+                    if (!autoScrolling) return;
                     
                     const step = speed * (isVertical ? 1 : -1);
                     if (isVertical) {

@@ -408,10 +408,14 @@ header::before {
     touch-action: none;
     z-index: 997;
     cursor: grab;
+    white-space: nowrap;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
 .viewer.dragging {
     cursor: grabbing;
+    scroll-behavior: auto;
 }
 
 .expanded-viewer {
@@ -629,17 +633,18 @@ header::before {
 .image-container {
     position: relative;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
     transform-origin: center center;
     cursor: grab;
     user-select: none;
     touch-action: none;
-    max-width: 90%;
+    max-width: none;
     margin: 0;
     will-change: transform;
     transition: transform 0.1s ease-out;
     padding-left: 20px;
+    white-space: nowrap;
 }
 
 .image-container.dragging {
@@ -649,16 +654,15 @@ header::before {
 
 .image-item {
     position: relative;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    margin: 0;
+    display: inline-block;
+    margin: 0 10px;
     padding: 0;
     max-width: 100%;
     max-height: 90vh;
     cursor: grab;
     user-select: none;
     will-change: transform;
+    vertical-align: top;
 }
 
 .image-item img {
@@ -1031,6 +1035,19 @@ header::before {
 
     .section-title {
         font-size: 1.1rem;
+    }
+
+    .viewer {
+        padding: 10px;
+    }
+    
+    .image-container {
+        padding-left: 10px;
+    }
+    
+    .viewer::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
     }
 }
 
