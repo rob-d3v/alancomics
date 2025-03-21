@@ -194,6 +194,43 @@ function toggleSidebarControls(disabled) {
     const sidebarButtons = document.querySelectorAll('.sidebar button:not(#stopScrollingBtn)');
     const sidebarInputs = document.querySelectorAll('.sidebar input');
     const directionButtons = document.querySelectorAll('.direction-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const viewer = document.getElementById('viewer');
+
+    // Fixar a posição da sidebar e do viewer durante a rolagem
+    if (disabled) {
+        if (sidebar) {
+            sidebar.style.position = 'fixed';
+            sidebar.style.top = '0';
+            sidebar.style.left = '0';
+            sidebar.style.height = '100vh';
+            sidebar.style.zIndex = '1000';
+        }
+        if (viewer) {
+            viewer.style.position = 'fixed';
+            viewer.style.top = '0';
+            viewer.style.right = '0';
+            viewer.style.width = 'calc(100% - 300px)';
+            viewer.style.height = '100vh';
+            viewer.style.zIndex = '999';
+        }
+    } else {
+        if (sidebar) {
+            sidebar.style.position = '';
+            sidebar.style.top = '';
+            sidebar.style.left = '';
+            sidebar.style.height = '';
+            sidebar.style.zIndex = '';
+        }
+        if (viewer) {
+            viewer.style.position = '';
+            viewer.style.top = '';
+            viewer.style.right = '';
+            viewer.style.width = '';
+            viewer.style.height = '';
+            viewer.style.zIndex = '';
+        }
+    }
 
     // Set disabled state for all controls
     sidebarButtons.forEach(button => {
@@ -1567,3 +1604,160 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
     enhanceInit();
 });
+
+// Função para configurar os controles de rolagem
+function setupScrollControls() {
+    const startScrollingBtn = document.getElementById('startScrollingBtn');
+    const stopScrollingBtn = document.getElementById('stopScrollingBtn');
+    const scrollSpeed = document.getElementById('scrollSpeed');
+    const decreaseSpacingBtn = document.getElementById('decreaseSpacingBtn');
+    const increaseSpacingBtn = document.getElementById('increaseSpacingBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    // Configurar botão de iniciar rolagem
+    if (startScrollingBtn) {
+        startScrollingBtn.addEventListener('click', () => {
+            if (!autoScrolling) {
+                startScrolling();
+                startScrollingBtn.innerHTML = '<i class="fas fa-play"></i> Rolando...';
+                startScrollingBtn.style.opacity = '0.7';
+            }
+        });
+    }
+    
+    // Configurar botão de parar rolagem
+    if (stopScrollingBtn) {
+        stopScrollingBtn.addEventListener('click', () => {
+            if (autoScrolling) {
+                stopScrolling();
+                startScrollingBtn.innerHTML = '<i class="fas fa-play"></i> Iniciar Rolagem';
+                startScrollingBtn.style.opacity = '1';
+            }
+        });
+    }
+    
+    // Configurar controle de velocidade
+    if (scrollSpeed) {
+        scrollSpeed.addEventListener('input', (e) => {
+            const speed = parseFloat(e.target.value);
+            if (!isNaN(speed)) {
+                scrollSpeed = speed;
+            }
+        });
+    }
+    
+    // Configurar botões de espaçamento
+    if (decreaseSpacingBtn) {
+        decreaseSpacingBtn.addEventListener('click', () => {
+            if (imageSpacing > 0) {
+                imageSpacing -= 10;
+                updateImageSpacing();
+            }
+        });
+    }
+    
+    if (increaseSpacingBtn) {
+        increaseSpacingBtn.addEventListener('click', () => {
+            imageSpacing += 10;
+            updateImageSpacing();
+        });
+    }
+    
+    // Configurar botões direcionais
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (autoScrolling) {
+                stopScrolling();
+            }
+            
+            const imageContainer = document.getElementById('imageContainer');
+            const viewer = document.getElementById('viewer');
+            
+            if (!imageContainer || !viewer) return;
+            
+            const containerRect = imageContainer.getBoundingClientRect();
+            const viewerRect = viewer.getBoundingClientRect();
+            
+            // Calcular o tamanho de uma página (largura/altura do viewer)
+            const pageSize = isVertical ? viewerRect.height : viewerRect.width;
+            
+            // Calcular o máximo que podemos rolar
+            const maxScroll = isVertical 
+                ? (containerRect.height * currentZoom - viewerRect.height) / currentZoom
+                : (containerRect.width * currentZoom - viewerRect.width) / currentZoom;
+            
+            // Atualizar a posição de rolagem (avançar)
+            if (isVertical) {
+                scrollPosition = Math.min(maxScroll, scrollPosition + pageSize);
+                // Se chegou ao final, voltar ao início
+                if (scrollPosition >= maxScroll) {
+                    scrollPosition = 0;
+                }
+            } else {
+                scrollPosition = Math.min(maxScroll, scrollPosition + pageSize);
+                // Se chegou ao final, voltar ao início
+                if (scrollPosition >= maxScroll) {
+                    scrollPosition = 0;
+                }
+            }
+            
+            // Aplicar a transformação
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+            }
+            
+            updateProgressIndicator();
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (autoScrolling) {
+                stopScrolling();
+            }
+            
+            const imageContainer = document.getElementById('imageContainer');
+            const viewer = document.getElementById('viewer');
+            
+            if (!imageContainer || !viewer) return;
+            
+            const containerRect = imageContainer.getBoundingClientRect();
+            const viewerRect = viewer.getBoundingClientRect();
+            
+            // Calcular o tamanho de uma página (largura/altura do viewer)
+            const pageSize = isVertical ? viewerRect.height : viewerRect.width;
+            
+            // Calcular o máximo que podemos rolar
+            const maxScroll = isVertical 
+                ? (containerRect.height * currentZoom - viewerRect.height) / currentZoom
+                : (containerRect.width * currentZoom - viewerRect.width) / currentZoom;
+            
+            // Atualizar a posição de rolagem (avançar)
+            if (isVertical) {
+                scrollPosition = Math.min(maxScroll, scrollPosition + pageSize);
+                // Se chegou ao final, voltar ao início
+                if (scrollPosition >= maxScroll) {
+                    scrollPosition = 0;
+                }
+            } else {
+                scrollPosition = Math.min(maxScroll, scrollPosition + pageSize);
+                // Se chegou ao final, voltar ao início
+                if (scrollPosition >= maxScroll) {
+                    scrollPosition = 0;
+                }
+            }
+            
+            // Aplicar a transformação
+            if (isVertical) {
+                imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+            } else {
+                imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+            }
+            
+            updateProgressIndicator();
+        });
+    }
+}

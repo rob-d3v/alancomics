@@ -1,27 +1,72 @@
 // 1. Correção da rolagem vertical que para inesperadamente
 
-// Função aprimorada para rolagem contínua
+// Função para iniciar a rolagem automática
 function startScrolling() {
-    stopScrolling();
-
-    if (images.length === 0) {
-        return;
-    }
-
+    if (autoScrolling) return;
+    
     autoScrolling = true;
-
-    if (scrollPosition <= 0) {
-        scrollPosition = 0;
+    isScrolling = true;
+    
+    // Desabilitar controles durante a rolagem
+    toggleSidebarControls(false);
+    
+    // Mostrar indicador de rolagem
+    const indicator = document.getElementById('scrollIndicator');
+    if (indicator) {
+        indicator.classList.add('visible');
     }
-
-    const startBtn = document.getElementById('startScrollingBtn');
-    if (startBtn) {
-        startBtn.innerHTML = '<i class="fas fa-play"></i> Rolando...';
-        startBtn.style.opacity = '0.7';
+    
+    // Função de rolagem
+    function scroll() {
+        if (!isScrolling) return;
+        
+        const imageContainer = document.getElementById('imageContainer');
+        const viewer = document.getElementById('viewer');
+        
+        if (!imageContainer || !viewer) return;
+        
+        const containerRect = imageContainer.getBoundingClientRect();
+        const viewerRect = viewer.getBoundingClientRect();
+        
+        // Calcular a direção e velocidade da rolagem
+        const scrollAmount = scrollSpeed * 0.5; // Ajuste a velocidade base
+        
+        // Atualizar a posição de rolagem
+        if (isVertical) {
+            scrollPosition += scrollAmount;
+            // Calcular o máximo que podemos rolar
+            const maxScroll = (containerRect.height * currentZoom - viewerRect.height) / currentZoom;
+            
+            // Se chegou ao final, reiniciar do início
+            if (scrollPosition >= maxScroll) {
+                scrollPosition = 0;
+            }
+            
+            // Aplicar a transformação mantendo a posição atual
+            imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+        } else {
+            scrollPosition += scrollAmount;
+            // Calcular o máximo que podemos rolar
+            const maxScroll = (containerRect.width * currentZoom - viewerRect.width) / currentZoom;
+            
+            // Se chegou ao final, reiniciar do início
+            if (scrollPosition >= maxScroll) {
+                scrollPosition = 0;
+            }
+            
+            // Aplicar a transformação mantendo a posição atual
+            imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+        }
+        
+        // Atualizar indicador de progresso
+        updateProgressIndicator();
+        
+        // Continuar a rolagem
+        requestAnimationFrame(scroll);
     }
-
-    // Iniciar o timer de contagem regressiva
-    startCountdownTimer(3);
+    
+    // Iniciar a rolagem
+    requestAnimationFrame(scroll);
 }
 
 // Função para iniciar contagem regressiva
