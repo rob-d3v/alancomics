@@ -1,10 +1,8 @@
-# Alan Comics - Visualizador de Imagens Responsivo
-
-![Alan Comics Banner](https://via.placeholder.com/1200x300)
+Quadrinhos do Alan - Visualizador de Imagens Responsivo
 
 ## Sobre o Projeto
 
-Alan Comics é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
+Quadrinhos do Alan é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
 
 ### Recursos Principais
 

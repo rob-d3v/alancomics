@@ -1406,14 +1406,9 @@ function setupLogo() {
 
     logoContainer.innerHTML = '';
 
-    const svgContainer = document.createElement('div');
-    svgContainer.className = 'logo-svg';
-    svgContainer.innerHTML = 'AC';
-
     const title = document.createElement('h1');
-    title.textContent = "Alan Comics";
+    title.textContent = "Quadrinhos do Alan";
 
-    logoContainer.appendChild(svgContainer);
     logoContainer.appendChild(title);
 }
 
