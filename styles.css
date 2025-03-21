@@ -398,15 +398,20 @@ header::before {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
     padding: 20px;
     box-sizing: border-box;
     background: transparent;
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     touch-action: none;
     z-index: 997;
+    cursor: grab;
+}
+
+.viewer.dragging {
+    cursor: grabbing;
 }
 
 .expanded-viewer {
@@ -625,15 +630,16 @@ header::before {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     transform-origin: center center;
     cursor: grab;
     user-select: none;
     touch-action: none;
     max-width: 90%;
-    margin: 0 auto;
+    margin: 0;
     will-change: transform;
     transition: transform 0.1s ease-out;
+    padding-left: 20px;
 }
 
 .image-container.dragging {
@@ -644,7 +650,7 @@ header::before {
 .image-item {
     position: relative;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     margin: 0;
     padding: 0;
@@ -653,10 +659,6 @@ header::before {
     cursor: grab;
     user-select: none;
     will-change: transform;
-}
-
-.image-item.dragging {
-    cursor: grabbing;
 }
 
 .image-item img {
@@ -1173,11 +1175,16 @@ select:focus {
     background-image: var(--viewer-bg-pattern);
     background-size: 200px 200px;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: flex-start;
     padding: 20px;
     box-sizing: border-box;
     overflow: hidden;
+    cursor: grab;
+}
+
+.viewer-container.dragging {
+    cursor: grabbing;
 }
 
 .viewer-wrapper {
@@ -1191,14 +1198,34 @@ select:focus {
     touch-action: none;
 }
 
-/* Remover scrollbars padrão */
-.viewer-wrapper::-webkit-scrollbar {
-    display: none;
+/* Estilos para scrollbars personalizadas */
+.viewer::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.1);
 }
 
-.viewer-wrapper {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+.viewer::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+}
+
+.viewer::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 6px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.viewer::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    transform: scale(1.1);
+}
+
+/* Estilos para Firefox */
+.viewer {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) rgba(0, 0, 0, 0.1);
 }
 
 /* Melhorar performance */
