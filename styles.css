@@ -224,6 +224,27 @@ h1 {
     transition: all 0.3s ease;
     margin-bottom: 1.2rem;
     background-color: rgba(var(--primary-color-rgb, 67, 97, 238), 0.05);
+    position: relative;
+    overflow: hidden;
+}
+.upload-area::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background-image: url('logo.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.1;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+}
+.upload-area:hover::before {
+    opacity: 0.15;
 }
 
 .upload-area:hover {

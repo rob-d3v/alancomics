@@ -142,7 +142,7 @@ function init() {
     });
 
     speedControl.addEventListener('input', (e) => {
-        scrollSpeed = parseInt(e.target.value);
+        scrollSpeed = parseFloat(e.target.value);
         speedValue.textContent = scrollSpeed;
 
         if (autoScrolling) {
@@ -174,22 +174,8 @@ function init() {
         }
     });
 
-    zoomInBtn.addEventListener('click', () => {
-        currentZoom += 0.1;
-        updateZoom();
-    });
-
-    zoomOutBtn.addEventListener('click', () => {
-        if (currentZoom > 0.1) {
-            currentZoom -= 0.1;
-            updateZoom();
-        }
-    });
-
-    resetZoomBtn.addEventListener('click', () => {
-        currentZoom = 1;
-        updateZoom();
-    });
+    // Removemos os event listeners de zoom aqui, pois serão substituídos pelo enhanceZoomControls
+    // O resto do código permanece igual
 
     startScrollingBtn.addEventListener('click', () => {
         startScrolling();
@@ -534,7 +520,130 @@ function updateImageCounter() {
 
     imageCounter.textContent = `${images.length}`;
 }
-
+// Add this new function for mouse wheel zooming at cursor position
+function setupWheelZoom() {
+    const viewer = document.getElementById('viewer');
+    if (!viewer) return;
+    
+    viewer.addEventListener('wheel', function(e) {
+        // Only zoom if Ctrl key is pressed (standard zoom behavior)
+        if (e.ctrlKey) {
+            e.preventDefault();
+            
+            // Store current mouse position relative to container
+            const imageContainer = document.getElementById('imageContainer');
+            const containerRect = imageContainer.getBoundingClientRect();
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+            
+            // Determine zoom direction
+            if (e.deltaY < 0) {
+                // Zoom in
+                currentZoom += 0.1;
+            } else {
+                // Zoom out
+                if (currentZoom > 0.1) {
+                    currentZoom -= 0.1;
+                }
+            }
+            
+            // Update zoom while maintaining focus on mouse position
+            zoomAtPoint(mouseX, mouseY);
+        }
+    }, { passive: false });
+}
+// Zoom while keeping a specific point fixed
+function zoomAtPoint(pointX, pointY) {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    
+    if (!imageContainer || !viewer) return;
+    
+    // Store old scale to calculate ratio
+    const oldZoom = parseFloat(imageContainer.style.transform.match(/scale\(([^)]+)\)/) 
+                           ? parseFloat(imageContainer.style.transform.match(/scale\(([^)]+)\)/)[1]) 
+                           : 1);
+    
+    // Calculate the point's position relative to image in "unscaled" coordinates
+    const unscaledX = pointX / oldZoom;
+    const unscaledY = pointY / oldZoom;
+    
+    // Apply the new scale
+    imageContainer.style.transform = `scale(${currentZoom})`;
+    
+    // Calculate new position after scaling
+    const scaledX = unscaledX * currentZoom;
+    const scaledY = unscaledY * currentZoom;
+    
+    // Calculate how much the point moved
+    const deltaX = scaledX - pointX;
+    const deltaY = scaledY - pointY;
+    
+    // Update scroll position to compensate
+    if (isVertical) {
+        scrollPosition += deltaY;
+    } else {
+        scrollPosition += deltaX;
+    }
+    
+    // Apply the scroll position
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+    }
+    
+    adjustImageContainer();
+    updateProgressIndicator();
+}
+function enhanceZoomControls() {
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    
+    if (zoomInBtn) {
+        zoomInBtn.removeEventListener('click', null);
+        zoomInBtn.addEventListener('click', () => {
+            // Get viewer center point
+            const viewer = document.getElementById('viewer');
+            const viewerRect = viewer.getBoundingClientRect();
+            const centerX = viewerRect.width / 2;
+            const centerY = viewerRect.height / 2;
+            
+            currentZoom += 0.1;
+            zoomAtPoint(centerX, centerY);
+        });
+    }
+    
+    if (zoomOutBtn) {
+        zoomOutBtn.removeEventListener('click', null);
+        zoomOutBtn.addEventListener('click', () => {
+            // Get viewer center point
+            const viewer = document.getElementById('viewer');
+            const viewerRect = viewer.getBoundingClientRect();
+            const centerX = viewerRect.width / 2;
+            const centerY = viewerRect.height / 2;
+            
+            if (currentZoom > 0.1) {
+                currentZoom -= 0.1;
+                zoomAtPoint(centerX, centerY);
+            }
+        });
+    }
+    
+    if (resetZoomBtn) {
+        resetZoomBtn.removeEventListener('click', null);
+        resetZoomBtn.addEventListener('click', () => {
+            currentZoom = 1;
+            resetScrollPosition();
+            adjustImageContainer();
+            centerImages();
+        });
+    }
+    
+    // Set up wheel zooming
+    setupWheelZoom();
+}
 function updateZoom() {
     const imageContainer = document.getElementById('imageContainer');
     const viewer = document.getElementById('viewer');
@@ -543,25 +652,53 @@ function updateZoom() {
         return;
     }
 
+    // Store the viewer's dimensions and position
     const viewerRect = viewer.getBoundingClientRect();
+    
+    // Calculate the current center point in the viewer
+    const viewerCenterX = viewerRect.width / 2;
+    const viewerCenterY = viewerRect.height / 2;
+    
+    // Get the current mouse position relative to the container before scaling
+    // We're using the center of the viewer as reference point
     const containerRect = imageContainer.getBoundingClientRect();
-
-    const viewCenterX = viewerRect.width / 2;
-    const viewCenterY = viewerRect.height / 2;
-
-    const relativeX = (viewCenterX - containerRect.left) / currentZoom;
-    const relativeY = (viewCenterY - containerRect.top) / currentZoom;
-
+    
+    // Calculate the point in the image container that's currently at the center of the viewer
+    // This needs to account for the current scroll position and zoom
+    const pointX = viewerCenterX - containerRect.left + scrollPosition * (isVertical ? 0 : 1);
+    const pointY = viewerCenterY - containerRect.top + scrollPosition * (isVertical ? 1 : 0);
+    
+    // Calculate what that point would be after scaling
+    const scaleRatio = currentZoom / (imageContainer.style.transform ? 
+                        parseFloat(imageContainer.style.transform.match(/scale\(([^)]+)\)/)[1]) : 1);
+    
+    // Apply the new zoom scale
+    imageContainer.style.transform = `scale(${currentZoom})`;
+    
+    // Calculate where that same point would be after scaling
+    const newContainerRect = imageContainer.getBoundingClientRect();
+    const newPointX = (pointX * scaleRatio) + newContainerRect.left - viewerCenterX;
+    const newPointY = (pointY * scaleRatio) + newContainerRect.top - viewerCenterY;
+    
+    // Update scroll position to keep the same point centered
     if (isVertical) {
-        imageContainer.style.transform = `scale(${currentZoom})`;
-        scrollPosition = Math.max(0, (relativeY * currentZoom) - viewCenterY);
+        scrollPosition = newPointY;
     } else {
-        imageContainer.style.transform = `scale(${currentZoom})`;
-        scrollPosition = Math.max(0, (relativeX * currentZoom) - viewCenterX);
+        scrollPosition = newPointX;
     }
-
-    updateScrollPosition();
+    
+    // Make sure we don't scroll past the bounds
+    if (scrollPosition < 0) scrollPosition = 0;
+    
+    // Apply the scroll position
+    if (isVertical) {
+        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+    } else {
+        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+    }
+    
     adjustImageContainer();
+    updateProgressIndicator();
 }
 
 function startScrolling() {
@@ -934,6 +1071,7 @@ function enhanceInit() {
     document.removeEventListener('MSFullscreenChange', updateFullscreenButton);
     // Adicionar setup para controles de velocidade
     setupSpeedControl();
+    enhanceZoomControls();
 }
 function updateFullscreenButton() {
     const fullscreenBtn = document.getElementById('fullscreenBtn');
