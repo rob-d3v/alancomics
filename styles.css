@@ -209,7 +209,7 @@ header {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 1000;
     gap: 2rem;
 }
 
@@ -227,7 +227,7 @@ header {
     padding: 1.5rem;
     overflow-y: auto;
     transition: all 0.3s ease;
-    z-index: 5;
+    z-index: 999;
     position: fixed;
     top: 80px;
     height: calc(100vh - 80px);
@@ -254,7 +254,7 @@ header {
     height: 44px;
     cursor: pointer;
     font-size: 1.1rem;
-    z-index: 10;
+    z-index: 1001;
     transition: all 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     display: flex;
@@ -264,7 +264,7 @@ header {
 
 .toggle-sidebar.collapsed {
     left: 20px;
-    z-index: 100;
+    z-index: 1001;
     transform: rotate(0);
     display: flex !important;
 }
@@ -281,10 +281,12 @@ header {
     overflow: hidden;
     padding: 20px;
     box-sizing: border-box;
-    background-color: #000;
+    background: transparent;
     display: flex;
     justify-content: flex-start;
     align-items: center;
+    touch-action: none;
+    z-index: 997;
 }
 
 .expanded-viewer {
@@ -508,14 +510,15 @@ header {
     cursor: grab;
     user-select: none;
     touch-action: none;
-    max-width: 80%;
+    max-width: 90%;
     margin: 0 auto;
     will-change: transform;
-    padding-left: 20px;
+    transition: transform 0.1s ease-out;
 }
 
 .image-container.dragging {
     cursor: grabbing;
+    transition: none;
 }
 
 .image-item {
@@ -526,18 +529,24 @@ header {
     margin: 0;
     padding: 0;
     max-width: 100%;
-    max-height: 100%;
+    max-height: 90vh;
     cursor: grab;
     user-select: none;
+    will-change: transform;
+}
+
+.image-item.dragging {
+    cursor: grabbing;
 }
 
 .image-item img {
     max-width: 100%;
-    max-height: 100%;
+    max-height: 90vh;
     width: auto;
     height: auto;
     object-fit: contain;
     display: block;
+    pointer-events: none;
 }
 
 .horizontal-scroll .image-container {
@@ -1026,33 +1035,28 @@ select:focus {
     height: 100%;
     background: transparent;
     position: relative;
-    overflow: auto;
+    overflow: hidden;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    touch-action: none;
 }
 
+/* Remover scrollbars padrão */
 .viewer-wrapper::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    display: none;
 }
 
-.viewer-wrapper::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
+.viewer-wrapper {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-.viewer-wrapper::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 6px;
-    border: 3px solid rgba(0, 0, 0, 0.2);
-}
-
-.viewer-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
-}
-
-.viewer-wrapper::-webkit-scrollbar-corner {
-    background: rgba(0, 0, 0, 0.2);
+/* Melhorar performance */
+.image-container, .image-item, .image-item img {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 /* Ajustes para o modo tela cheia */

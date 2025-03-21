@@ -18,11 +18,14 @@ let spacing = 20;
 
 // Variáveis para controle de arrasto
 let isDragging = false;
-let startX, startY;
-let initialScrollX, initialScrollY;
-let currentX, currentY;
-let xOffset = 0;
-let yOffset = 0;
+let startX = 0;
+let startY = 0;
+let scrollLeft = 0;
+let scrollTop = 0;
+let currentX = 0;
+let currentY = 0;
+let dragThreshold = 5; // Pixels mínimos para iniciar o drag
+let boundaryPadding = 50; // Pixels de padding nas bordas
 
 // Function to limit scrolling to keep images visible
 function limitScrollPosition() {
@@ -628,6 +631,8 @@ function renderImages() {
     
     // Atualizar a barra de progresso
     updateProgressIndicator();
+
+    initDragSystem();
 }
 
 function init() {
@@ -2052,4 +2057,132 @@ function startScrolling() {
             updateScrollPosition();
         }, 16);
     }, 4000);
+}
+
+function initDragSystem() {
+    const imageContainer = document.getElementById('imageContainer');
+    const viewer = document.getElementById('viewer');
+    
+    if (!imageContainer || !viewer) return;
+    
+    // Funções auxiliares para limites
+    function getBoundaries() {
+        const containerRect = imageContainer.getBoundingClientRect();
+        const viewerRect = viewer.getBoundingClientRect();
+        const scale = currentZoom || 1;
+        
+        return {
+            minX: viewerRect.width - containerRect.width * scale,
+            maxX: 0,
+            minY: viewerRect.height - containerRect.height * scale,
+            maxY: 0
+        };
+    }
+    
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+    
+    // Função para aplicar transformação com limites
+    function applyTransform(x, y) {
+        const boundaries = getBoundaries();
+        const clampedX = clamp(x, boundaries.minX - boundaryPadding, boundaries.maxX + boundaryPadding);
+        const clampedY = clamp(y, boundaries.minY - boundaryPadding, boundaries.maxY + boundaryPadding);
+        
+        currentX = clampedX;
+        currentY = clampedY;
+        
+        imageContainer.style.transform = `translate(${clampedX}px, ${clampedY}px) scale(${currentZoom})`;
+        updateProgressIndicator();
+    }
+    
+    // Eventos de mouse
+    imageContainer.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // Apenas botão esquerdo
+        
+        isDragging = true;
+        imageContainer.classList.add('dragging');
+        
+        startX = e.pageX - currentX;
+        startY = e.pageY - currentY;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const x = e.pageX - startX;
+        const y = e.pageY - startY;
+        
+        requestAnimationFrame(() => {
+            applyTransform(x, y);
+        });
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        imageContainer.classList.remove('dragging');
+    });
+    
+    // Eventos de touch
+    imageContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        
+        isDragging = true;
+        imageContainer.classList.add('dragging');
+        
+        const touch = e.touches[0];
+        startX = touch.pageX - currentX;
+        startY = touch.pageY - currentY;
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        
+        const touch = e.touches[0];
+        const x = touch.pageX - startX;
+        const y = touch.pageY - startY;
+        
+        requestAnimationFrame(() => {
+            applyTransform(x, y);
+        });
+        
+        e.preventDefault();
+    });
+    
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+        imageContainer.classList.remove('dragging');
+    });
+    
+    // Evento para parar o drag se o mouse sair da janela
+    document.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            imageContainer.classList.remove('dragging');
+        }
+    });
+    
+    // Impedir seleção de texto durante o drag
+    imageContainer.addEventListener('selectstart', (e) => {
+        e.preventDefault();
+    });
+}
+
+// Atualizar limites quando mudar o zoom
+function updateZoom(scale) {
+    currentZoom = scale;
+    const imageContainer = document.getElementById('imageContainer');
+    if (!imageContainer) return;
+    
+    const boundaries = getBoundaries();
+    currentX = clamp(currentX, boundaries.minX - boundaryPadding, boundaries.maxX + boundaryPadding);
+    currentY = clamp(currentY, boundaries.minY - boundaryPadding, boundaries.maxY + boundaryPadding);
+    
+    imageContainer.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
