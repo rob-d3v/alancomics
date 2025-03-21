@@ -488,11 +488,11 @@ function enhancedScrolling() {
         }
 
         // Verificar se chegamos ao fim da rolagem
-        if (scrollPosition >= maxScroll && autoScrolling && maxScroll > 0) {
-            console.log("Fim da rolagem atingido:", scrollPosition, maxScroll);
-            stopScrolling();
-            return true;
-        }
+        // if (scrollPosition >= maxScroll && autoScrolling && maxScroll > 0) {
+        //     console.log("Fim da rolagem atingido:", scrollPosition, maxScroll);
+        //     stopScrolling();
+        //     return true;
+        // }
 
         return false;
     }
@@ -506,13 +506,13 @@ function enhancedScrolling() {
     // Melhorar a função de parada de rolagem
     window.stopScrolling = function () {
         if (scrollInterval) {
-            if (typeof scrollInterval === 'number') {
-                cancelAnimationFrame(scrollInterval);
-                console.log("Rolagem interrompida (cancelAnimationFrame)");
-            } else {
-                clearInterval(scrollInterval);
-                console.log("Rolagem interrompida (clearInterval)");
-            }
+            // if (typeof scrollInterval === 'number') {
+            //     cancelAnimationFrame(scrollInterval);
+            //     console.log("Rolagem interrompida (cancelAnimationFrame)");
+            // } else {
+            //     clearInterval(scrollInterval);
+            //     console.log("Rolagem interrompida (clearInterval)");
+            // }
 
             autoScrolling = false;
             scrollInterval = null;
