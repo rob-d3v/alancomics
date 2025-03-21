@@ -1995,25 +1995,22 @@ function setupDragAndZoom() {
 document.addEventListener('DOMContentLoaded', setupDragAndZoom);
 
 function startScrolling() {
-    if (autoScrolling) return;
-
-    // Criar overlay de contagem regressiva
+    if (images.length === 0) return;
+    
+    // Criar overlay para contagem regressiva
     const overlay = document.createElement('div');
     overlay.className = 'countdown-overlay';
     document.body.appendChild(overlay);
 
-    // Função para mostrar número
     const showNumber = (num) => {
         overlay.innerHTML = `<div class="countdown-number">${num}</div>`;
         overlay.classList.add('visible');
     };
 
-    // Função para mostrar texto de início
     const showStart = () => {
-        overlay.innerHTML = `<div class="countdown-start">COMEÇANDO!</div>`;
+        overlay.innerHTML = `<div class="countdown-start">COMEÇAR!</div>`;
     };
 
-    // Função para remover overlay
     const removeOverlay = () => {
         overlay.classList.remove('visible');
         setTimeout(() => {
@@ -2021,47 +2018,41 @@ function startScrolling() {
         }, 300);
     };
 
-    // Iniciar contagem regressiva
-    showNumber(3);
-    
-    setTimeout(() => {
-        showNumber(2);
+    // Contagem regressiva
+    let count = 3;
+    showNumber(count);
+
+    const countdown = setInterval(() => {
+        count--;
+        if (count > 0) {
+            showNumber(count);
+        } else {
+            clearInterval(countdown);
+            showStart();
+            setTimeout(() => {
+                removeOverlay();
+                // Iniciar a rolagem após a contagem
+                isScrolling = true;
+                const speed = parseFloat(document.getElementById('speedInput').value);
+                const spacing = parseFloat(document.getElementById('spacingInput').value);
+                const direction = document.querySelector('.direction-btn.active').dataset.direction;
+                const isVertical = direction === 'up' || direction === 'down';
+                
+                scrollInterval = setInterval(() => {
+                    if (!isScrolling) return;
+                    
+                    const step = speed * (isVertical ? 1 : -1);
+                    if (isVertical) {
+                        scrollPosition += step;
+                    } else {
+                        scrollPosition += step;
+                    }
+                    
+                    updateScrollPosition();
+                }, spacing);
+            }, 1000);
+        }
     }, 1000);
-    
-    setTimeout(() => {
-        showNumber(1);
-    }, 2000);
-    
-    setTimeout(() => {
-        showStart();
-    }, 3000);
-    
-    setTimeout(() => {
-        removeOverlay();
-        // Iniciar rolagem após a contagem
-        autoScrolling = true;
-        toggleSidebarControls(true);
-        
-        const startBtn = document.getElementById('startScrollingBtn');
-        if (startBtn) {
-            startBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Rolagem';
-            startBtn.style.opacity = '0.7';
-        }
-
-        if (scrollInterval) {
-            clearInterval(scrollInterval);
-        }
-
-        scrollInterval = setInterval(() => {
-            if (isVertical) {
-                scrollPosition += scrollSpeed;
-            } else {
-                scrollPosition += scrollSpeed;
-            }
-
-            updateScrollPosition();
-        }, 16);
-    }, 4000);
 }
 
 function initDragSystem() {
