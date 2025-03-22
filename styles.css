@@ -670,7 +670,7 @@ header::before {
 
 /* Fornecer feedback visual no modo tela cheia */
 #fullscreenBtn:hover {
-    transform: scale(1.2);
+    /* transform: scale(1.2); */
     background: var(--primary-color);
 }
 
@@ -1219,69 +1219,13 @@ select:focus {
     }
 }
 
-/* Estilos para o container de visualização */
-.viewer-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--viewer-bg);
-    background-image: var(--viewer-bg-pattern);
-    background-size: 200px 200px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: hidden;
-    cursor: grab;
-}
 
-.viewer-container.dragging {
-    cursor: grabbing;
-}
 
-.viewer-wrapper {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    touch-action: none;
-}
-
-/* Estilos para scrollbars personalizadas */
-.viewer::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.viewer::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-}
-
-.viewer::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border-radius: 6px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.viewer::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-    transform: scale(1.1);
-}
-
-/* Estilos para Firefox */
+/* Estilos para Firefox
 .viewer {
     scrollbar-width: thin;
     scrollbar-color: var(--primary-color) rgba(0, 0, 0, 0.1);
-}
+} */
 
 /* Melhorar performance */
 .image-container, .image-item, .image-item img {
@@ -1291,61 +1235,20 @@ select:focus {
     -webkit-transform: translateZ(0);
 }
 
-/* Ajustes para o modo fullscreen */
-.fullscreen-viewer {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
-    background: var(--viewer-bg) !important;
-    z-index: 9999 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    overflow: hidden !important;
-}
-
-.fullscreen-viewer .image-container {
-    position: relative !important;
-    transform-origin: center center !important;
-    margin: 0 auto !important;
-    max-width: 95vw !important;
-    max-height: 95vh !important;
-}
-
-.fullscreen-viewer.vertical-scroll .image-container {
-    transform-origin: center center !important;
-}
-
-.fullscreen-viewer.horizontal-scroll .image-container {
-    transform-origin: center center !important;
-}
-
-.fullscreen-viewer .image-item {
-    max-width: 95vw !important;
-    max-height: 95vh !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-
+/* 
 .fullscreen-viewer .image-item img {
     max-width: 95vw !important;
     max-height: 95vh !important;
     object-fit: contain !important;
-}
+} */
+/* 
+    .fullscreen-viewer .zoom-controls,
+    .fullscreen-viewer .navigation-controls {
+        z-index: 10000 !important;
+        position: fixed !important;
+    } */
 
-.fullscreen-viewer .zoom-controls,
-.fullscreen-viewer .navigation-controls {
-    z-index: 10000 !important;
-    position: fixed !important;
-}
-
-.fullscreen-viewer .zoom-controls {
+/* .fullscreen-viewer .zoom-controls {
     right: 20px !important;
     bottom: 20px !important;
 }
@@ -1353,17 +1256,17 @@ select:focus {
 .fullscreen-viewer .navigation-controls {
     left: 20px !important;
     bottom: 20px !important;
-}
+} */
 
-.fullscreen-viewer .image-counter {
+/* .fullscreen-viewer .image-counter {
     z-index: 10000 !important;
     position: fixed !important;
     top: 20px !important;
     left: 20px !important;
-}
+} */
 
 /* Ajuste do container principal em fullscreen */
-.viewer-container.fullscreen {
+/* .viewer-container.fullscreen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -1376,9 +1279,9 @@ select:focus {
     align-items: center !important;
     background: var(--viewer-bg) !important;
     z-index: 9999 !important;
-}
+} */
 
-/* Ajuste do viewer em fullscreen */
+/* Ajuste do viewer em fullscreen
 .viewer-container.fullscreen .viewer {
     width: 100% !important;
     height: 100% !important;
@@ -1386,7 +1289,7 @@ select:focus {
     justify-content: center !important;
     align-items: center !important;
     overflow: auto !important;
-}
+} */
 
 /* Ajuste responsivo */
 @media (max-width: 1024px) {

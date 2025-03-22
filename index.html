@@ -113,7 +113,7 @@
                 <div class="viewer-wrapper">
                     <div id="viewer" class="viewer">
                         <div id="imageContainer" class="image-container"></div>
-                        
+
                         <div class="zoom-controls">
                             <button class="control-button" id="zoomInBtn" title="Aumentar Zoom">
                                 <i class="fas fa-search-plus"></i>
@@ -153,7 +153,7 @@
 
     <script>
         // Inicialização do tema após o DOM estar carregado
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Verificar se o sistema do usuário está em modo escuro
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.body.classList.add('dark-theme');
@@ -180,6 +180,7 @@
     <script src="diagnostico.js"></script>
     <link rel="stylesheet" href="zoom-fixes.css">
     <script src="zoom-fixes.js"></script>
-</body>
+    <link rel="stylesheet" href="manual-positioning-css.css">
+    <script src="drag-position-fix.js"></script>
 
 </html>
