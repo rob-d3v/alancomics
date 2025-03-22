@@ -384,14 +384,35 @@ header::before {
 
 .toggle-sidebar.collapsed {
     left: 20px;
-    z-index: 1001;
-    transform: rotate(0);
-    display: flex !important;
+    transform: rotate(180deg);
 }
 
 .toggle-sidebar:hover {
     transform: scale(1.05);
     background-color: var(--secondary-color);
+}
+
+.viewer-container {
+    position: fixed;
+    top: 80px;
+    left: 320px;
+    right: 0;
+    bottom: 0;
+    background: var(--viewer-bg);
+    background-image: var(--viewer-bg-pattern);
+    background-size: 200px 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 996;
+    transition: left 0.3s ease;
+}
+
+.viewer-container.dragging {
+    cursor: grabbing;
 }
 
 .viewer {
@@ -403,24 +424,59 @@ header::before {
     box-sizing: border-box;
     background: transparent;
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-start;
     touch-action: none;
     z-index: 997;
     cursor: grab;
-    white-space: nowrap;
-    scroll-behavior: auto;
-    -webkit-overflow-scrolling: touch;
+    user-select: none;
 }
 
 .viewer.dragging {
     cursor: grabbing;
-    scroll-behavior: auto;
 }
 
-.expanded-viewer {
-    margin-left: 0 !important;
-    width: 100% !important;
+.image-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    margin: 0 auto;
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+.horizontal-scroll .image-container {
+    flex-direction: row;
+    align-items: center;
+    margin: auto 0;
+}
+
+.image-item {
+    position: relative;
+    display: inline-block;
+    margin: 0 10px;
+    padding: 0;
+    max-width: 100%;
+    max-height: 90vh;
+    cursor: grab;
+    user-select: none;
+    will-change: transform;
+    vertical-align: top;
+}
+
+.image-item img {
+    max-width: 100%;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
 }
 
 .section {
@@ -669,67 +725,9 @@ header::before {
     border-color: var(--primary-color);
 }
 
-.image-container {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    transform-origin: center center;
-    cursor: grab;
-    user-select: none;
-    touch-action: none;
-    max-width: none;
-    margin: 0;
-    will-change: transform;
-    transition: none;
-    padding-left: 20px;
-    white-space: nowrap;
-}
-
-.image-container.dragging {
-    cursor: grabbing;
-    transition: none;
-}
-
-.image-item {
-    position: relative;
-    display: inline-block;
-    margin: 0 10px;
-    padding: 0;
-    max-width: 100%;
-    max-height: 90vh;
-    cursor: grab;
-    user-select: none;
-    will-change: transform;
-    vertical-align: top;
-}
-
-.image-item img {
-    max-width: 100%;
-    max-height: 90vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    display: block;
-    pointer-events: none;
-}
-
-.horizontal-scroll .image-container {
-    flex-direction: row;
-    height: 100%;
-}
-
-.horizontal-scroll .image-item {
-    margin: 0 10px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-}
-
-.horizontal-scroll .image-item img {
-    max-height: 100%;
-    width: auto;
-    object-fit: contain;
+.expanded-viewer {
+    margin-left: 0 !important;
+    width: 100% !important;
 }
 
 /* Controles de navegação e zoom - redesenhados para melhor visibilidade */
@@ -1294,13 +1292,102 @@ select:focus {
 }
 
 /* Ajustes para o modo tela cheia */
+.fullscreen-viewer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    background: var(--viewer-bg) !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.fullscreen-viewer .image-container {
+    position: relative !important;
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    margin: 0 auto !important;
+    transform-origin: center center !important;
+}
+
+.fullscreen-viewer.vertical-scroll .image-container {
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.fullscreen-viewer.horizontal-scroll .image-container {
+    flex-direction: row !important;
+    align-items: center !important;
+}
+
+.fullscreen-viewer .image-item {
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    margin: 10px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.fullscreen-viewer .image-item img {
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    object-fit: contain !important;
+}
+
 .fullscreen-viewer .zoom-controls,
 .fullscreen-viewer .navigation-controls {
-    z-index: 10000;
+    z-index: 10000 !important;
+    position: fixed !important;
+}
+
+.fullscreen-viewer .zoom-controls {
+    right: 20px !important;
+    bottom: 20px !important;
+}
+
+.fullscreen-viewer .navigation-controls {
+    left: 20px !important;
+    bottom: 20px !important;
 }
 
 .fullscreen-viewer .image-counter {
-    z-index: 10000;
+    z-index: 10000 !important;
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+}
+
+/* Ajuste do container principal em fullscreen */
+.viewer-container.fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: var(--viewer-bg) !important;
+    z-index: 9999 !important;
+}
+
+/* Ajuste do viewer em fullscreen */
+.viewer-container.fullscreen .viewer {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: auto !important;
 }
 
 /* Ajuste responsivo */

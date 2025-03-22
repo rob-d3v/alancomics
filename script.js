@@ -1216,24 +1216,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function toggleFullscreen() {
     const viewer = document.getElementById('viewer');
+    const viewerContainer = document.querySelector('.viewer-container');
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
 
-    if (!viewer) return;
+    if (!viewer || !viewerContainer) return;
 
     if (!document.fullscreenElement &&
         !document.webkitFullscreenElement &&
         !document.mozFullScreenElement &&
         !document.msFullscreenElement) {
         try {
-            // Adicionar classe para esconder elementos
+            // Adicionar classes para esconder elementos
             if (header) header.classList.add('fullscreen-hidden');
             if (sidebar) sidebar.classList.add('fullscreen-hidden');
             if (toggleSidebarBtn) toggleSidebarBtn.classList.add('fullscreen-hidden');
 
-            // Adicionar classe para o viewer em tela cheia
+            // Adicionar classes para o modo fullscreen
             viewer.classList.add('fullscreen-viewer');
+            viewerContainer.classList.add('fullscreen');
+
+            // Centralizar o conteúdo
+            const imageContainer = document.getElementById('imageContainer');
+            if (imageContainer) {
+                imageContainer.style.margin = '0 auto';
+                adjustImageContainer();
+                centerImages();
+            }
 
             // Solicitar tela cheia
             if (viewer.requestFullscreen) {
@@ -1245,6 +1255,8 @@ function toggleFullscreen() {
             } else if (viewer.msRequestFullscreen) {
                 viewer.msRequestFullscreen();
             }
+
+            isFullscreen = true;
         } catch (error) {
             console.error("Erro ao entrar em tela cheia:", error);
         }
@@ -1260,6 +1272,26 @@ function toggleFullscreen() {
             } else if (document.msExitFullscreen) {
                 document.msExitFullscreen();
             }
+
+            // Remover classes de fullscreen
+            viewer.classList.remove('fullscreen-viewer');
+            viewerContainer.classList.remove('fullscreen');
+
+            // Restaurar elementos ocultos
+            if (header) header.classList.remove('fullscreen-hidden');
+            if (sidebar) sidebar.classList.remove('fullscreen-hidden');
+            if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
+
+            // Reajustar o conteúdo
+            const imageContainer = document.getElementById('imageContainer');
+            if (imageContainer) {
+                setTimeout(() => {
+                    adjustImageContainer();
+                    centerImages();
+                }, 100);
+            }
+
+            isFullscreen = false;
         } catch (error) {
             console.error("Erro ao sair da tela cheia:", error);
         }
@@ -1279,27 +1311,43 @@ function setupFullscreenListeners() {
     });
 }
 
-// Atualizar a função handleFullscreenChange para não manipular posição ou zoom
+// Atualizar a função handleFullscreenChange
 function handleFullscreenChange() {
-    updateFullscreenButton();
-
+    const viewer = document.getElementById('viewer');
+    const viewerContainer = document.querySelector('.viewer-container');
     const header = document.querySelector('header');
     const sidebar = document.querySelector('.sidebar');
     const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
-    const viewer = document.getElementById('viewer');
 
-    // Se não estamos mais em modo tela cheia, restaurar elementos
-    if (!document.fullscreenElement &&
-        !document.webkitFullscreenElement &&
-        !document.mozFullScreenElement &&
-        !document.msFullscreenElement) {
+    // Verificar se ainda estamos em fullscreen
+    const isInFullscreen = document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+
+    if (!isInFullscreen) {
+        // Remover classes de fullscreen
+        if (viewer) viewer.classList.remove('fullscreen-viewer');
+        if (viewerContainer) viewerContainer.classList.remove('fullscreen');
 
         // Restaurar elementos ocultos
         if (header) header.classList.remove('fullscreen-hidden');
         if (sidebar) sidebar.classList.remove('fullscreen-hidden');
         if (toggleSidebarBtn) toggleSidebarBtn.classList.remove('fullscreen-hidden');
-        if (viewer) viewer.classList.remove('fullscreen-viewer');
+
+        // Reajustar o conteúdo
+        const imageContainer = document.getElementById('imageContainer');
+        if (imageContainer) {
+            setTimeout(() => {
+                adjustImageContainer();
+                centerImages();
+            }, 100);
+        }
+
+        isFullscreen = false;
     }
+
+    updateFullscreenButton();
 }
 
 function enhanceUserExperience() {
@@ -1877,268 +1925,138 @@ function setupScrollControls() {
 }
 
 // Função para iniciar o arrasto
-function dragStart(e) {
-    const viewer = document.querySelector('.viewer');
-    isDragging = true;
-    viewer.classList.add('dragging');
-    
-    // Capturar posição inicial
-    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-    
-    // Capturar posição inicial do scroll
-    scrollLeft = viewer.scrollLeft;
-    scrollTop = viewer.scrollTop;
-}
-
-function drag(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const viewer = document.querySelector('.viewer');
-    
-    // Calcular movimento
-    const x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-    const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-    
-    // Calcular distância percorrida
-    const walkX = x - startX;
-    const walkY = y - startY;
-    
-    // Atualizar scroll
-    viewer.scrollLeft = scrollLeft - walkX;
-    viewer.scrollTop = scrollTop - walkY;
-}
-
-function dragEnd() {
-    isDragging = false;
-    const viewer = document.querySelector('.viewer');
-    viewer.classList.remove('dragging');
-}
-
-function setupDragAndZoom() {
-    const viewer = document.querySelector('.viewer');
-    
-    // Eventos de mouse
-    viewer.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-    
-    // Eventos de toque
-    viewer.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
-    
-    // Prevenir comportamento padrão do scroll
-    viewer.addEventListener('scroll', (e) => {
-        if (isDragging) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-}
-
-// Inicializar arrasto e zoom quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', setupDragAndZoom);
-
-function startScrolling() {
-    if (images.length === 0) return;
-    
-    // Criar overlay para contagem regressiva
-    const overlay = document.createElement('div');
-    overlay.className = 'countdown-overlay';
-    document.body.appendChild(overlay);
-
-    const showNumber = (num) => {
-        overlay.innerHTML = `<div class="countdown-number">${num}</div>`;
-        overlay.classList.add('visible');
-    };
-
-    const showStart = () => {
-        overlay.innerHTML = `<div class="countdown-start">COMEÇAR!</div>`;
-    };
-
-    const removeOverlay = () => {
-        overlay.classList.remove('visible');
-        setTimeout(() => {
-            overlay.remove();
-        }, 300);
-    };
-
-    // Contagem regressiva
-    let count = 3;
-    showNumber(count);
-
-    const countdown = setInterval(() => {
-        count--;
-        if (count > 0) {
-            showNumber(count);
-        } else {
-            clearInterval(countdown);
-            showStart();
-            setTimeout(() => {
-                removeOverlay();
-                // Iniciar a rolagem após a contagem
-                autoScrolling = true;
-                toggleSidebarControls(true);
-                
-                const startBtn = document.getElementById('startScrollingBtn');
-                if (startBtn) {
-                    startBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar Rolagem';
-                    startBtn.style.opacity = '0.7';
-                }
-
-                if (scrollInterval) {
-                    clearInterval(scrollInterval);
-                }
-
-                const speed = parseFloat(document.getElementById('speedInput').value) || 1;
-                const spacing = parseFloat(document.getElementById('spacingInput').value) || 16;
-                const direction = document.querySelector('.direction-btn.active')?.dataset.direction || 'down';
-                const isVertical = direction === 'up' || direction === 'down';
-                
-                scrollInterval = setInterval(() => {
-                    if (!autoScrolling) return;
-                    
-                    const step = speed * (isVertical ? 1 : -1);
-                    if (isVertical) {
-                        scrollPosition += step;
-                    } else {
-                        scrollPosition += step;
-                    }
-                    
-                    updateScrollPosition();
-                }, spacing);
-            }, 1000);
-        }
-    }, 1000);
-}
-
 function initDragSystem() {
     const imageContainer = document.getElementById('imageContainer');
     const viewer = document.getElementById('viewer');
     
     if (!imageContainer || !viewer) return;
     
-    // Funções auxiliares para limites
-    function getBoundaries() {
-        const containerRect = imageContainer.getBoundingClientRect();
-        const viewerRect = viewer.getBoundingClientRect();
-        const scale = currentZoom || 1;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollStartX = 0;
+    let scrollStartY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let velocityX = 0;
+    let velocityY = 0;
+    let animationFrame = null;
+    
+    function startDragging(e) {
+        if (e.button !== 0 && e.type !== 'touchstart') return; // Apenas botão esquerdo ou touch
         
-        return {
-            minX: viewerRect.width - containerRect.width * scale,
-            maxX: 0,
-            minY: viewerRect.height - containerRect.height * scale,
-            maxY: 0
-        };
+        isDragging = true;
+        imageContainer.classList.add('dragging');
+        
+        // Capturar posição inicial
+        if (e.type === 'touchstart') {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        } else {
+            startX = e.clientX;
+            startY = e.clientY;
+        }
+        
+        // Armazenar posição inicial de scroll
+        scrollStartX = scrollPosition;
+        scrollStartY = scrollPosition;
+        
+        lastX = startX;
+        lastY = startY;
+        
+        // Parar qualquer animação de inércia
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+        }
+        
+        e.preventDefault();
     }
     
-    function clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
+    function drag(e) {
+        if (!isDragging) return;
+        
+        let currentX, currentY;
+        if (e.type === 'touchmove') {
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+        } else {
+            currentX = e.clientX;
+            currentY = e.clientY;
+        }
+        
+        // Calcular velocidade para inércia
+        velocityX = currentX - lastX;
+        velocityY = currentY - lastY;
+        
+        // Calcular distância percorrida
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+        
+        // Aplicar movimento com base na direção
+        if (isVertical) {
+            scrollPosition = scrollStartY - deltaY / currentZoom;
+        } else {
+            scrollPosition = scrollStartX - deltaX / currentZoom;
+        }
+        
+        // Atualizar posição
+        updateScrollPosition();
+        
+        lastX = currentX;
+        lastY = currentY;
+        
+        e.preventDefault();
     }
     
-    // Função para aplicar transformação com limites
-    function applyTransform(x, y) {
-        const boundaries = getBoundaries();
-        const clampedX = clamp(x, boundaries.minX - boundaryPadding, boundaries.maxX + boundaryPadding);
-        const clampedY = clamp(y, boundaries.minY - boundaryPadding, boundaries.maxY + boundaryPadding);
+    function stopDragging() {
+        if (!isDragging) return;
         
-        currentX = clampedX;
-        currentY = clampedY;
+        isDragging = false;
+        imageContainer.classList.remove('dragging');
         
-        imageContainer.style.transform = `translate(${clampedX}px, ${clampedY}px) scale(${currentZoom})`;
-        updateProgressIndicator();
+        // Aplicar inércia
+        let inertiaX = velocityX * 0.95;
+        let inertiaY = velocityY * 0.95;
+        
+        function applyInertia() {
+            if (Math.abs(inertiaX) > 0.1 || Math.abs(inertiaY) > 0.1) {
+                if (isVertical) {
+                    scrollPosition -= inertiaY / currentZoom;
+                } else {
+                    scrollPosition -= inertiaX / currentZoom;
+                }
+                
+                updateScrollPosition();
+                
+                inertiaX *= 0.95;
+                inertiaY *= 0.95;
+                
+                animationFrame = requestAnimationFrame(applyInertia);
+            }
+        }
+        
+        applyInertia();
     }
     
     // Eventos de mouse
-    imageContainer.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return; // Apenas botão esquerdo
-        
-        isDragging = true;
-        imageContainer.classList.add('dragging');
-        
-        startX = e.pageX - currentX;
-        startY = e.pageY - currentY;
-        
-        e.preventDefault();
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        
-        const x = e.pageX - startX;
-        const y = e.pageY - startY;
-        
-        requestAnimationFrame(() => {
-            applyTransform(x, y);
-        });
-        
-        e.preventDefault();
-    });
-    
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        imageContainer.classList.remove('dragging');
-    });
+    imageContainer.addEventListener('mousedown', startDragging);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDragging);
     
     // Eventos de touch
-    imageContainer.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        
-        isDragging = true;
-        imageContainer.classList.add('dragging');
-        
-        const touch = e.touches[0];
-        startX = touch.pageX - currentX;
-        startY = touch.pageY - currentY;
-        
-        e.preventDefault();
-    });
+    imageContainer.addEventListener('touchstart', startDragging, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', stopDragging);
     
-    document.addEventListener('touchmove', (e) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        
-        const touch = e.touches[0];
-        const x = touch.pageX - startX;
-        const y = touch.pageY - startY;
-        
-        requestAnimationFrame(() => {
-            applyTransform(x, y);
-        });
-        
-        e.preventDefault();
-    });
+    // Parar arrasto se o mouse sair da janela
+    document.addEventListener('mouseleave', stopDragging);
     
-    document.addEventListener('touchend', () => {
-        isDragging = false;
-        imageContainer.classList.remove('dragging');
-    });
-    
-    // Evento para parar o drag se o mouse sair da janela
-    document.addEventListener('mouseleave', () => {
+    // Prevenir seleção de texto durante o arrasto
+    imageContainer.addEventListener('selectstart', (e) => {
         if (isDragging) {
-            isDragging = false;
-            imageContainer.classList.remove('dragging');
+            e.preventDefault();
         }
     });
-    
-    // Impedir seleção de texto durante o drag
-    imageContainer.addEventListener('selectstart', (e) => {
-        e.preventDefault();
-    });
-}
-
-// Atualizar limites quando mudar o zoom
-function updateZoom(scale) {
-    currentZoom = scale;
-    const imageContainer = document.getElementById('imageContainer');
-    if (!imageContainer) return;
-    
-    const boundaries = getBoundaries();
-    currentX = clamp(currentX, boundaries.minX - boundaryPadding, boundaries.maxX + boundaryPadding);
-    currentY = clamp(currentY, boundaries.minY - boundaryPadding, boundaries.maxY + boundaryPadding);
-    
-    imageContainer.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
 }
 
 // Função para melhorar o comportamento do scroll
