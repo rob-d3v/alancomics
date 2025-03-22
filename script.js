@@ -1515,7 +1515,7 @@ function setupLogo() {
     logoContainer.innerHTML = '';
 
     const title = document.createElement('h1');
-    title.textContent = "Quadrinhos do Alan";
+    title.textContent = "Comics Viewer";
 
     logoContainer.appendChild(title);
 }

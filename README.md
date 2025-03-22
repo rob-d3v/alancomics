@@ -1,8 +1,8 @@
-Quadrinhos do Alan - Visualizador de Imagens Responsivo
+Comics Viewer - Visualizador de Imagens Responsivo
 
 ## Sobre o Projeto
 
-Quadrinhos do Alan é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
+Comics Viewer é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
 
 ### Recursos Principais
 
