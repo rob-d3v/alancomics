@@ -6,6 +6,12 @@ class Sidebar {
         this.dropZone = document.getElementById('dropZone');
         this.thumbnailsContainer = document.getElementById('thumbnailsContainer');
         this.isRunning = false;
+        
+        // Add auto-scroll complete listener
+        document.addEventListener('autoScrollComplete', () => {
+            this.stopViewer();
+        });
+        
         this.initializeEventListeners();
     }
 
@@ -154,6 +160,7 @@ class Sidebar {
 
     async loadExistingImages() {
         const images = await this.db.getAllImages();
+        console.log('Loading images:', images.length); // Debug log
         await this.viewer.displayImages(images);
         this.updateThumbnails(images);
     }

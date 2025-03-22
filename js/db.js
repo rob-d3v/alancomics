@@ -1,12 +1,12 @@
 class ComicsDB {
     constructor() {
-        this.dbName = 'ComicsViewer';
+        this.dbName = 'AlanComicsDB';
         this.dbVersion = 1;
+        this.storeName = 'images';
         this.db = null;
-        this.init();
     }
 
-    async init() {
+    async initialize() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.dbName, this.dbVersion);
 
@@ -18,23 +18,21 @@ class ComicsDB {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                if (!db.objectStoreNames.contains('images')) {
-                    const store = db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
-                    store.createIndex('order', 'order', { unique: false });
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    db.createObjectStore(this.storeName, {
+                        keyPath: 'id',
+                        autoIncrement: true
+                    });
                 }
             };
         });
     }
 
     async addImage(imageData) {
-        const count = await this.getImagesCount();
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['images'], 'readwrite');
-            const store = transaction.objectStore('images');
-            const request = store.add({
-                data: imageData,
-                order: count
-            });
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.add({ data: imageData });
 
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
@@ -43,29 +41,19 @@ class ComicsDB {
 
     async getAllImages() {
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['images'], 'readonly');
-            const store = transaction.objectStore('images');
-            const request = store.index('order').openCursor();
-            const images = [];
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.getAll();
 
-            request.onsuccess = (event) => {
-                const cursor = event.target.result;
-                if (cursor) {
-                    images.push({ id: cursor.value.id, data: cursor.value.data });
-                    cursor.continue();
-                } else {
-                    resolve(images);
-                }
-            };
-
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
 
     async removeImage(id) {
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['images'], 'readwrite');
-            const store = transaction.objectStore('images');
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
             const request = store.delete(id);
 
             request.onsuccess = () => resolve();
@@ -75,22 +63,11 @@ class ComicsDB {
 
     async clearAll() {
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['images'], 'readwrite');
-            const store = transaction.objectStore('images');
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
             const request = store.clear();
 
             request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async getImagesCount() {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['images'], 'readonly');
-            const store = transaction.objectStore('images');
-            const request = store.count();
-
-            request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }

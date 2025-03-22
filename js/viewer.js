@@ -56,15 +56,19 @@ class ComicsViewer {
 
         this.scrollInterval = setInterval(() => {
             if (this.container.classList.contains('horizontal')) {
-                this.viewer.scrollLeft += scrollStep;
                 if (this.viewer.scrollLeft >= this.viewer.scrollWidth - this.viewer.clientWidth) {
-                    this.viewer.scrollLeft = 0;
+                    this.stopAutoScroll();
+                    document.dispatchEvent(new CustomEvent('autoScrollComplete'));
+                    return;
                 }
+                this.viewer.scrollLeft += scrollStep;
             } else {
-                this.viewer.scrollTop += scrollStep;
                 if (this.viewer.scrollTop >= this.viewer.scrollHeight - this.viewer.clientHeight) {
-                    this.viewer.scrollTop = 0;
+                    this.stopAutoScroll();
+                    document.dispatchEvent(new CustomEvent('autoScrollComplete'));
+                    return;
                 }
+                this.viewer.scrollTop += scrollStep;
             }
         }, 50);
     }
@@ -76,11 +80,28 @@ class ComicsViewer {
 
     async displayImages(images) {
         this.container.innerHTML = '';
-        for (const image of images) {
-            const img = document.createElement('img');
-            img.src = image.data;
-            img.dataset.id = image.id;
-            this.container.appendChild(img);
+        
+        if (!images || images.length === 0) {
+            return;
         }
+
+        images.forEach(image => {
+            const imgElement = document.createElement('img');
+            imgElement.src = image.data;
+            imgElement.dataset.id = image.id;
+            imgElement.style.width = `${100 * this.zoomLevel}%`;
+            imgElement.style.maxWidth = `${100 * this.zoomLevel}%`;
+            imgElement.style.display = 'block'; // Ensure image is visible
+            imgElement.onerror = () => {
+                console.error('Failed to load image:', image.id);
+                imgElement.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
+            };
+            this.container.appendChild(imgElement);
+        });
+
+        // Force layout recalculation
+        this.container.style.display = 'none';
+        this.container.offsetHeight; // Force reflow
+        this.container.style.display = '';
     }
 }
