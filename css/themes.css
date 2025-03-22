@@ -4,6 +4,7 @@
     --accent-color: #3498db;
     --text-color: #ecf0f1;
     --background-color: rgba(44, 62, 80, 0.95);
+    --gradient: linear-gradient(135deg, var(--primary-color), var(--accent-color));
 }
 
 .theme-dark {
@@ -12,6 +13,7 @@
     --accent-color: #e74c3c;
     --text-color: #ffffff;
     --background-color: rgba(26, 26, 26, 0.95);
+    --gradient: linear-gradient(135deg, #2d2d2d, #e74c3c);
 }
 
 .theme-light {
@@ -20,6 +22,7 @@
     --accent-color: #273c75;
     --text-color: #2f3640;
     --background-color: rgba(245, 246, 250, 0.95);
+    --gradient: linear-gradient(135deg, #dcdde1, #273c75);
 }
 
 .theme-sepia {
@@ -28,4 +31,41 @@
     --accent-color: #8b4513;
     --text-color: #5d4037;
     --background-color: rgba(212, 196, 168, 0.95);
+    --gradient: linear-gradient(135deg, #d4c4a8, #8b4513);
+}
+
+.theme-neon {
+    --primary-color: #2d3436;
+    --secondary-color: #636e72;
+    --accent-color: #00b894;
+    --text-color: #dfe6e9;
+    --background-color: rgba(45, 52, 54, 0.95);
+    --gradient: linear-gradient(135deg, #00b894, #00cec9);
+}
+
+.theme-cosmic {
+    --primary-color: #30336b;
+    --secondary-color: #130f40;
+    --accent-color: #eb4d4b;
+    --text-color: #f7f1e3;
+    --background-color: rgba(48, 51, 107, 0.95);
+    --gradient: linear-gradient(135deg, #30336b, #eb4d4b);
+}
+
+.theme-sunset {
+    --primary-color: #ff7675;
+    --secondary-color: #d63031;
+    --accent-color: #fdcb6e;
+    --text-color: #2d3436;
+    --background-color: rgba(255, 118, 117, 0.95);
+    --gradient: linear-gradient(135deg, #ff7675, #fdcb6e);
+}
+
+.theme-forest {
+    --primary-color: #006266;
+    --secondary-color: #004d40;
+    --accent-color: #00b894;
+    --text-color: #c8d6e5;
+    --background-color: rgba(0, 98, 102, 0.95);
+    --gradient: linear-gradient(135deg, #006266, #00b894);
 }
