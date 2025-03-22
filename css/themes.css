@@ -1,0 +1,31 @@
+.theme-default {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --text-color: #ecf0f1;
+    --background-color: rgba(44, 62, 80, 0.95);
+}
+
+.theme-dark {
+    --primary-color: #1a1a1a;
+    --secondary-color: #2d2d2d;
+    --accent-color: #e74c3c;
+    --text-color: #ffffff;
+    --background-color: rgba(26, 26, 26, 0.95);
+}
+
+.theme-light {
+    --primary-color: #f5f6fa;
+    --secondary-color: #dcdde1;
+    --accent-color: #273c75;
+    --text-color: #2f3640;
+    --background-color: rgba(245, 246, 250, 0.95);
+}
+
+.theme-sepia {
+    --primary-color: #d4c4a8;
+    --secondary-color: #c4b397;
+    --accent-color: #8b4513;
+    --text-color: #5d4037;
+    --background-color: rgba(212, 196, 168, 0.95);
+}
