@@ -1291,7 +1291,7 @@ select:focus {
     -webkit-transform: translateZ(0);
 }
 
-/* Ajustes para o modo tela cheia */
+/* Ajustes para o modo fullscreen */
 .fullscreen-viewer {
     position: fixed !important;
     top: 0 !important;
@@ -1306,30 +1306,28 @@ select:focus {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    overflow: hidden !important;
 }
 
 .fullscreen-viewer .image-container {
     position: relative !important;
+    transform-origin: center center !important;
+    margin: 0 auto !important;
     max-width: 95vw !important;
     max-height: 95vh !important;
-    margin: 0 auto !important;
-    transform-origin: center center !important;
 }
 
 .fullscreen-viewer.vertical-scroll .image-container {
-    flex-direction: column !important;
-    align-items: center !important;
+    transform-origin: center center !important;
 }
 
 .fullscreen-viewer.horizontal-scroll .image-container {
-    flex-direction: row !important;
-    align-items: center !important;
+    transform-origin: center center !important;
 }
 
 .fullscreen-viewer .image-item {
     max-width: 95vw !important;
     max-height: 95vh !important;
-    margin: 10px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

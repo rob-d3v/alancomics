@@ -333,6 +333,15 @@ function zoomAtPoint(pointX, pointY) {
     const viewerCenterX = viewerRect.width / 2;
     const viewerCenterY = viewerRect.height / 2;
     
+    // Verificar se está em modo fullscreen
+    const isFullscreen = viewer.classList.contains('fullscreen-viewer');
+    
+    if (isFullscreen) {
+        // Em fullscreen, sempre usar o centro do viewer como ponto de zoom
+        pointX = viewerCenterX;
+        pointY = viewerCenterY;
+    }
+    
     // Calcular o ponto relativo ao container
     const containerX = pointX - containerRect.left;
     const containerY = pointY - containerRect.top;
@@ -344,40 +353,28 @@ function zoomAtPoint(pointX, pointY) {
     const newContainerX = containerX * scaleRatio;
     const newContainerY = containerY * scaleRatio;
     
-    // Calcular o deslocamento necessário para manter o ponto sob o cursor
-    const deltaX = newContainerX - containerX;
-    const deltaY = newContainerY - containerY;
+    // Calcular o deslocamento necessário
+    const deltaX = (newContainerX - containerX);
+    const deltaY = (newContainerY - containerY);
     
-    // Calcular o centro do container
-    const containerCenterX = containerRect.width / 2;
-    const containerCenterY = containerRect.height / 2;
-    
-    // Calcular o deslocamento do centro
-    const centerOffsetX = containerCenterX - viewerCenterX;
-    const centerOffsetY = containerCenterY - viewerCenterY;
-    
-    // Atualizar a posição de rolagem mantendo o centro
-    if (isVertical) {
-        scrollPosition = centerOffsetY + deltaY;
+    // Em fullscreen, ajustar a posição para manter centralizado
+    if (isFullscreen) {
+        if (isVertical) {
+            scrollPosition = deltaY;
+            imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+        } else {
+            scrollPosition = deltaX;
+            imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+        }
     } else {
-        scrollPosition = centerOffsetX + deltaX;
-    }
-    
-    // Limitar a posição de rolagem
-    const maxX = (containerRect.width * currentZoom - viewerRect.width) / 2;
-    const maxY = (containerRect.height * currentZoom - viewerRect.height) / 2;
-    
-    if (isVertical) {
-        scrollPosition = Math.max(0, Math.min(scrollPosition, maxY));
-    } else {
-        scrollPosition = Math.max(0, Math.min(scrollPosition, maxX));
-    }
-    
-    // Aplicar a transformação mantendo o centro
-    if (isVertical) {
-        imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
-    } else {
-        imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+        // Comportamento normal fora do fullscreen
+        if (isVertical) {
+            scrollPosition += deltaY;
+            imageContainer.style.transform = `translateY(-${scrollPosition}px) scale(${currentZoom})`;
+        } else {
+            scrollPosition += deltaX;
+            imageContainer.style.transform = `translateX(-${scrollPosition}px) scale(${currentZoom})`;
+        }
     }
     
     // Atualizar a barra de progresso
@@ -1214,6 +1211,37 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTheme();
 });
 
+function adjustFullscreenContainer() {
+    const viewer = document.getElementById('viewer');
+    const imageContainer = document.getElementById('imageContainer');
+    const viewerContainer = document.querySelector('.viewer-container');
+    
+    if (!viewer || !imageContainer || !viewerContainer) return;
+    
+    // Verificar se está em modo fullscreen
+    const isFullscreen = viewer.classList.contains('fullscreen-viewer');
+    
+    if (isFullscreen) {
+        // Resetar transformações
+        imageContainer.style.transform = `scale(${currentZoom})`;
+        
+        // Obter dimensões
+        const viewerRect = viewer.getBoundingClientRect();
+        const containerRect = imageContainer.getBoundingClientRect();
+        
+        // Calcular offsets para centralização
+        const offsetX = (viewerRect.width - containerRect.width * currentZoom) / 2;
+        const offsetY = (viewerRect.height - containerRect.height * currentZoom) / 2;
+        
+        // Aplicar transformação mantendo o zoom
+        if (isVertical) {
+            imageContainer.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${currentZoom})`;
+        } else {
+            imageContainer.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${currentZoom})`;
+        }
+    }
+}
+
 function toggleFullscreen() {
     const viewer = document.getElementById('viewer');
     const viewerContainer = document.querySelector('.viewer-container');
@@ -1241,8 +1269,7 @@ function toggleFullscreen() {
             const imageContainer = document.getElementById('imageContainer');
             if (imageContainer) {
                 imageContainer.style.margin = '0 auto';
-                adjustImageContainer();
-                centerImages();
+                adjustFullscreenContainer();
             }
 
             // Solicitar tela cheia
