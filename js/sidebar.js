@@ -24,7 +24,6 @@ class Sidebar {
     }
 
     initializeDropZone() {
-        // Add click handler for file selection
         this.dropZone.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
@@ -32,23 +31,39 @@ class Sidebar {
             input.accept = 'image/*';
             
             input.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files).filter(file => 
-                    file.type.startsWith('image/'));
+                const files = Array.from(e.target.files)
+                    .filter(file => file.type.startsWith('image/'));
                 
-                for (const file of files) {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        await this.db.addImage(e.target.result);
-                        await this.loadExistingImages();
-                    };
-                    reader.readAsDataURL(file);
+                // Process files in sequence to maintain order
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const imageData = await this.readFileAsDataURL(file);
+                    await this.db.addImage(imageData);
                 }
+                await this.loadExistingImages();
             });
             
             input.click();
         });
 
-        // Existing drag and drop handlers
+        // Update drop handler to maintain order as well
+        this.dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            this.dropZone.classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files)
+                .filter(file => file.type.startsWith('image/'));
+            
+            // Process files in sequence to maintain order
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const imageData = await this.readFileAsDataURL(file);
+                await this.db.addImage(imageData);
+            }
+            await this.loadExistingImages();
+        });
+
+        // Keep existing dragover and dragleave handlers
         this.dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.dropZone.classList.add('drag-over');
@@ -56,23 +71,6 @@ class Sidebar {
 
         this.dropZone.addEventListener('dragleave', () => {
             this.dropZone.classList.remove('drag-over');
-        });
-
-        this.dropZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            this.dropZone.classList.remove('drag-over');
-            
-            const files = Array.from(e.dataTransfer.files).filter(file => 
-                file.type.startsWith('image/'));
-
-            for (const file of files) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    await this.db.addImage(e.target.result);
-                    await this.loadExistingImages();
-                };
-                reader.readAsDataURL(file);
-            }
         });
     }
 
@@ -191,5 +189,15 @@ class Sidebar {
         div.appendChild(img);
         div.appendChild(removeBtn);
         return div;
+    }
+
+    // Add helper method to read file
+    readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e.error);
+            reader.readAsDataURL(file);
+        });
     }
 }
