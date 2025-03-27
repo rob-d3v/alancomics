@@ -132,7 +132,7 @@ class Sidebar {
         const countdown = document.getElementById('countdown');
         countdown.style.display = 'block';
         
-        for (let i = 3; i > 0; i--) {
+        for (let i = 5; i > 0; i--) {
             countdown.textContent = i;
             await new Promise(resolve => setTimeout(resolve, 1000));
         }

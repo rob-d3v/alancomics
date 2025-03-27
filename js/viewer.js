@@ -197,15 +197,33 @@ class ComicsViewer {
     zoom(delta) {
         this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel + delta));
         
-        // Apply zoom to all content types
-        this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
-            img.style.width = `${100 * this.zoomLevel}%`;
-            img.style.maxWidth = `${100 * this.zoomLevel}%`;
-        });
-        
-        this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
-            container.style.width = `${100 * this.zoomLevel}%`;
-        });
+        if (this.container.classList.contains('horizontal')) {
+            // Modo horizontal - tratamento específico
+            this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
+                img.style.maxHeight = `${80 * this.zoomLevel}vh`;
+                img.style.height = 'auto';
+                img.style.width = 'auto';
+            });
+            
+            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+                container.style.maxHeight = `${80 * this.zoomLevel}vh`;
+                container.style.height = 'auto';
+                container.style.width = 'auto';
+            });
+            
+            // Ajustar o alinhamento vertical para um centro comum
+            this.container.style.alignItems = 'center';
+        } else {
+            // Modo vertical - mantém o comportamento original
+            this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
+                img.style.width = `${100 * this.zoomLevel}%`;
+                img.style.maxWidth = `${100 * this.zoomLevel}%`;
+            });
+            
+            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+                container.style.width = `${100 * this.zoomLevel}%`;
+            });
+        }
     }
 
     scrollToTop() {
@@ -293,6 +311,36 @@ class ComicsViewer {
 
     setScrollDirection(direction) {
         this.container.className = `images-container ${direction}`;
+        
+        // Aplicar estilos específicos para o modo horizontal
+        if (direction === 'horizontal') {
+            this.container.style.alignItems = 'center';
+            this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
+                img.style.maxHeight = `${80 * this.zoomLevel}vh`;
+                img.style.height = 'auto';
+                img.style.width = 'auto';
+            });
+            
+            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+                container.style.maxHeight = `${80 * this.zoomLevel}vh`;
+                container.style.height = 'auto';
+                container.style.width = 'auto';
+            });
+        } else {
+            // Restaurar estilos para o modo vertical
+            this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
+                img.style.maxHeight = '';
+                img.style.height = '';
+                img.style.width = `${100 * this.zoomLevel}%`;
+                img.style.maxWidth = `${100 * this.zoomLevel}%`;
+            });
+            
+            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+                container.style.maxHeight = '';
+                container.style.height = '';
+                container.style.width = `${100 * this.zoomLevel}%`;
+            });
+        }
     }
 
     setSpacing(spacing) {
