@@ -15,6 +15,9 @@
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js"></script>
+    <!-- Add before your other scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 
 <body>
@@ -70,6 +73,43 @@
                 <button id="startButton" class="start-button">
                     <i class="fas fa-play"></i> Iniciar
                 </button>
+                
+                <!-- Add narration settings here, inside the existing settings div -->
+                <div class="settings-section narration-settings">
+                    <div class="section-header">
+                        <h3>Narração</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enableNarration">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div id="narrationControls" class="narration-controls disabled">
+                        <div class="setting-group">
+                            <label for="voiceSelect">Voz:</label>
+                            <select id="voiceSelect"></select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="pitchRange">Tom: <span id="pitchValue">1.0</span></label>
+                            <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="rateRange">Velocidade: <span id="rateValue">1.0</span></label>
+                            <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="pauseTime">Pausa entre páginas (segundos):</label>
+                            <input type="number" id="pauseTime" min="1" max="10" value="2">
+                        </div>
+                        
+                        <button id="startNarration" class="narration-button">
+                            <i class="fas fa-book-reader"></i> Iniciar Narração
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="thumbnails" id="thumbnails">
@@ -128,13 +168,14 @@
         </div>
     </div>
 
-    <!-- Add before closing body tag -->
+    <!-- Add before closing body tag, after other scripts -->
     <script src="js/db.js"></script>
     <script src="js/viewer.js"></script>
     <script src="js/themes.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
     <script src="js/donation.js"></script>
+    <script src="js/narration.js"></script>
 </body>
 
 </html>
