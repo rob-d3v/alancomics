@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,15 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Add these script tags in the head section of your HTML file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        // Set worker source for PDF.js
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.88/epub.min.js"></script>
 </head>
+
 <body>
     <header>
         <div class="title">Alan Comics</div>
@@ -27,10 +36,13 @@
         </div>
         <div class="sidebar-content">
             <div class="drop-zone" id="dropZone">
-                Arraste suas imagens aqui<br>
-                ou clique para selecionar
+                <i class="upload-icon"></i>
+                <!-- <h3>Solte seus arquivos aqui</h3> -->
+                <p>Arraste e solte imagens, PDFs ou EPUBs</p>
+                <p class="upload-alt">ou <span class="upload-button">clique para selecionar arquivos</span></p>
+                <p class="file-types">Formatos aceitos: JPG, PNG, PDF, EPUB</p>
             </div>
-            
+
             <div class="settings">
                 <div class="setting-group">
                     <label>Direção da Rolagem:</label>
@@ -46,8 +58,8 @@
                 </div>
 
                 <div class="setting-group">
-                    <label>Velocidade de Rolagem:</label>
-                    <input type="range" id="scrollSpeed" min="1" max="10" value="5">
+                    <label>Velocidade de Rolagem: <span id="speedValue">1.0</span></label>
+                    <input type="range" id="scrollSpeed" min="0.1" max="10" step="0.1" value="1">
                 </div>
 
                 <button id="startButton" class="start-button">
@@ -69,7 +81,7 @@
 
     <main id="viewer">
         <div class="images-container" id="imagesContainer"></div>
-        
+
         <div class="floating-controls">
             <button id="zoomIn"><i class="fas fa-search-plus"></i></button>
             <button id="zoomOut"><i class="fas fa-search-minus"></i></button>
@@ -81,10 +93,11 @@
     <div class="countdown" id="countdown"></div>
 
     <!-- Add before closing body tag -->
-        <script src="js/db.js"></script>
-        <script src="js/viewer.js"></script>
-        <script src="js/themes.js"></script>
-        <script src="js/sidebar.js"></script>
-        <script src="js/main.js"></script>
-    </body>
+    <script src="js/db.js"></script>
+    <script src="js/viewer.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
 </html>

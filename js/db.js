@@ -1,8 +1,8 @@
 class ComicsDB {
     constructor() {
         this.dbName = 'AlanComicsDB';
-        this.dbVersion = 1;
-        this.storeName = 'images';
+        this.dbVersion = 2; // Increased version for schema update
+        this.storeName = 'content';
         this.db = null;
     }
 
@@ -18,6 +18,13 @@ class ComicsDB {
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
+                
+                // If we're upgrading from v1, delete the old store
+                if (event.oldVersion < 2 && db.objectStoreNames.contains('images')) {
+                    db.deleteObjectStore('images');
+                }
+                
+                // Create new content store if it doesn't exist
                 if (!db.objectStoreNames.contains(this.storeName)) {
                     db.createObjectStore(this.storeName, {
                         keyPath: 'id',
@@ -28,18 +35,23 @@ class ComicsDB {
         });
     }
 
-    async addImage(imageData) {
+    async addContent(data, fileType, fileName) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
-            const request = store.add({ data: imageData });
+            const request = store.add({ 
+                data: data,
+                type: fileType,
+                name: fileName,
+                dateAdded: new Date().toISOString()
+            });
 
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
 
-    async getAllImages() {
+    async getAllContent() {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readonly');
             const store = transaction.objectStore(this.storeName);
@@ -50,7 +62,7 @@ class ComicsDB {
         });
     }
 
-    async removeImage(id) {
+    async removeContent(id) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);

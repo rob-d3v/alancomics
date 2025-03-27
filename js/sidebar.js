@@ -20,7 +20,7 @@ class Sidebar {
         this.initializeSettings();
         this.initializeSidebarToggle();
         this.initializeClearAll();
-        this.loadExistingImages();
+        this.loadExistingImages(); // Keep this name consistent
     }
 
     initializeDropZone() {
@@ -28,19 +28,17 @@ class Sidebar {
             const input = document.createElement('input');
             input.type = 'file';
             input.multiple = true;
-            input.accept = 'image/*';
+            input.accept = 'image/*,application/pdf,application/epub+zip';
             
             input.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files)
-                    .filter(file => file.type.startsWith('image/'));
+                const files = Array.from(e.target.files);
                 
                 // Process files in sequence to maintain order
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    const imageData = await this.readFileAsDataURL(file);
-                    await this.db.addImage(imageData);
+                    await this.processFile(file);
                 }
-                await this.loadExistingImages();
+                await this.loadExistingImages(); // Change to match the method name
             });
             
             input.click();
@@ -51,16 +49,14 @@ class Sidebar {
             e.preventDefault();
             this.dropZone.classList.remove('drag-over');
             
-            const files = Array.from(e.dataTransfer.files)
-                .filter(file => file.type.startsWith('image/'));
+            const files = Array.from(e.dataTransfer.files);
             
             // Process files in sequence to maintain order
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const imageData = await this.readFileAsDataURL(file);
-                await this.db.addImage(imageData);
+                await this.processFile(file);
             }
-            await this.loadExistingImages();
+            await this.loadExistingImages(); // Change to match the method name
         });
 
         // Keep existing dragover and dragleave handlers
@@ -74,6 +70,24 @@ class Sidebar {
         });
     }
 
+    async processFile(file) {
+        const fileType = file.type;
+        const fileName = file.name;
+        
+        if (fileType.startsWith('image/')) {
+            const imageData = await this.readFileAsDataURL(file);
+            await this.db.addContent(imageData, 'image', fileName);
+        } 
+        else if (fileType === 'application/pdf') {
+            const pdfData = await this.readFileAsDataURL(file);
+            await this.db.addContent(pdfData, 'pdf', fileName);
+        }
+        else if (fileType === 'application/epub+zip') {
+            const epubData = await this.readFileAsDataURL(file);
+            await this.db.addContent(epubData, 'epub', fileName);
+        }
+    }
+
     initializeSettings() {
         document.getElementById('scrollDirection').addEventListener('change', (e) => {
             this.viewer.setScrollDirection(e.target.value);
@@ -82,6 +96,25 @@ class Sidebar {
         document.getElementById('spacing').addEventListener('input', (e) => {
             this.viewer.setSpacing(e.target.value);
         });
+
+        // Melhorar o controle de velocidade de rolagem
+        const speedSlider = document.getElementById('scrollSpeed');
+        const speedValue = document.getElementById('speedValue');
+        
+        // Configurar o slider para valores menores
+        speedSlider.min = "0.1";  // Velocidade mínima muito mais lenta
+        speedSlider.max = "10";
+        speedSlider.step = "0.1";  // Permitir incrementos menores
+        speedSlider.value = "1";   // Valor padrão moderado
+        
+        // Atualizar o valor exibido quando o slider mudar
+        speedSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            speedValue.textContent = value.toFixed(1);
+        });
+        
+        // Inicializar o valor exibido
+        speedValue.textContent = parseFloat(speedSlider.value).toFixed(1);
 
         const startButton = document.getElementById('startButton');
         startButton.addEventListener('click', () => {
@@ -111,7 +144,8 @@ class Sidebar {
         startButton.innerHTML = '<i class="fas fa-stop"></i> Parar';
         startButton.classList.add('active');
         
-        const speed = document.getElementById('scrollSpeed').value;
+        // Usar o valor exato do slider para a velocidade
+        const speed = parseFloat(document.getElementById('scrollSpeed').value);
         this.viewer.startAutoScroll(speed);
         
         this.disableControls(true);
@@ -157,9 +191,9 @@ class Sidebar {
     }
 
     async loadExistingImages() {
-        const images = await this.db.getAllImages();
-        console.log('Loading images:', images.length); // Debug log
-        await this.viewer.displayImages(images);
+        const images = await this.db.getAllContent(); // Change to use the new method name
+        console.log('Loading content:', images.length); // Debug log
+        await this.viewer.displayContent(images); // Change to use the new method name
         this.updateThumbnails(images);
     }
 
@@ -176,13 +210,27 @@ class Sidebar {
         div.className = 'thumbnail';
         
         const img = document.createElement('img');
-        img.src = image.data;
+        
+        // Aqui está o erro - você está usando 'item' em vez de 'image'
+        if (image.type === 'image') {
+            img.src = image.data;
+        } else if (image.type === 'pdf') {
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODQgNTEyIj48cGF0aCBmaWxsPSIjZmY1NzIyIiBkPSJNMTgxLjkgMjU2LjFjLTUtMTYtNC45LTMyLjctLjEtNDguNiA3LjQtMjUuOCAyMy43LTQyLjMgNDcuOS00Mi4zIDI0LjYgMCA0MC4zIDE2LjkgNDcuOCA0Mi4yIDQuMS0xMy42IDQuMy0yNy4yIDEuOS00MC44SDEzMi4xYy0xMy4zIDAtMjQuMiAxMC45LTI0LjIgMjQuMnYxMzkuNmMwIDEzLjMgMTAuOSAyNC4yIDI0LjIgMjQuMmgxNzAuNGMxMy4zIDAgMjQuMi0xMC45IDI0LjItMjQuMlYyNTZIMTgxLjl6TTIwNy4yIDMwNGMtMTQuOC0xNi0zMS41LTI4LjgtNDkuNS0zNi44IDEzLjMtMTIuMyAyNC4yLTI3LjggMzEuNi00NS44IDguNyAyMC44IDIwLjcgMzcuMSAzNC45IDQ4LjQtMTQuMS0xLjQtMTIuNy0xLjktMTctNS44ek0zMzYgMTI4SDQ4Yy0yNi41IDAtNDggMjEuNS00OCA0OHYyNTZjMCAyNi41IDIxLjUgNDggNDggNDhoMjg4YzI2LjUgMCA0OC0yMS41IDQ4LTQ4VjE3NmMwLTI2LjUtMjEuNS00OC00OC00OHptMCAzMDRINDhWMTc2aDI4OHYyNTZ6Ii8+PC9zdmc+';
+        } else if (image.type === 'epub') {
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NDggNTEyIj48cGF0aCBmaWxsPSIjMDA5Njg4IiBkPSJNNDQ4IDE2MFYzMjBDNDQ4IDM1Ny4zIDQxOC4zIDM4NyAzODEgMzg3SDEyMEw2OCA0MzlWMzg3SDY3QzI5LjcgMzg3IDAgMzU3LjMgMCAzMjBWMTYwQzAgMTIyLjcgMjkuNyA5MyA2NyA5M0gzODFDNDE4LjMgOTMgNDQ4IDEyMi43IDQ0OCAxNjB6TTEyOCAyMTZjMC04LjgtNy4yLTE2LTE2LTE2SDgwYy04LjggMC0xNiA3LjItMTYgMTZ2NjRjMCA4LjggNy4yIDE2IDE2IDE2aDMyYzguOCAwIDE2LTcuMiAxNi0xNnYtNjR6TTI1NiAyMTZjMC04LjgtNy4yLTE2LTE2LTE2aC0zMmMtOC44IDAtMTYgNy4yLTE2IDE2djY0YzAgOC44IDcuMiAxNiAxNiAxNmgzMmM4LjggMCAxNi03LjIgMTYtMTZ2LTY0ek0zODQgMjE2YzAtOC44LTcuMi0xNi0xNi0xNmgtMzJjLTguOCAwLTE2IDcuMi0xNiAxNnY2NGMwIDguOCA3LjIgMTYgMTYgMTZoMzJjOC44IDAgMTYtNy4yIDE2LTE2di02NHoiLz48L3N2Zz4=';
+        } else {
+            // Default icon for unknown types
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODQgNTEyIj48cGF0aCBmaWxsPSIjOWU5ZTllIiBkPSJNMzY5LjkgOTcuOUwyODYgMTRDMjc3IDUgMjY0LjggLS4xIDI1Mi4xLS4xSDQ4QzIxLjUgMCA0IDIxLjUgNCA0OHY0MTZjMCAyNi41IDIxLjUgNDggNDggNDhoMjg4YzI2LjUgMCA0OC0yMS41IDQ4LTQ4VjEzMS45YzAtMTIuNy01LjEtMjUtMTQuMS0zNHpNMzMyLjEgMTI4SDI1NlY1MS45bDc2LjEgNzYuMXpNNDggNDY0VjQ4aDE2MHY5NmMwIDEzLjMgMTAuNyAyNCAyNCAyNGg5NnYyOTZINDh6Ii8+PC9zdmc+';
+        }
+        
+        // Add file name as title
+        div.title = image.name || '';
         
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove';
         removeBtn.innerHTML = '×';
         removeBtn.onclick = async () => {
-            await this.db.removeImage(image.id);
+            await this.db.removeContent(image.id);
             await this.loadExistingImages();
         };
         
