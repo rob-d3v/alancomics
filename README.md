@@ -1,8 +1,8 @@
-Alan Comics - Visualizador de Imagens Responsivo
+Leitor de Quadrinhos e Livros - Visualizador de Imagens Responsivo
 
 ## Sobre o Projeto
 
-Alan Comics é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
+Leitor de Quadrinhos e Livros é um visualizador de imagens moderno, intuitivo e totalmente responsivo, desenvolvido para leitura de quadrinhos, mangás, e coleções de imagens. A aplicação oferece uma experiência de leitura fluida tanto em desktops quanto em dispositivos móveis.
 
 ### Recursos Principais
 
