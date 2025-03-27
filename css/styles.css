@@ -684,3 +684,40 @@ html {
     background-color: rgba(108, 99, 255, 0.15);
     border-color: #5048e5;
 }
+/* Ajuste para o visualizador quando o header estiver oculto */
+header {
+    transition: opacity 0.3s ease, height 0.3s ease;
+    height: auto;
+    overflow: hidden;
+}
+
+:fullscreen header:not(.visible) {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border: none;
+}
+
+#viewer.header-hidden {
+    height: 100vh; /* Ocupar toda a altura da viewport */
+    top: 0;
+    position: absolute;
+}
+
+/* Para navegadores mais antigos */
+:-webkit-full-screen header:not(.visible) {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border: none;
+}
+
+:-moz-full-screen header:not(.visible) {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border: none;
+}

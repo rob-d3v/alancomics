@@ -177,6 +177,8 @@ class Sidebar {
     initializeSidebarToggle() {
         const sidebarToggle = document.getElementById('sidebarToggle');
         const floatingControls = document.querySelector('.floating-controls');
+        const header = document.querySelector('header');
+        const viewer = document.getElementById('viewer');
         let mouseTimeout = null;
         let isAutoHideEnabled = false;
         
@@ -191,11 +193,15 @@ class Sidebar {
                 // Mostrar elementos
                 sidebarToggle.classList.add('visible');
                 floatingControls.classList.add('visible');
+                header.classList.add('visible');
+                viewer.classList.remove('header-hidden');
                 
                 // Configurar timeout para ocultar após 2 segundos
                 mouseTimeout = setTimeout(() => {
                     sidebarToggle.classList.remove('visible');
                     floatingControls.classList.remove('visible');
+                    header.classList.remove('visible');
+                    viewer.classList.add('header-hidden');
                 }, 2000);
             }
         };
@@ -221,6 +227,8 @@ class Sidebar {
                 }
                 sidebarToggle.classList.add('visible');
                 floatingControls.classList.add('visible');
+                header.classList.add('visible');
+                viewer.classList.remove('header-hidden');
             }
         });
     }
