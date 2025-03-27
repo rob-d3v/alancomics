@@ -496,228 +496,169 @@ html {
 
 /* Add these styles to your existing CSS file */
 
-.pdf-container,
-.epub-container {
-    margin-bottom: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: var(--card-background);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.content-title {
-    padding: 10px 15px;
-    font-weight: bold;
-    background-color: var(--accent-color, var(--primary-color));
-    color: var(--text-on-accent);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.pdf-page {
-    margin: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.pdf-page canvas {
-    display: block;
-    margin: 0 auto;
-    max-width: 100%;
-    height: auto;
-}
-
-.epub-viewer {
-    min-height: 600px;
-    background-color: #fff;
-    padding: 20px;
-}
-
-.epub-navigation {
+/* Header controls container */
+.header-controls {
     display: flex;
-    justify-content: space-between;
-    padding: 10px 15px;
-    background-color: var(--background-color);
-    border-top: 1px solid var(--border-color);
+    align-items: center;
+    gap: 15px;
 }
 
-.epub-navigation button {
-    padding: 8px 16px;
-    background-color: var(--accent-color, var(--primary-color));
+/* Donation Button */
+.donate-button {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
     color: var(--text-on-accent);
     border: none;
-    border-radius: 4px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.donate-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(var(--accent-color-rgb), 0.4);
+}
+
+.donate-button i {
+    font-size: 16px;
+}
+
+/* Modal Styles - Updated */
+.modal-content {
+    background-color: var(--background-color);
+    margin: 5% auto; /* Changed from 10% to 5% to position higher */
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    width: 90%;
+    position: relative;
+    animation: modalFadeIn 0.3s ease;
+    color: var(--text-color);
+    opacity: 1;
+    max-height: 85vh; /* Added max height */
+    overflow-y: auto; /* Added scrolling if content is too tall */
+}
+
+@media (max-width: 768px) {
+    .donation-container {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 8% auto; /* Adjusted for mobile */
+        padding: 20px;
+    }
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+/* Ensure text is readable */
+.modal h2, 
+.modal h3, 
+.modal p {
+    color: var(--text-color);
+}
+
+/* Make the QR code stand out better */
+.qr-code img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    background-color: white;
+    padding: 10px;
+}
+
+.donation-info {
+    flex: 1;
+    min-width: 250px;
+}
+
+.pix-key-container {
+    display: flex;
+    margin: 15px 0;
+}
+
+.pix-key-container input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px 0 0 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.copy-button {
+    padding: 10px 15px;
+    background-color: var(--accent-color);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 0 6px 6px 0;
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
-.epub-navigation button:hover {
-    background-color: var(--accent-hover-color, var(--primary-hover-color));
+.copy-button:hover {
+    background-color: var(--primary-color);
 }
 
-.error-message {
-    padding: 15px;
-    margin: 10px 0;
-    background-color: #ffebee;
-    color: #c62828;
-    border-left: 4px solid #c62828;
-    border-radius: 4px;
+.copied-message {
+    display: none;
+    color: var(--accent-color);
+    font-size: 14px;
+    margin-top: 5px;
 }
 
-.drop-zone {
-    border: 2px dashed #6c63ff;
-    border-radius: 12px;
-    padding: 30px;
-    text-align: center;
-    background-color: rgba(108, 99, 255, 0.05);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    margin: 20px auto;
-    max-width: 500px;
+.contact-info {
+    margin-top: 25px;
 }
 
-.drop-zone:hover {
-    background-color: rgba(108, 99, 255, 0.1);
-    border-color: #5048e5;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+.linkedin-link {
+    display: inline-flex;
+    align-items: center;
+    color: #0077b5;
+    text-decoration: none;
+    font-weight: 500;
+    margin-top: 10px;
+    transition: color 0.2s;
 }
 
-.upload-icon {
-    display: block;
-    width: 50px;
-    height: 50px;
-    margin: 0 auto 15px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c63ff'%3E%3Cpath d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z'/%3E%3C/svg%3E");
-    background-size: contain;
-    background-repeat: no-repeat;
+.linkedin-link i {
+    margin-right: 8px;
+    font-size: 18px;
 }
 
-.drop-zone h3 {
-    color: #333;
-    margin: 0 0 10px;
-    font-size: 20px;
-}
-
-.drop-zone p {
-    margin: 5px 0;
-    color: #666;
-}
-
-.upload-alt {
-    margin-top: 15px !important;
-}
-
-.upload-button {
-    color: #6c63ff;
-    font-weight: bold;
+.linkedin-link:hover {
+    color: #00669c;
     text-decoration: underline;
 }
 
-.file-types {
-    font-size: 12px;
-    color: #888;
-    margin-top: 15px !important;
-}
-
-.drop-zone.dragover {
-    background-color: rgba(108, 99, 255, 0.15);
-    border-color: #5048e5;
-}
-
-.drop-zone {
-    border: 2px dashed #6c63ff;
-    border-radius: 12px;
-    padding: 30px;
-    text-align: center;
-    background-color: rgba(108, 99, 255, 0.05);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    margin: 20px auto;
-    max-width: 500px;
-}
-
-.drop-zone:hover {
-    background-color: rgba(108, 99, 255, 0.1);
-    border-color: #5048e5;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.upload-icon {
-    display: block;
-    width: 50px;
-    height: 50px;
-    margin: 0 auto 15px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c63ff'%3E%3Cpath d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z'/%3E%3C/svg%3E");
-    background-size: contain;
-    background-repeat: no-repeat;
-}
-
-.drop-zone h3 {
-    color: #333;
-    margin: 0 0 10px;
-    font-size: 20px;
-}
-
-.drop-zone p {
-    margin: 5px 0;
-    color: #666;
-}
-
-.upload-alt {
-    margin-top: 15px !important;
-}
-
-.upload-button {
-    color: #6c63ff;
-    font-weight: bold;
-    text-decoration: underline;
-}
-
-.file-types {
-    font-size: 12px;
-    color: #888;
-    margin-top: 15px !important;
-}
-
-.drop-zone.dragover {
-    background-color: rgba(108, 99, 255, 0.15);
-    border-color: #5048e5;
-}
-/* Ajuste para o visualizador quando o header estiver oculto */
-header {
-    transition: opacity 0.3s ease, height 0.3s ease;
-    height: auto;
-    overflow: hidden;
-}
-
-:fullscreen header:not(.visible) {
-    height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    border: none;
-}
-
-#viewer.header-hidden {
-    height: 100vh; /* Ocupar toda a altura da viewport */
-    top: 0;
-    position: absolute;
-}
-
-/* Para navegadores mais antigos */
-:-webkit-full-screen header:not(.visible) {
-    height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    border: none;
-}
-
-:-moz-full-screen header:not(.visible) {
-    height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    border: none;
+@media (max-width: 768px) {
+    .donation-container {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 15% auto;
+        padding: 20px;
+    }
 }

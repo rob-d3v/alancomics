@@ -20,13 +20,18 @@
 <body>
     <header>
         <div class="title">Alan Comics</div>
-        <div class="theme-selector">
-            <select id="themeSelect">
-                <option value="default">Tema Padrão</option>
-                <option value="dark">Tema Escuro</option>
-                <option value="light">Tema Claro</option>
-                <option value="sepia">Tema Sépia</option>
-            </select>
+        <div class="header-controls">
+            <div class="theme-selector">
+                <select id="themeSelect">
+                    <option value="default">Tema Padrão</option>
+                    <option value="dark">Tema Escuro</option>
+                    <option value="light">Tema Claro</option>
+                    <option value="sepia">Tema Sépia</option>
+                </select>
+            </div>
+            <button id="donateButton" class="donate-button" title="Apoie este projeto">
+                <i class="fas fa-heart"></i>
+            </button>
         </div>
     </header>
 
@@ -92,12 +97,44 @@
 
     <div class="countdown" id="countdown"></div>
 
+    <!-- Add donation modal -->
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Apoie este Projeto</h2>
+            <p>Obrigado por usar o Alan Comics! Se você gostou e deseja contribuir com o desenvolvimento, considere fazer uma doação.</p>
+            
+            <div class="donation-container">
+                <div class="qr-code">
+                    <img src="qrCode.png" alt="QR Code PIX">
+                </div>
+                <div class="donation-info">
+                    <h3>PIX</h3>
+                    <div class="pix-key-container">
+                        <input type="text" id="pixKey" value="0020126360014BR.GOV.BCB.PIX0114+5562920005056520400005303986540510.005802BR5925Robson Pereira da Costa J6009SAO PAULO62140510ktr10bIeyP63046E56" readonly>
+                        <button id="copyPixKey" class="copy-button">Copiar</button>
+                    </div>
+                    <div class="copied-message" id="copiedMessage">Copiado!</div>
+                    
+                    <div class="contact-info">
+                        <h3>Contato</h3>
+                        <p>Tem ideias ou sugestões? Entre em contato:</p>
+                        <a href="https://www.linkedin.com/in/robseng/" target="_blank" class="linkedin-link">
+                            <i class="fab fa-linkedin"></i> LinkedIn
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Add before closing body tag -->
     <script src="js/db.js"></script>
     <script src="js/viewer.js"></script>
     <script src="js/themes.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/donation.js"></script>
 </body>
 
 </html>
