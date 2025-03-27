@@ -175,9 +175,53 @@ class Sidebar {
     }
 
     initializeSidebarToggle() {
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const floatingControls = document.querySelector('.floating-controls');
+        let mouseTimeout = null;
+        let isAutoHideEnabled = false;
+        
+        // Função para ocultar elementos após 2 segundos
+        const setupAutoHide = () => {
+            if (isAutoHideEnabled) {
+                // Limpar qualquer timeout existente
+                if (mouseTimeout) {
+                    clearTimeout(mouseTimeout);
+                }
+                
+                // Mostrar elementos
+                sidebarToggle.classList.add('visible');
+                floatingControls.classList.add('visible');
+                
+                // Configurar timeout para ocultar após 2 segundos
+                mouseTimeout = setTimeout(() => {
+                    sidebarToggle.classList.remove('visible');
+                    floatingControls.classList.remove('visible');
+                }, 2000);
+            }
+        };
+        
+        // Alternar entre sidebar colapsada e expandida
+        sidebarToggle.addEventListener('click', () => {
             this.sidebar.classList.toggle('collapsed');
             this.viewer.viewer.classList.toggle('full-width');
+            
+            // Ativar/desativar auto-hide quando a sidebar estiver colapsada
+            isAutoHideEnabled = this.sidebar.classList.contains('collapsed');
+            
+            if (isAutoHideEnabled) {
+                // Adicionar listener de movimento do mouse
+                document.addEventListener('mousemove', setupAutoHide);
+                // Iniciar o timeout inicial
+                setupAutoHide();
+            } else {
+                // Remover listener e garantir que os elementos estejam visíveis
+                document.removeEventListener('mousemove', setupAutoHide);
+                if (mouseTimeout) {
+                    clearTimeout(mouseTimeout);
+                }
+                sidebarToggle.classList.add('visible');
+                floatingControls.classList.add('visible');
+            }
         });
     }
 

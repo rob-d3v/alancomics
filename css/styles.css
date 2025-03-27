@@ -470,10 +470,28 @@ html {
     opacity: 1;
 }
 
-/* Ensure controls are always visible when not in fullscreen */
-header,
+/* Auto-hide para sidebar toggle e controles flutuantes */
+.sidebar-toggle,
 .floating-controls {
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-toggle.visible,
+.floating-controls.visible {
     opacity: 1;
+}
+
+.sidebar.collapsed .sidebar-toggle:not(.visible),
+.sidebar.collapsed ~ main .floating-controls:not(.visible) {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Garantir que os elementos sejam sempre visíveis quando a sidebar não estiver colapsada */
+.sidebar:not(.collapsed) .sidebar-toggle,
+.sidebar:not(.collapsed) ~ main .floating-controls {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* Add these styles to your existing CSS file */
