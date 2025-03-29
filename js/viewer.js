@@ -209,28 +209,46 @@ class ComicsViewer {
         // Se o zoom não mudou, não faça nada
         if (oldZoomLevel === this.zoomLevel) return;
         
+        // Save current scroll position relative to content
+        let relativeScrollPosition;
+        
         if (this.container.classList.contains('horizontal')) {
+            // For horizontal mode, calculate relative position based on scrollLeft
+            const totalWidth = this.viewer.scrollWidth;
+            relativeScrollPosition = this.viewer.scrollLeft / totalWidth;
+            
             // Modo horizontal - tratamento específico
             this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
                 img.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 img.style.height = 'auto';
                 img.style.width = 'auto';
+                img.style.alignSelf = 'center'; // Keep images centered vertically
             });
             
             this.container.querySelectorAll('.epub-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
                 container.style.width = 'auto';
+                container.style.alignSelf = 'center'; // Keep containers centered vertically
             });
             
-            // Ajustar o alinhamento vertical para um centro comum
+            // Ensure container is properly set for vertical centering
             this.container.style.alignItems = 'center';
+            this.container.style.minHeight = '100%';
             
             // Recarregar PDFs com novo zoom
             this.container.querySelectorAll('.pdf-container').forEach(container => {
+                container.style.maxHeight = `${80 * this.zoomLevel}vh`;
+                container.style.height = 'auto';
+                container.style.width = 'auto';
+                container.style.alignSelf = 'center'; // Keep PDFs centered vertically
                 this.reloadPdfWithZoom(container, this.zoomLevel);
             });
         } else {
+            // For vertical mode, calculate relative position based on scrollTop
+            const totalHeight = this.viewer.scrollHeight;
+            relativeScrollPosition = this.viewer.scrollTop / totalHeight;
+            
             // Modo vertical - mantém o comportamento original
             this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
                 img.style.width = `${100 * this.zoomLevel}%`;
@@ -246,6 +264,17 @@ class ComicsViewer {
                 this.reloadPdfWithZoom(container, this.zoomLevel);
             });
         }
+        
+        // After DOM updates, restore the relative scroll position
+        setTimeout(() => {
+            if (this.container.classList.contains('horizontal')) {
+                const newTotalWidth = this.viewer.scrollWidth;
+                this.viewer.scrollLeft = relativeScrollPosition * newTotalWidth;
+            } else {
+                const newTotalHeight = this.viewer.scrollHeight;
+                this.viewer.scrollTop = relativeScrollPosition * newTotalHeight;
+            }
+        }, 50);
     }
 
     // Novo método para recarregar PDF com zoom atualizado
