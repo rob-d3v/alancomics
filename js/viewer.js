@@ -322,13 +322,21 @@ class ComicsViewer {
     toggleFullscreen() {
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().then(() => {
+                // Add fullscreen-active class to body
+                document.body.classList.add('fullscreen-active');
                 // Enable auto-hide controls when entering fullscreen
                 this.enableAutoHideControls();
+            }).catch(err => {
+                console.error('Erro ao entrar em tela cheia:', err);
             });
         } else {
             document.exitFullscreen().then(() => {
+                // Remove fullscreen-active class from body
+                document.body.classList.remove('fullscreen-active');
                 // Disable auto-hide controls when exiting fullscreen
                 this.disableAutoHideControls();
+            }).catch(err => {
+                console.error('Erro ao sair da tela cheia:', err);
             });
         }
     }
@@ -337,10 +345,11 @@ class ComicsViewer {
         // Store references to elements
         this.header = document.querySelector('header');
         this.floatingControls = document.querySelector('.floating-controls');
+        this.viewer = document.getElementById('viewer');
         
         // Add visible class initially
-        this.header.classList.add('visible');
-        this.floatingControls.classList.add('visible');
+        if (this.header) this.header.classList.add('visible');
+        if (this.floatingControls) this.floatingControls.classList.add('visible');
         
         // Set up mouse movement tracking
         this.mouseTimeout = null;
@@ -348,8 +357,9 @@ class ComicsViewer {
         // Define the mousemove handler
         this.mouseMoveHandler = () => {
             // Show controls
-            this.header.classList.add('visible');
-            this.floatingControls.classList.add('visible');
+            if (this.header) this.header.classList.add('visible');
+            if (this.floatingControls) this.floatingControls.classList.add('visible');
+            if (this.viewer) this.viewer.classList.remove('expanded');
             
             // Clear any existing timeout
             if (this.mouseTimeout) {
@@ -358,8 +368,9 @@ class ComicsViewer {
             
             // Set timeout to hide controls after 2 seconds
             this.mouseTimeout = setTimeout(() => {
-                this.header.classList.remove('visible');
-                this.floatingControls.classList.remove('visible');
+                if (this.header) this.header.classList.remove('visible');
+                if (this.floatingControls) this.floatingControls.classList.remove('visible');
+                if (this.viewer) this.viewer.classList.add('expanded');
             }, 2000);
         };
         
@@ -368,8 +379,9 @@ class ComicsViewer {
         
         // Initial timeout to hide controls
         this.mouseTimeout = setTimeout(() => {
-            this.header.classList.remove('visible');
-            this.floatingControls.classList.remove('visible');
+            if (this.header) this.header.classList.remove('visible');
+            if (this.floatingControls) this.floatingControls.classList.remove('visible');
+            if (this.viewer) this.viewer.classList.add('expanded');
         }, 2000);
     }
 
@@ -391,6 +403,9 @@ class ComicsViewer {
         }
         if (this.floatingControls) {
             this.floatingControls.classList.add('visible');
+        }
+        if (this.viewer) {
+            this.viewer.classList.remove('expanded');
         }
     }
 
@@ -497,6 +512,42 @@ class ComicsViewer {
             .pdf-page canvas {
                 max-width: 100%;
                 height: auto;
+            }
+            
+            /* Adjust header height to be 2/3 of current size */
+            :root {
+                --header-height: 40px;
+            }
+            
+            /* Only apply these styles when in fullscreen mode */
+            body.fullscreen-active #viewer {
+                transition: height 0.3s ease, top 0.3s ease;
+                height: calc(100vh - var(--header-height));
+                top: var(--header-height);
+            }
+            
+            body.fullscreen-active #viewer.expanded {
+                height: 100vh;
+                top: 0;
+            }
+            
+            /* Header styles */
+            body.fullscreen-active header {
+                transition: transform 0.3s ease;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                height: var(--header-height);
+            }
+            
+            body.fullscreen-active header.visible {
+                transform: translateY(0);
+            }
+            
+            body.fullscreen-active header:not(.visible) {
+                transform: translateY(-100%);
             }
         `;
         document.head.appendChild(style);
