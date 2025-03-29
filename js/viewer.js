@@ -9,6 +9,9 @@ class ComicsViewer {
         this.currentEpubBook = null;
         this.initControls();
         this.loadRequiredLibraries();
+        
+        // Adicionar estilos CSS para PDFs
+        this.addPdfStyles();
     }
 
     async loadRequiredLibraries() {
@@ -97,11 +100,15 @@ class ComicsViewer {
             pdfContainer.dataset.type = 'pdf';
             pdfContainer.style.width = `${100 * this.zoomLevel}%`;
             
-            // Remove the title div that was here
+            // Armazenar a URL do PDF para recarregamento posterior
+            pdfContainer.dataset.pdfUrl = pdfItem.data;
             
             // Load the PDF document
             const loadingTask = pdfjsLib.getDocument(pdfItem.data);
             const pdfDoc = await loadingTask.promise;
+            
+            // Armazenar o número de páginas
+            pdfContainer.dataset.numPages = pdfDoc.numPages;
             
             // Create canvas elements for each page
             const numPages = pdfDoc.numPages;
@@ -111,6 +118,7 @@ class ComicsViewer {
                 
                 const canvasContainer = document.createElement('div');
                 canvasContainer.className = 'pdf-page';
+                canvasContainer.dataset.pageNum = i;
                 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
@@ -195,7 +203,11 @@ class ComicsViewer {
     }
 
     zoom(delta) {
+        const oldZoomLevel = this.zoomLevel;
         this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel + delta));
+        
+        // Se o zoom não mudou, não faça nada
+        if (oldZoomLevel === this.zoomLevel) return;
         
         if (this.container.classList.contains('horizontal')) {
             // Modo horizontal - tratamento específico
@@ -205,7 +217,7 @@ class ComicsViewer {
                 img.style.width = 'auto';
             });
             
-            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+            this.container.querySelectorAll('.epub-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
                 container.style.width = 'auto';
@@ -213,6 +225,11 @@ class ComicsViewer {
             
             // Ajustar o alinhamento vertical para um centro comum
             this.container.style.alignItems = 'center';
+            
+            // Recarregar PDFs com novo zoom
+            this.container.querySelectorAll('.pdf-container').forEach(container => {
+                this.reloadPdfWithZoom(container, this.zoomLevel);
+            });
         } else {
             // Modo vertical - mantém o comportamento original
             this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
@@ -220,9 +237,77 @@ class ComicsViewer {
                 img.style.maxWidth = `${100 * this.zoomLevel}%`;
             });
             
-            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+            this.container.querySelectorAll('.epub-container').forEach(container => {
                 container.style.width = `${100 * this.zoomLevel}%`;
             });
+            
+            // Recarregar PDFs com novo zoom
+            this.container.querySelectorAll('.pdf-container').forEach(container => {
+                this.reloadPdfWithZoom(container, this.zoomLevel);
+            });
+        }
+    }
+
+    // Novo método para recarregar PDF com zoom atualizado
+    async reloadPdfWithZoom(pdfContainer, zoomLevel) {
+        try {
+            // Obter a URL do PDF e o número da página atual
+            const pdfUrl = pdfContainer.dataset.pdfUrl;
+            if (!pdfUrl) return;
+            
+            // Salvar a posição de rolagem atual
+            const scrollTop = this.viewer.scrollTop;
+            const scrollLeft = this.viewer.scrollLeft;
+            
+            // Limpar o container
+            pdfContainer.innerHTML = '';
+            
+            // Atualizar a largura do container
+            if (this.container.classList.contains('horizontal')) {
+                pdfContainer.style.maxHeight = `${80 * zoomLevel}vh`;
+                pdfContainer.style.height = 'auto';
+                pdfContainer.style.width = 'auto';
+            } else {
+                pdfContainer.style.width = `${100 * zoomLevel}%`;
+            }
+            
+            // Carregar o PDF
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            const pdfDoc = await loadingTask.promise;
+            
+            // Renderizar cada página com o novo zoom
+            const numPages = parseInt(pdfContainer.dataset.numPages) || pdfDoc.numPages;
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: zoomLevel });
+                
+                const canvasContainer = document.createElement('div');
+                canvasContainer.className = 'pdf-page';
+                canvasContainer.dataset.pageNum = i;
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                canvasContainer.appendChild(canvas);
+                pdfContainer.appendChild(canvasContainer);
+            }
+            
+            // Restaurar a posição de rolagem
+            setTimeout(() => {
+                this.viewer.scrollTop = scrollTop;
+                this.viewer.scrollLeft = scrollLeft;
+            }, 50);
+            
+        } catch (error) {
+            console.error('Error reloading PDF with zoom:', error);
         }
     }
 
@@ -393,5 +478,27 @@ class ComicsViewer {
         this.isScrolling = false;
         clearInterval(this.scrollInterval);
         console.log('Auto-scroll stopped');
+    }
+
+    addPdfStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .pdf-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            .pdf-page {
+                margin-bottom: 2px;
+                display: flex;
+                justify-content: center;
+            }
+            .pdf-page canvas {
+                max-width: 100%;
+                height: auto;
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
