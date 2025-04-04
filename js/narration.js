@@ -224,22 +224,21 @@ class ComicNarrator {
         });
     }
 
-    // Solicitar permissões de áudio do navegador e tentar forçar carregamento de vozes do sistema
+    // Método modificado para não solicitar permissões de microfone desnecessárias
     async requestAudioPermissions() {
         try {
-            // Solicitar acesso ao microfone (isso pode ajudar com permissões de áudio em geral)
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Permissões de áudio concedidas");
+            // Não solicitar mais acesso ao microfone, apenas tentar carregar as vozes
+            console.log("Carregando vozes do sistema sem solicitar permissões de microfone");
             
-            // Forçar uma nova tentativa de carregar as vozes após obter permissão
+            // Tentar carregar as vozes diretamente
             setTimeout(() => {
                 this.loadVoices();
-                console.log("Tentativa adicional de carregar vozes do sistema após permissão");
+                console.log("Tentativa adicional de carregar vozes do sistema");
             }, 1000);
             
             return true;
         } catch (error) {
-            console.warn("Não foi possível obter permissões de áudio:", error);
+            console.warn("Erro ao carregar vozes do sistema:", error);
             return false;
         }
     }
@@ -577,7 +576,7 @@ class ComicNarrator {
         windowsVoicesButton.innerHTML = '<span class="windows-icon">🪟</span> Detectar Vozes do Windows';
         windowsVoicesButton.addEventListener('click', () => {
             windowsVoicesButton.classList.add('refreshing');
-            this.requestAudioPermissions();
+            // Não solicitar mais permissões de microfone
             this.forceWindowsVoicesDetection();
             setTimeout(() => {
                 windowsVoicesButton.classList.remove('refreshing');
@@ -594,8 +593,7 @@ class ComicNarrator {
             this.readingIndicator.textContent = 'Tentando acessar vozes do Narrador (Antonio e Francisca)...';
             this.readingIndicator.style.display = 'block';
             
-            // Solicitar permissões e tentar métodos específicos para o narrador
-            this.requestAudioPermissions();
+            // Tentar métodos específicos para o narrador sem solicitar permissões de microfone
             this.tryAccessNarratorVoices();
             
             // Tentar várias vezes com intervalos diferentes
@@ -896,8 +894,7 @@ class ComicNarrator {
     async startNarration() {
         if (!this.enableNarration.checked || this.isNarrating) return;
 
-        // Solicitar permissões de áudio antes de iniciar
-        await this.requestAudioPermissions();
+        // Removida a solicitação de permissões de áudio que não é necessária para text-to-speech
 
         // Get the images container element
         const imagesContainer = document.getElementById('imagesContainer');
@@ -1054,8 +1051,8 @@ class ComicNarrator {
         page.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         // Extract text from the page or use buffered text
-        this.readingIndicator.textContent = 'Processando texto...';
-        this.readingIndicator.style.display = 'block';
+        // Não exibir mensagem de status durante a narração normal
+        this.readingIndicator.style.display = 'none';
 
         try {
             let text = '';
@@ -1098,7 +1095,8 @@ class ComicNarrator {
             }
 
             // Read the text
-            this.readingIndicator.textContent = 'Lendo...';
+            // Não exibir mensagem de 'Lendo...' durante a narração normal
+            this.readingIndicator.style.display = 'none';
             await this.speakText(text);
 
             // Wait for the specified pause time
@@ -1131,6 +1129,7 @@ class ComicNarrator {
     async extractTextFromImage(imgElement) {
         this.isProcessing = true;
         this.readingIndicator.textContent = 'Extraindo texto da imagem...';
+        this.readingIndicator.style.display = 'block';
 
         try {
             // Check if Tesseract is available
@@ -1183,6 +1182,7 @@ class ComicNarrator {
     async extractTextFromPdfPage(pdfContainer) {
         this.isProcessing = true;
         this.readingIndicator.textContent = 'Extraindo texto do PDF...';
+        this.readingIndicator.style.display = 'block';
 
         try {
             // Instead of trying to extract text directly, we'll capture the rendered page as an image
@@ -1235,6 +1235,7 @@ class ComicNarrator {
     async extractTextFromEpubPage(epubContainer) {
         this.isProcessing = true;
         this.readingIndicator.textContent = 'Extraindo texto do EPUB...';
+        this.readingIndicator.style.display = 'block';
 
         try {
             // Get text content from the EPUB container
