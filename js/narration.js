@@ -335,7 +335,7 @@ class ComicNarrator {
         // Criar seção para outras vozes premium
         if (otherPremiumVoices.length > 0) {
             const premiumGroup = document.createElement('optgroup');
-            premiumGroup.label = '✨ Vozes Premium';
+            premiumGroup.label = '✨ Vozes Básicas';
 
             otherPremiumVoices.forEach(voice => {
                 const option = document.createElement('option');
