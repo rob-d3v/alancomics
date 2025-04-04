@@ -1128,8 +1128,11 @@ class ComicNarrator {
 
     async extractTextFromImage(imgElement) {
         this.isProcessing = true;
-        this.readingIndicator.textContent = 'Extraindo texto da imagem...';
-        this.readingIndicator.style.display = 'block';
+        // Só exibir o indicador se não estiver em processo de narração normal
+        if (!this.isNarrating) {
+            this.readingIndicator.textContent = 'Extraindo texto da imagem...';
+            this.readingIndicator.style.display = 'block';
+        }
 
         try {
             // Check if Tesseract is available
@@ -1149,7 +1152,7 @@ class ComicNarrator {
                 'por+eng', // Portuguese and English languages
                 {
                     logger: m => {
-                        if (m.status === 'recognizing text') {
+                        if (m.status === 'recognizing text' && !this.isNarrating) {
                             this.readingIndicator.textContent = `Extraindo texto: ${Math.floor(m.progress * 100)}%`;
                         }
                     }
@@ -1181,8 +1184,11 @@ class ComicNarrator {
 
     async extractTextFromPdfPage(pdfContainer) {
         this.isProcessing = true;
-        this.readingIndicator.textContent = 'Extraindo texto do PDF...';
-        this.readingIndicator.style.display = 'block';
+        // Só exibir o indicador se não estiver em processo de narração normal
+        if (!this.isNarrating) {
+            this.readingIndicator.textContent = 'Extraindo texto do PDF...';
+            this.readingIndicator.style.display = 'block';
+        }
 
         try {
             // Instead of trying to extract text directly, we'll capture the rendered page as an image
@@ -1209,7 +1215,7 @@ class ComicNarrator {
                 'por+eng', // Portuguese and English languages
                 {
                     logger: m => {
-                        if (m.status === 'recognizing text') {
+                        if (m.status === 'recognizing text' && !this.isNarrating) {
                             this.readingIndicator.textContent = `Extraindo texto: ${Math.floor(m.progress * 100)}%`;
                         }
                     }
@@ -1234,8 +1240,11 @@ class ComicNarrator {
 
     async extractTextFromEpubPage(epubContainer) {
         this.isProcessing = true;
-        this.readingIndicator.textContent = 'Extraindo texto do EPUB...';
-        this.readingIndicator.style.display = 'block';
+        // Só exibir o indicador se não estiver em processo de narração normal
+        if (!this.isNarrating) {
+            this.readingIndicator.textContent = 'Extraindo texto do EPUB...';
+            this.readingIndicator.style.display = 'block';
+        }
 
         try {
             // Get text content from the EPUB container
