@@ -301,7 +301,32 @@ class Sidebar {
             const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result);
             reader.onerror = (e) => reject(e.error);
-            reader.readAsDataURL(file);
+            
+            // Verificar se é um arquivo de texto para usar a codificação UTF-8
+            if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+                // Para arquivos de texto, primeiro lemos como texto com UTF-8
+                const textReader = new FileReader();
+                textReader.onload = (e) => {
+                    // Convertemos o texto para DataURL manualmente preservando a codificação UTF-8
+                    const textContent = e.target.result;
+                    // Usar TextEncoder para garantir codificação UTF-8 correta
+                    const encoder = new TextEncoder();
+                    const bytes = encoder.encode(textContent);
+                    // Converter bytes para string base64
+                    let binary = '';
+                    const len = bytes.byteLength;
+                    for (let i = 0; i < len; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64Content = btoa(binary);
+                    resolve(`data:text/plain;charset=utf-8;base64,${base64Content}`);
+                };
+                textReader.onerror = (e) => reject(e.error);
+                textReader.readAsText(file, 'UTF-8');
+            } else {
+                // Para outros tipos de arquivo, usamos o método padrão
+                reader.readAsDataURL(file);
+            }
         });
     }
 }

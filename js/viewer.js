@@ -237,7 +237,8 @@ class ComicsViewer {
             if (txtItem.data.startsWith('data:')) {
                 // Handle data URL format
                 const base64Content = txtItem.data.split(',')[1];
-                textContent = atob(base64Content);
+                // Usar decodificação UTF-8 em vez de atob simples
+                textContent = this.decodeBase64UTF8(base64Content);
             } else {
                 // Handle plain text
                 textContent = txtItem.data;
@@ -261,6 +262,25 @@ class ComicsViewer {
             errorDiv.className = 'error-message';
             errorDiv.textContent = `Failed to load TXT: ${error.message}`;
             this.container.appendChild(errorDiv);
+        }
+    }
+    
+    // Método para decodificar base64 com suporte a UTF-8
+    decodeBase64UTF8(base64) {
+        try {
+            // Primeiro decodifica o base64 para binário
+            const binaryString = atob(base64);
+            // Converte o binário para um array de bytes
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            // Decodifica o array de bytes como UTF-8
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(bytes);
+        } catch (error) {
+            console.error('Erro ao decodificar texto UTF-8:', error);
+            return 'Erro ao decodificar o texto. O arquivo pode estar corrompido.';
         }
     }
 
