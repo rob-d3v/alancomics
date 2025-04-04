@@ -54,6 +54,7 @@ class ComicsViewer {
         const images = contentItems.filter(item => item.type === 'image');
         const pdfs = contentItems.filter(item => item.type === 'pdf');
         const epubs = contentItems.filter(item => item.type === 'epub');
+        const txts = contentItems.filter(item => item.type === 'txt');
     
         // Display images first
         for (const image of images) {
@@ -65,9 +66,14 @@ class ComicsViewer {
             await this.displayPdf(pdf);
         }
     
-        // Finally display EPUBs
+        // Then display EPUBs
         for (const epub of epubs) {
             await this.displayEpub(epub);
+        }
+        
+        // Finally display TXT files
+        for (const txt of txts) {
+            await this.displayTxt(txt);
         }
     
         // Force layout recalculation
@@ -201,6 +207,62 @@ class ComicsViewer {
             this.container.appendChild(errorDiv);
         }
     }
+    
+    async displayTxt(txtItem) {
+        try {
+            // Create container for this TXT file
+            const txtContainer = document.createElement('div');
+            txtContainer.className = 'txt-container';
+            txtContainer.dataset.id = txtItem.id;
+            txtContainer.dataset.type = 'txt';
+            txtContainer.style.width = `${100 * this.zoomLevel}%`;
+            
+            // Create content element with proper styling
+            const txtContent = document.createElement('div');
+            txtContent.className = 'txt-content';
+            txtContent.style.padding = '20px';
+            txtContent.style.backgroundColor = '#fff';
+            txtContent.style.color = '#333';
+            txtContent.style.fontFamily = 'Arial, sans-serif';
+            txtContent.style.lineHeight = '1.6';
+            txtContent.style.whiteSpace = 'pre-wrap';
+            txtContent.style.overflow = 'auto';
+            txtContent.style.maxHeight = '80vh';
+            txtContent.style.border = '1px solid #ddd';
+            txtContent.style.borderRadius = '5px';
+            txtContent.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+            
+            // Decode the base64 content if needed
+            let textContent = '';
+            if (txtItem.data.startsWith('data:')) {
+                // Handle data URL format
+                const base64Content = txtItem.data.split(',')[1];
+                textContent = atob(base64Content);
+            } else {
+                // Handle plain text
+                textContent = txtItem.data;
+            }
+            
+            // Set the text content
+            txtContent.textContent = textContent;
+            
+            // Add data attributes for narration
+            txtContent.dataset.narrationText = textContent;
+            
+            // Append content to container
+            txtContainer.appendChild(txtContent);
+            
+            // Append container to main container
+            this.container.appendChild(txtContainer);
+            
+        } catch (error) {
+            console.error('Error rendering TXT:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `Failed to load TXT: ${error.message}`;
+            this.container.appendChild(errorDiv);
+        }
+    }
 
     zoom(delta) {
         const oldZoomLevel = this.zoomLevel;
@@ -225,7 +287,7 @@ class ComicsViewer {
                 img.style.alignSelf = 'center'; // Keep images centered vertically
             });
             
-            this.container.querySelectorAll('.epub-container').forEach(container => {
+            this.container.querySelectorAll('.epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
                 container.style.width = 'auto';
@@ -255,7 +317,7 @@ class ComicsViewer {
                 img.style.maxWidth = `${100 * this.zoomLevel}%`;
             });
             
-            this.container.querySelectorAll('.epub-container').forEach(container => {
+            this.container.querySelectorAll('.epub-container, .txt-container').forEach(container => {
                 container.style.width = `${100 * this.zoomLevel}%`;
             });
             
@@ -450,7 +512,7 @@ class ComicsViewer {
                 img.style.width = 'auto';
             });
             
-            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+            this.container.querySelectorAll('.pdf-container, .epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
                 container.style.width = 'auto';
@@ -464,7 +526,7 @@ class ComicsViewer {
                 img.style.maxWidth = `${100 * this.zoomLevel}%`;
             });
             
-            this.container.querySelectorAll('.pdf-container, .epub-container').forEach(container => {
+            this.container.querySelectorAll('.pdf-container, .epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = '';
                 container.style.height = '';
                 container.style.width = `${100 * this.zoomLevel}%`;

@@ -28,7 +28,7 @@ class Sidebar {
             const input = document.createElement('input');
             input.type = 'file';
             input.multiple = true;
-            input.accept = 'image/*,application/pdf,application/epub+zip';
+            input.accept = 'image/*,application/pdf,application/epub+zip,text/plain,.txt';
             
             input.addEventListener('change', async (e) => {
                 const files = Array.from(e.target.files);
@@ -85,6 +85,10 @@ class Sidebar {
         else if (fileType === 'application/epub+zip') {
             const epubData = await this.readFileAsDataURL(file);
             await this.db.addContent(epubData, 'epub', fileName);
+        }
+        else if (fileType === 'text/plain' || fileName.toLowerCase().endsWith('.txt')) {
+            const txtData = await this.readFileAsDataURL(file);
+            await this.db.addContent(txtData, 'txt', fileName);
         }
     }
 
