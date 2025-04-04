@@ -538,50 +538,39 @@ class ComicNarrator {
         const panel = document.createElement('div');
         panel.className = 'voice-info-panel';
         panel.innerHTML = `
-            <div class="voice-info-header">
-                <span class="voice-info-icon">🎙️</span>
-                <h3>Biblioteca de Vozes</h3>
-            </div>
             <div class="voice-info-content">
-                <p>Para uma experiência narrativa sublime:</p>
+                <p>Para uma experiência narrativa melhor, utilize o Firefox:</p>
                 <ul>
-                    <li><span class="voice-step">1</span> Permita que o navegador acesse suas vozes instaladas do Windows</li>
-                    <li><span class="voice-step">2</span> Selecione uma voz com "Desktop" ou "SAPI" no nome para usar vozes do sistema</li>
-                    <li><span class="voice-step">3</span> Ajuste o tom e velocidade conforme sua preferência</li>
+                    <li><span class="voice-step">1</span> Instale narradores de nível superior em sua máquina</li>
+                    <li><span class="voice-step">2</span> Ajuste o tom e velocidade conforme sua preferência</li>
                 </ul>
-                <div class="voice-status">
-                    ${this.currentVoice ?
-                `<p>Voz atual: <span class="current-voice">${this.currentVoice.name}</span></p>
-                 <p>Tipo: <span class="voice-type">${this.currentVoice.localService ? '✓ Voz do Sistema Windows' : '⚠️ Voz do Navegador'}</span></p>` :
-                '<p>Nenhuma voz selecionada</p>'}
-                </div>
             </div>
         `;
 
         // Botão de atualização estilizado
-        const refreshButton = document.createElement('button');
-        refreshButton.className = 'refresh-voices';
-        refreshButton.innerHTML = '<span class="refresh-icon">↻</span> Atualizar Vozes';
-        refreshButton.addEventListener('click', () => {
-            refreshButton.classList.add('refreshing');
-            setTimeout(() => {
-                this.loadVoices();
-                refreshButton.classList.remove('refreshing');
-            }, 500);
-        });
+        // const refreshButton = document.createElement('button');
+        // refreshButton.className = 'refresh-voices';
+        // refreshButton.innerHTML = '<span class="refresh-icon">↻</span> Atualizar Vozes';
+        // refreshButton.addEventListener('click', () => {
+        //     refreshButton.classList.add('refreshing');
+        //     setTimeout(() => {
+        //         this.loadVoices();
+        //         refreshButton.classList.remove('refreshing');
+        //     }, 500);
+        // });
         
-        // Botão específico para forçar detecção de vozes do Windows
-        const windowsVoicesButton = document.createElement('button');
-        windowsVoicesButton.className = 'windows-voices-button';
-        windowsVoicesButton.innerHTML = '<span class="windows-icon">🪟</span> Detectar Vozes do Windows';
-        windowsVoicesButton.addEventListener('click', () => {
-            windowsVoicesButton.classList.add('refreshing');
-            // Não solicitar mais permissões de microfone
-            this.forceWindowsVoicesDetection();
-            setTimeout(() => {
-                windowsVoicesButton.classList.remove('refreshing');
-            }, 3000);
-        });
+        // // Botão específico para forçar detecção de vozes do Windows
+        // const windowsVoicesButton = document.createElement('button');
+        // windowsVoicesButton.className = 'windows-voices-button';
+        // windowsVoicesButton.innerHTML = '<span class="windows-icon">🪟</span> Detectar Vozes do Windows';
+        // windowsVoicesButton.addEventListener('click', () => {
+        //     windowsVoicesButton.classList.add('refreshing');
+        //     // Não solicitar mais permissões de microfone
+        //     this.forceWindowsVoicesDetection();
+        //     setTimeout(() => {
+        //         windowsVoicesButton.classList.remove('refreshing');
+        //     }, 3000);
+        // });
         
         // Botão específico para tentar detectar as vozes do Narrador (Antonio e Francisca)
         const narratorVoicesButton = document.createElement('button');
@@ -624,8 +613,8 @@ class ComicNarrator {
         this.voiceSelect.parentNode.insertBefore(panel, this.voiceSelect.nextSibling);
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'voice-buttons';
-        buttonContainer.appendChild(refreshButton);
-        buttonContainer.appendChild(windowsVoicesButton);
+        // buttonContainer.appendChild(refreshButton);
+        // buttonContainer.appendChild(windowsVoicesButto   n);
         panel.querySelector('.voice-info-content').appendChild(buttonContainer);
 
         // Adicionar estilos CSS inline para garantir que sejam aplicados
