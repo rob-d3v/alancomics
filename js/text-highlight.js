@@ -158,7 +158,7 @@ class TextHighlighter {
     }
 
     /**
-     * Rola a página para manter o elemento destacado visível
+     * Rola a página para manter o elemento destacado visível e centralizado
      */
     scrollToHighlightedElement() {
         if (!this.highlightedElement) return;
@@ -166,18 +166,51 @@ class TextHighlighter {
         // Obter a posição do elemento destacado
         const rect = this.highlightedElement.getBoundingClientRect();
         
-        // Verificar se o elemento está fora da área visível
-        const isInViewport = (
-            rect.top >= 0 &&
-            rect.left >= 0 &&
-            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-        );
+        // Verificar se o elemento está dentro de um contêiner com scroll próprio
+        const scrollContainer = this.findScrollContainer(this.highlightedElement);
         
-        // Se não estiver visível, rolar para ele
-        if (!isInViewport) {
+        if (scrollContainer) {
+            // Caso 1: O elemento está dentro de um contêiner com scroll próprio
+            console.log('Usando scroll do contêiner para centralizar texto');
+            
+            const containerRect = scrollContainer.getBoundingClientRect();
+            
+            // Calcular a posição relativa do elemento dentro do contêiner
+            const relativeTop = rect.top - containerRect.top;
+            const relativeBottom = rect.bottom - containerRect.top;
+            
+            // Verificar se o elemento está completamente visível dentro do contêiner
+            const isFullyVisible = (
+                relativeTop >= 0 &&
+                relativeBottom <= containerRect.height
+            );
+            
+            // Se não estiver completamente visível, centralizar no contêiner
+            if (!isFullyVisible) {
+                // Calcular a posição para centralizar o elemento no contêiner
+                const targetScroll = scrollContainer.scrollTop + relativeTop - (containerRect.height / 2) + (rect.height / 2);
+                
+                // Rolar suavemente para a posição
+                scrollContainer.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth'
+                });
+            }
+        } else {
+            // Caso 2: Usar o scroll da página (fallback)
+            console.log('Usando scroll da página para centralizar texto');
+            
+            // Verificar se o elemento está fora da área visível
+            const isInViewport = (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+            
+            // Sempre centralizar o elemento, mesmo que esteja parcialmente visível
             // Calcular posição para centralizar o elemento na tela
-            const scrollTop = rect.top + window.pageYOffset - (window.innerHeight / 2);
+            const scrollTop = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
             
             // Rolar suavemente para a posição
             window.scrollTo({
@@ -185,6 +218,35 @@ class TextHighlighter {
                 behavior: 'smooth'
             });
         }
+    }
+    
+    /**
+     * Encontra o contêiner com scroll que contém o elemento
+     * @param {HTMLElement} element - Elemento para encontrar o contêiner
+     * @returns {HTMLElement|null} - Contêiner com scroll ou null se não encontrar
+     */
+    findScrollContainer(element) {
+        if (!element) return null;
+        
+        // Verificar cada elemento pai até encontrar um com scroll
+        let parent = element.parentElement;
+        
+        while (parent) {
+            // Verificar se o elemento tem scroll
+            const hasScroll = (
+                parent.scrollHeight > parent.clientHeight &&
+                (getComputedStyle(parent).overflowY === 'auto' ||
+                 getComputedStyle(parent).overflowY === 'scroll')
+            );
+            
+            if (hasScroll) {
+                return parent;
+            }
+            
+            parent = parent.parentElement;
+        }
+        
+        return null; // Nenhum contêiner com scroll encontrado
     }
 
     /**
@@ -204,25 +266,62 @@ class TextHighlighter {
             return;
         }
         
-        // Encontrar a sentença que contém a posição inicial
+        // Abordagem melhorada: usar a posição do caractere diretamente para encontrar a sentença
         const fullText = textElement.textContent;
-        let accumulatedLength = 0;
         
-        for (let i = 0; i < this.sentences.length; i++) {
-            const sentenceIndex = fullText.indexOf(this.sentences[i], accumulatedLength);
-            const sentenceEnd = sentenceIndex + this.sentences[i].length;
-            
-            if (startPosition >= sentenceIndex && startPosition <= sentenceEnd) {
-                // Definir o índice para a sentença anterior, para que highlightNextSentence() destaque a correta
-                this.currentSentenceIndex = i - 1;
-                return;
-            }
-            
-            accumulatedLength = sentenceEnd;
+        // Verificar se a posição está dentro dos limites do texto
+        if (startPosition >= fullText.length) {
+            console.warn('Posição inicial fora dos limites do texto, começando do início');
+            this.currentSentenceIndex = -1;
+            return;
         }
         
-        // Se não encontrar, começar do início
-        this.currentSentenceIndex = -1;
+        // Encontrar a sentença que contém a posição inicial
+        // Método direto: verificar cada sentença e suas posições no texto completo
+        let currentPosition = 0;
+        
+        for (let i = 0; i < this.sentences.length; i++) {
+            const sentence = this.sentences[i];
+            const sentenceIndex = fullText.indexOf(sentence, currentPosition);
+            
+            if (sentenceIndex === -1) {
+                // Se não encontrar a sentença a partir da posição atual, continuar procurando
+                continue;
+            }
+            
+            const sentenceEnd = sentenceIndex + sentence.length;
+            currentPosition = sentenceEnd; // Atualizar a posição atual para a próxima busca
+            
+            // Verificar se a posição está dentro desta sentença
+            if (startPosition >= sentenceIndex && startPosition < sentenceEnd) {
+                console.log(`Iniciando narração a partir da sentença ${i}: "${sentence.substring(0, 30)}..."`);
+                this.currentSentenceIndex = i - 1; // Definir para a sentença anterior
+                return;
+            }
+        }
+        
+        // Se não encontrar uma correspondência exata, encontrar a sentença mais próxima
+        let closestIndex = 0;
+        let minDistance = Number.MAX_SAFE_INTEGER;
+        currentPosition = 0;
+        
+        for (let i = 0; i < this.sentences.length; i++) {
+            const sentence = this.sentences[i];
+            const sentenceIndex = fullText.indexOf(sentence, currentPosition);
+            
+            if (sentenceIndex === -1) continue;
+            
+            const distance = Math.abs(sentenceIndex - startPosition);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestIndex = i;
+            }
+            
+            currentPosition = sentenceIndex + sentence.length;
+        }
+        
+        console.log(`Iniciando narração a partir da sentença mais próxima (${closestIndex}): "${this.sentences[closestIndex].substring(0, 30)}..."`);
+        this.currentSentenceIndex = closestIndex - 1;
     }
 
     /**
