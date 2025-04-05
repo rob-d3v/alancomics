@@ -945,6 +945,11 @@ class ComicNarrator {
             this.fallbackAudio.src = '';
             this.fallbackAudio = null;
         }
+        
+        // Desativar o rastreador de narração se estiver ativo
+        if (this.narrationTracker) {
+            this.narrationTracker.deactivate();
+        }
 
         // Update UI
         this.startNarrationBtn.innerHTML = '<i class="fas fa-book-reader"></i> Iniciar Narração';
@@ -1287,6 +1292,28 @@ class ComicNarrator {
                 console.error('Speech error:', event);
                 reject(new Error('Speech synthesis error'));
             };
+            
+            // Verificar se estamos em um arquivo de texto para ativar o destaque
+            const isTextFile = this.isTextFile();
+            
+            // Se for um arquivo de texto, ativar o rastreador de narração
+            if (isTextFile) {
+                // Inicializar o rastreador de narração se ainda não existe
+                if (!this.narrationTracker) {
+                    this.narrationTracker = new TextNarrationTracker();
+                }
+                
+                // Encontrar o elemento de texto atual
+                const textElement = this.findTextElement();
+                
+                if (textElement) {
+                    // Ativar o rastreador
+                    this.narrationTracker.activate(textElement);
+                    
+                    // Iniciar narração com destaque
+                    this.narrationTracker.startNarration(text, utterance);
+                }
+            }
 
             // Start speaking
             this.synth.speak(utterance);
@@ -1360,6 +1387,34 @@ class ComicNarrator {
         });
 
         return voicesByLanguage;
+    }
+    
+    /**
+     * Verifica se o conteúdo atual é um arquivo de texto
+     * @returns {boolean} - Verdadeiro se for um arquivo de texto
+     */
+    isTextFile() {
+        const imagesContainer = document.getElementById('imagesContainer');
+        if (!imagesContainer) return false;
+        
+        // Verificar se há um elemento txt-container
+        return !!imagesContainer.querySelector('.txt-container');
+    }
+    
+    /**
+     * Encontra o elemento de texto atual
+     * @returns {HTMLElement|null} - Elemento de texto ou null se não encontrado
+     */
+    findTextElement() {
+        const imagesContainer = document.getElementById('imagesContainer');
+        if (!imagesContainer) return null;
+        
+        // Encontrar o container de texto
+        const txtContainer = imagesContainer.querySelector('.txt-container');
+        if (!txtContainer) return null;
+        
+        // Encontrar o elemento de conteúdo de texto
+        return txtContainer.querySelector('.txt-content');
     }
 }
 
