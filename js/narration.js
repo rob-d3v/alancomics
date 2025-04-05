@@ -1311,8 +1311,21 @@ class ComicNarrator {
                 return;
             }
 
-            // If speech synthesis has paused unexpectedly, resume it
-            if (this.synth.paused) {
+            // Adicionando uma verificação para não retomar a narração se foi pausada manualmente
+            // Verificamos se algum dos botões de pausa está no estado pausado
+            const mainPauseButton = document.querySelector('.narration-play-pause');
+            const viewerPauseButton = document.getElementById('pauseNarration');
+            
+            // Verificamos se o botão principal está com a classe 'paused' ou se o botão do visualizador
+            // está mostrando o ícone de play (o que indica que está pausado)
+            const mainButtonPaused = mainPauseButton && mainPauseButton.classList.contains('paused');
+            const viewerButtonPaused = viewerPauseButton && viewerPauseButton.innerHTML.includes('fa-play');
+            
+            // Se qualquer um dos botões indicar que a narração foi pausada manualmente
+            const manuallyPaused = mainButtonPaused || viewerButtonPaused;
+            
+            // Se estiver pausado mas NÃO foi pausado manualmente, então retoma
+            if (this.synth.paused && !manuallyPaused) {
                 console.log('Speech synthesis paused unexpectedly, resuming...');
                 this.synth.resume();
             }
