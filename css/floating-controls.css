@@ -48,6 +48,21 @@
 
 .narration-play-pause.paused {
     background-color: #f39c12;
+}
+
+/* Botão de pausa da narração no visualizador */
+.pause-narration {
+    background-color: #e74c3c;
+    position: relative;
+    z-index: 1001;
+    animation: pulse-button 2s infinite;
+    transition: all 0.3s ease;
+}
+
+.pause-narration:hover {
+    background-color: #c0392b;
+    transform: scale(1.05);
+}
     animation: none;
 }
 
@@ -76,6 +91,17 @@
 /* Botão de narração */
 .toggle-narration {
     background-color: #1abc9c;
+}
+
+/* Botão de pausa no visualizador */
+#pauseNarration {
+    background-color: #e74c3c;
+    transition: all 0.3s ease;
+}
+
+#pauseNarration:hover {
+    background-color: #c0392b;
+    transform: scale(1.05);
 }
 
 /* Responsividade para dispositivos móveis */

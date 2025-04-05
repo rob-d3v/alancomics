@@ -40,6 +40,68 @@ class ComicsViewer {
         document.getElementById('zoomOut').addEventListener('click', () => this.zoom(-0.1));
         document.getElementById('backToTop').addEventListener('click', () => this.scrollToTop());
         document.getElementById('fullscreen').addEventListener('click', () => this.toggleFullscreen());
+        
+        // Adicionar botão de pausa da narração aos controles flutuantes
+        this.addPauseNarrationButton();
+    }
+    
+    /**
+     * Adiciona o botão de pausa da narração aos controles flutuantes
+     */
+    addPauseNarrationButton() {
+        // Verificar se os controles flutuantes existem
+        const floatingControls = document.querySelector('#viewer .floating-controls');
+        if (!floatingControls) {
+            // Criar o container de controles flutuantes se não existir
+            const newControls = document.createElement('div');
+            newControls.className = 'floating-controls';
+            this.viewer.appendChild(newControls);
+        }
+        
+        // Obter referência aos controles flutuantes
+        const controls = document.querySelector('#viewer .floating-controls');
+        
+        // Criar botão de pausa da narração
+        const pauseButton = document.createElement('button');
+        pauseButton.id = 'pauseNarration';
+        pauseButton.className = 'floating-button pause-narration';
+        pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+        pauseButton.title = 'Pausar/Retomar narração';
+        
+        // Adicionar evento de clique para pausar/retomar a narração
+        pauseButton.addEventListener('click', () => {
+            if (window.speechSynthesis) {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+                } else if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.pause();
+                    pauseButton.innerHTML = '<i class="fas fa-play"></i>';
+                }
+            }
+        });
+        
+        // Adicionar o botão aos controles flutuantes
+        controls.appendChild(pauseButton);
+        
+        // Inicialmente oculto, será mostrado quando a narração estiver ativa
+        pauseButton.style.display = 'none';
+        
+        // Verificar periodicamente o estado da narração para mostrar/ocultar o botão
+        setInterval(() => {
+            if (window.comicNarrator && window.comicNarrator.isNarrating) {
+                pauseButton.style.display = 'flex';
+                
+                // Atualizar o ícone com base no estado atual da narração
+                if (window.speechSynthesis && window.speechSynthesis.paused) {
+                    pauseButton.innerHTML = '<i class="fas fa-play"></i>';
+                } else {
+                    pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+                }
+            } else {
+                pauseButton.style.display = 'none';
+            }
+        }, 1000); // Verificar a cada segundo
     }
 
     // Make sure this method exists and is properly renamed

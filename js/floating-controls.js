@@ -96,6 +96,47 @@ class FloatingControls {
             }
         }, 1000); // Verificar a cada segundo
         
+        // Adicionar botão de pausa flutuante no visualizador junto aos outros controles
+        const viewerControls = document.querySelector('main#viewer .floating-controls');
+        if (viewerControls) {
+            // Criar botão de pausa para narração no visualizador
+            const pauseButton = document.createElement('button');
+            pauseButton.id = 'pauseNarration';
+            pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+            pauseButton.title = 'Pausar/Retomar narração';
+            pauseButton.style.display = 'none'; // Inicialmente oculto
+            
+            // Adicionar evento de clique
+            pauseButton.addEventListener('click', () => this.togglePlayPause());
+            
+            // Adicionar ao container de controles do visualizador
+            viewerControls.appendChild(pauseButton);
+            
+            // Armazenar referência ao botão
+            this.viewerPauseButton = pauseButton;
+            
+            // Verificar periodicamente o estado da narração para atualizar o botão do visualizador
+            setInterval(() => {
+                if (this.narrator && document.getElementById('enableNarration')?.checked) {
+                    // Mostrar o botão quando a narração estiver habilitada
+                    this.viewerPauseButton.style.display = 'block';
+                    
+                    // Atualizar o ícone com base no estado atual da narração
+                    if (this.narrator.isNarrating) {
+                        const isPaused = window.speechSynthesis && window.speechSynthesis.paused;
+                        this.viewerPauseButton.innerHTML = isPaused ? 
+                            '<i class="fas fa-play"></i>' : 
+                            '<i class="fas fa-pause"></i>';
+                    } else {
+                        this.viewerPauseButton.innerHTML = '<i class="fas fa-play"></i>';
+                    }
+                } else {
+                    // Ocultar o botão quando a narração estiver desabilitada
+                    this.viewerPauseButton.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
         // Criar botão de voltar ao topo
         const topButton = document.createElement('button');
         topButton.className = 'floating-button scroll-top';
@@ -250,6 +291,21 @@ class FloatingControls {
         } else {
             this.playPauseButton.innerHTML = '<i class="fas fa-play"></i>';
             this.playPauseButton.classList.remove('active', 'paused');
+        }
+        
+        // Atualizar também o botão de pausa no visualizador, se existir
+        if (this.viewerPauseButton) {
+            // Atualizar visibilidade
+            this.viewerPauseButton.style.display = narrationEnabled ? 'block' : 'none';
+            
+            // Atualizar ícone
+            if (isActive) {
+                this.viewerPauseButton.innerHTML = isPaused ? 
+                    '<i class="fas fa-play"></i>' : 
+                    '<i class="fas fa-pause"></i>';
+            } else {
+                this.viewerPauseButton.innerHTML = '<i class="fas fa-play"></i>';
+            }
         }
     }
 }
