@@ -1,0 +1,261 @@
+/**
+ * Estilos para o componente de seleção retangular de texto em imagens
+ */
+
+/* Modo de seleção ativo */
+body.rectangular-selection-mode {
+    cursor: crosshair;
+}
+
+body.rectangular-selection-mode img.selectable-image {
+    cursor: crosshair;
+}
+
+/* Container para a seleção de imagem */
+.rectangular-selection-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Área de seleção retangular */
+.rectangular-selection {
+    position: absolute;
+    border: 2px dashed #e74c3c;
+    background-color: rgba(231, 76, 60, 0.2);
+    z-index: 100;
+    pointer-events: none;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* Área de seleção confirmada */
+.rectangular-selection.confirmed {
+    border: 2px solid #2ecc71;
+    background-color: rgba(46, 204, 113, 0.2);
+}
+
+/* Numeração das seleções */
+.selection-number {
+    position: absolute;
+    background-color: #3498db;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 101;
+    top: -12px;
+    left: -12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Botões de controle da seleção */
+.rectangular-selection-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+    background-color: rgba(52, 73, 94, 0.9);
+    padding: 10px 15px;
+    border-radius: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Indicador de modo de seleção */
+.rectangular-selection-indicator {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(52, 152, 219, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Botão de seleção de texto em imagens */
+.select-rectangular-text {
+    background-color: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.select-rectangular-text:hover {
+    background-color: #8e44ad;
+}
+
+.select-rectangular-text.active {
+    background-color: #8e44ad;
+    box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.5);
+}
+
+/* Container para texto extraído */
+.rectangular-extracted-text-container {
+    background-color: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.rectangular-extracted-text-container h3 {
+    color: #3498db;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Item de texto extraído */
+.extracted-text-item {
+    display: flex;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge com número da seleção */
+.selection-badge {
+    background-color: #3498db;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Conteúdo do texto extraído */
+.extracted-text-content {
+    flex-grow: 1;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Indicador de progresso */
+.progress-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(52, 73, 94, 0.95);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    min-width: 300px;
+}
+
+.progress-message {
+    font-size: 16px;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #2ecc71;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Notificação */
+.rectangular-selection-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-size: 14px;
+    z-index: 2000;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+    max-width: 400px;
+}
+
+.notification-success {
+    background-color: #2ecc71;
+}
+
+.notification-error {
+    background-color: #e74c3c;
+}
+
+.notification-warning {
+    background-color: #f39c12;
+}
+
+.notification-info {
+    background-color: #3498db;
+}
+
+/* Ajustes para tema escuro */
+.dark-theme .rectangular-selection {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.3);
+}
+
+.dark-theme .rectangular-selection.confirmed {
+    border-color: #2ecc71;
+    background-color: rgba(46, 204, 113, 0.3);
+}
+
+.dark-theme .rectangular-selection-controls {
+    background-color: rgba(44, 62, 80, 0.9);
+}
+
+.dark-theme .rectangular-extracted-text-container {
+    background-color: rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.4);
+}
+
+.dark-theme .extracted-text-item {
+    background-color: rgba(44, 62, 80, 0.7);
+}
+
+.dark-theme .extracted-text-content {
+    color: #ecf0f1;
+}
