@@ -20,13 +20,15 @@ class TextSelection {
      * Ativa o modo de seleção de texto
      * @param {HTMLElement} textElement - Elemento de texto onde a seleção será permitida
      * @param {Function} callback - Função a ser chamada quando um ponto for selecionado
+     * @param {boolean} permanent - Se o modo de seleção deve ser permanente
      */
-    enableSelectionMode(textElement, callback) {
+    enableSelectionMode(textElement, callback, permanent = false) {
         if (!textElement) return;
         
         // Armazenar referências
         this.currentTextElement = textElement;
         this.onSelectionCallback = callback;
+        this.isPermanent = permanent;
         
         // Ativar modo de seleção
         this.isSelectionModeActive = true;
@@ -34,8 +36,11 @@ class TextSelection {
         // Adicionar classe visual para indicar que o modo de seleção está ativo
         textElement.classList.add('selection-mode-active');
         
+        // Armazenar o handler de clique como propriedade da classe para poder removê-lo corretamente
+        this.clickHandler = this.handleTextClick.bind(this);
+        
         // Adicionar evento de clique
-        textElement.addEventListener('click', this.handleTextClick.bind(this));
+        textElement.addEventListener('click', this.clickHandler);
         
         // Mostrar instruções para o usuário
         this.showInstructions(textElement);
@@ -43,13 +48,14 @@ class TextSelection {
         // Alterar o cursor para indicar que o texto é clicável
         textElement.style.cursor = 'pointer';
         
-        console.log('Modo de seleção de texto ativado');
+        console.log('Modo de seleção de texto ativado' + (permanent ? ' (modo permanente)' : ''));
     }
 
     /**
      * Desativa o modo de seleção de texto
+     * @param {boolean} force - Força a desativação mesmo se for permanente
      */
-    disableSelectionMode() {
+    disableSelectionMode(force = false) {
         if (!this.currentTextElement) return;
         
         // Desativar modo de seleção
@@ -58,8 +64,11 @@ class TextSelection {
         // Remover classe visual
         this.currentTextElement.classList.remove('selection-mode-active');
         
-        // Remover evento de clique
-        this.currentTextElement.removeEventListener('click', this.handleTextClick.bind(this));
+        // Armazenar o handler de clique como propriedade da classe para poder removê-lo corretamente
+        if (this.clickHandler) {
+            this.currentTextElement.removeEventListener('click', this.clickHandler);
+            this.clickHandler = null;
+        }
         
         // Restaurar cursor
         this.currentTextElement.style.cursor = '';
@@ -89,8 +98,10 @@ class TextSelection {
                 this.onSelectionCallback(this.currentTextElement, clickPosition);
             }
             
-            // Desativar o modo de seleção após a escolha
-            this.disableSelectionMode();
+            // Desativar o modo de seleção após a escolha, a menos que seja permanente
+            if (!this.isPermanent) {
+                this.disableSelectionMode();
+            }
         }
     }
 
@@ -103,17 +114,120 @@ class TextSelection {
     getTextPositionFromPoint(x, y) {
         if (!this.currentTextElement) return -1;
         
-        // Usar a API de range para encontrar a posição do texto
-        const range = document.caretRangeFromPoint(x, y);
-        if (!range) return -1;
+        // Método 1: Usar API nativa de seleção de texto (mais preciso)
+        try {
+            let range;
+            
+            // Verificar qual método está disponível no navegador
+            if (document.caretRangeFromPoint) {
+                // Chrome, Safari, Edge moderno
+                range = document.caretRangeFromPoint(x, y);
+            } else if (document.caretPositionFromPoint) {
+                // Firefox
+                const position = document.caretPositionFromPoint(x, y);
+                if (position) {
+                    range = document.createRange();
+                    range.setStart(position.offsetNode, position.offset);
+                    range.setEnd(position.offsetNode, position.offset);
+                }
+            }
+            
+            if (range) {
+                // Criar um range do início do elemento até o ponto clicado
+                const fullRange = document.createRange();
+                fullRange.setStart(this.currentTextElement, 0);
+                fullRange.setEnd(range.startContainer, range.startOffset);
+                
+                // A posição é o comprimento do texto até o ponto clicado
+                return fullRange.toString().length;
+            }
+        } catch (error) {
+            console.warn('Erro ao usar método nativo de seleção:', error);
+            // Continuar para o método alternativo
+        }
         
-        // Criar um range do início do elemento até o ponto clicado
-        const fullRange = document.createRange();
-        fullRange.setStart(this.currentTextElement, 0);
-        fullRange.setEnd(range.startContainer, range.startOffset);
-        
-        // A posição é o comprimento do texto até o ponto clicado
-        return fullRange.toString().length;
+        // Método 2: Usar elementos de texto (fallback mais robusto)
+        try {
+            // Obter o texto completo
+            const textContent = this.currentTextElement.textContent;
+            const textLength = textContent.length;
+            
+            // Obter as dimensões do elemento
+            const rect = this.currentTextElement.getBoundingClientRect();
+            
+            // Verificar se o clique está dentro do elemento
+            if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+                return -1; // Clique fora do elemento
+            }
+            
+            // Calcular a posição relativa do clique
+            const relativeX = (x - rect.left) / rect.width;
+            const relativeY = (y - rect.top) / rect.height;
+            
+            // Criar um elemento temporário para calcular a posição do texto
+            const tempElement = document.createElement('div');
+            tempElement.style.position = 'absolute';
+            tempElement.style.visibility = 'hidden';
+            tempElement.style.width = `${rect.width}px`;
+            tempElement.style.fontSize = window.getComputedStyle(this.currentTextElement).fontSize;
+            tempElement.style.fontFamily = window.getComputedStyle(this.currentTextElement).fontFamily;
+            tempElement.style.whiteSpace = 'pre-wrap';
+            tempElement.style.wordBreak = 'break-word';
+            document.body.appendChild(tempElement);
+            
+            // Dividir o texto em linhas aproximadas
+            const lines = [];
+            let currentLine = '';
+            let currentPosition = 0;
+            
+            // Processar o texto caractere por caractere
+            for (let i = 0; i < textContent.length; i++) {
+                const char = textContent[i];
+                currentLine += char;
+                
+                // Se encontrar uma quebra de linha ou o texto ficar muito longo
+                if (char === '\n' || currentLine.length > 50) {
+                    lines.push({
+                        text: currentLine,
+                        startPosition: currentPosition
+                    });
+                    currentPosition += currentLine.length;
+                    currentLine = '';
+                }
+            }
+            
+            // Adicionar a última linha se houver texto restante
+            if (currentLine.length > 0) {
+                lines.push({
+                    text: currentLine,
+                    startPosition: currentPosition
+                });
+            }
+            
+            // Calcular a linha aproximada com base na posição Y relativa
+            const lineIndex = Math.floor(relativeY * lines.length);
+            const line = lines[Math.min(lineIndex, lines.length - 1)];
+            
+            // Calcular a posição aproximada na linha com base na posição X relativa
+            const charIndex = Math.floor(relativeX * line.text.length);
+            const position = line.startPosition + charIndex;
+            
+            // Limpar o elemento temporário
+            document.body.removeChild(tempElement);
+            
+            return Math.max(0, Math.min(position, textLength));
+        } catch (error) {
+            console.warn('Erro ao usar método alternativo de seleção:', error);
+            
+            // Método 3: Fallback simples (menos preciso, mas funciona em qualquer caso)
+            const textContent = this.currentTextElement.textContent;
+            const textLength = textContent.length;
+            const rect = this.currentTextElement.getBoundingClientRect();
+            const relativeX = (x - rect.left) / rect.width;
+            const estimatedPosition = Math.floor(relativeX * textLength);
+            return Math.max(0, Math.min(estimatedPosition, textLength));
+        }
+    }
     }
 
     /**

@@ -1,0 +1,60 @@
+/**
+ * Estilos para os controles de OCR e seleção retangular
+ */
+
+/* Estilos para a seção de OCR */
+.ocr-settings {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.ocr-settings h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.ocr-controls {
+    margin-top: 10px;
+    transition: opacity 0.3s, height 0.3s;
+}
+
+.ocr-controls.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.ocr-info {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* Botão de seleção retangular */
+.select-rectangular-text {
+    background-color: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.select-rectangular-text:hover {
+    background-color: #8e44ad;
+}
+
+.select-rectangular-text.active {
+    background-color: #8e44ad;
+    box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.5);
+}

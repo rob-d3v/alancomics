@@ -1,0 +1,307 @@
+/**
+ * Estilos para o componente de seleção avançada de texto em imagens
+ */
+
+/* Container para a seleção de imagem */
+.image-selection-container-advanced {
+    position: relative;
+    display: inline-block;
+    cursor: crosshair;
+}
+
+/* Área de seleção retangular */
+.selection-rectangle-advanced {
+    position: absolute;
+    border: 2px dashed #e74c3c;
+    background-color: rgba(231, 76, 60, 0.2);
+    z-index: 100;
+    pointer-events: none;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* Área de seleção confirmada */
+.selection-rectangle-advanced.confirmed {
+    border: 2px solid #2ecc71;
+    background-color: rgba(46, 204, 113, 0.2);
+}
+
+/* Numeração das seleções */
+.selection-number {
+    position: absolute;
+    background-color: #3498db;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 101;
+    top: -12px;
+    left: -12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Botões de controle da seleção */
+.image-selection-controls-advanced {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+    background-color: rgba(52, 73, 94, 0.9);
+    padding: 10px 15px;
+    border-radius: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.selection-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.selection-button:hover {
+    background-color: #2980b9;
+}
+
+.selection-button.cancel {
+    background-color: #e74c3c;
+}
+
+.selection-button.cancel:hover {
+    background-color: #c0392b;
+}
+
+.selection-button.clear {
+    background-color: #f39c12;
+}
+
+.selection-button.clear:hover {
+    background-color: #d35400;
+}
+
+.selection-button.process {
+    background-color: #2ecc71;
+}
+
+.selection-button.process:hover {
+    background-color: #27ae60;
+}
+
+/* Indicador de modo de seleção */
+.selection-mode-indicator-advanced {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(52, 152, 219, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Botão de seleção de texto em imagens */
+.select-image-text-advanced {
+    background-color: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+.select-image-text-advanced:hover {
+    background-color: #8e44ad;
+}
+
+.select-image-text-advanced.active {
+    background-color: #8e44ad;
+    box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.5);
+}
+
+/* Container para texto extraído */
+.extracted-text-container-advanced {
+    background-color: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.extracted-text-container-advanced h3 {
+    color: #3498db;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Item de texto extraído */
+.extracted-text-item {
+    display: flex;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge com número da seleção */
+.selection-badge {
+    background-color: #3498db;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+/* Conteúdo do texto extraído */
+.extracted-text-content {
+    flex-grow: 1;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Indicador de progresso */
+.progress-indicator-advanced {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(44, 62, 80, 0.9);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    z-index: 2000;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.progress-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-message {
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Notificação */
+.notification-advanced {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(52, 73, 94, 0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.notification-advanced.success {
+    background-color: rgba(46, 204, 113, 0.9);
+}
+
+.notification-advanced.error {
+    background-color: rgba(231, 76, 60, 0.9);
+}
+
+.notification-advanced.warning {
+    background-color: rgba(243, 156, 18, 0.9);
+}
+
+/* Ajustes para tema escuro */
+.dark-theme .selection-rectangle-advanced {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.3);
+}
+
+.dark-theme .selection-rectangle-advanced.confirmed {
+    border-color: #2ecc71;
+    background-color: rgba(46, 204, 113, 0.3);
+}
+
+.dark-theme .image-selection-controls-advanced {
+    background-color: rgba(44, 62, 80, 0.9);
+}
+
+.dark-theme .extracted-text-container-advanced {
+    background-color: rgba(52, 152, 219, 0.15);
+    border-color: rgba(52, 152, 219, 0.4);
+}
+
+.dark-theme .extracted-text-container-advanced h3 {
+    color: #3498db;
+}
+
+.dark-theme .extracted-text-item {
+    background-color: rgba(44, 62, 80, 0.7);
+    color: #ecf0f1;
+}
+
+.dark-theme .progress-indicator-advanced {
+    background-color: rgba(44, 62, 80, 0.95);
+}
+
+.dark-theme .notification-advanced {
+    background-color: rgba(44, 62, 80, 0.95);
+}
