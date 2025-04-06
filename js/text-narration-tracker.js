@@ -12,8 +12,9 @@ class TextNarrationTracker {
         // Referência ao elemento destacado atual
         this.highlightedElement = null;
         
-        // Gerenciador de scroll
-        this.scrollManager = new ScrollManager();
+        // Usar o ScrollManager global em vez de criar uma nova instância
+        // Isso garante que todos os componentes usem a mesma instância do ScrollManager
+        this.scrollManager = window.scrollManager || new ScrollManager();
         
         // Configurações
         this.settings = {
@@ -58,17 +59,32 @@ class TextNarrationTracker {
                     border-radius: 3px;
                     padding: 2px 4px;
                     margin: -2px -4px;
-                    box-shadow: 0 0 8px rgba(52, 152, 219, 0.4);
+                    box-shadow: 0 0 12px rgba(52, 152, 219, 0.6);
                     transition: background-color 0.3s ease, box-shadow 0.3s ease;
                     display: inline;
                     position: relative;
-                    z-index: 10;
-                    animation: narration-pulse 2s infinite alternate;
+                    z-index: 100;
+                    animation: narration-pulse 1.5s infinite alternate;
+                    outline: 2px solid rgba(52, 152, 219, 0.7);
+                    font-weight: 500;
                 }
                 
                 @keyframes narration-pulse {
-                    0% { background-color: rgba(52, 152, 219, 0.3); box-shadow: 0 0 8px rgba(52, 152, 219, 0.4); }
-                    100% { background-color: rgba(52, 152, 219, 0.5); box-shadow: 0 0 12px rgba(52, 152, 219, 0.6); }
+                    0% { background-color: rgba(52, 152, 219, 0.4); box-shadow: 0 0 12px rgba(52, 152, 219, 0.5); }
+                    100% { background-color: rgba(52, 152, 219, 0.6); box-shadow: 0 0 16px rgba(52, 152, 219, 0.8); }
+                }
+                
+                /* Estilo adicional para quando o elemento recebe foco */
+                .current-narration-text:focus {
+                    outline: 3px solid rgba(52, 152, 219, 0.9);
+                    box-shadow: 0 0 20px rgba(52, 152, 219, 0.8);
+                }
+                
+                /* Estilo para destacar temporariamente quando o scroll é aplicado */
+                .current-narration-text.scroll-highlight {
+                    background-color: rgba(52, 152, 219, 0.7) !important;
+                    box-shadow: 0 0 25px rgba(52, 152, 219, 1) !important;
+                    transition: all 0.3s ease-in-out;
                 }
             `;
             document.head.appendChild(style);
@@ -123,6 +139,9 @@ class TextNarrationTracker {
     setupUtteranceEvents(utterance) {
         if (!utterance) return;
         
+        // Preservar eventos onboundary existentes se houver
+        const existingOnBoundary = utterance.onboundary;
+        
         // Evento de limite de palavra (word boundary)
         utterance.onboundary = (event) => {
             if (event.name === 'word') {
@@ -131,6 +150,16 @@ class TextNarrationTracker {
                 
                 // Destacar a posição atual
                 this.highlightTextPosition(this.currentPosition);
+                
+                // Garantir que o ScrollManager acompanhe o elemento destacado
+                if (this.scrollManager && this.highlightedElement) {
+                    this.scrollManager.setCurrentElement(this.highlightedElement);
+                }
+            }
+            
+            // Chamar o handler existente se houver
+            if (existingOnBoundary) {
+                existingOnBoundary(event);
             }
         };
         
@@ -162,6 +191,10 @@ class TextNarrationTracker {
         highlightElement.className = 'current-narration-text';
         highlightElement.textContent = wordInfo.word;
         
+        // Adicionar atributos para melhorar a acessibilidade e foco
+        highlightElement.setAttribute('tabindex', '-1');
+        highlightElement.setAttribute('aria-live', 'assertive');
+        
         // Dividir o texto em três partes: antes, palavra e depois
         const textBefore = this.currentText.substring(0, wordInfo.start);
         const textAfter = this.currentText.substring(wordInfo.end);
@@ -185,8 +218,168 @@ class TextNarrationTracker {
             this.currentTextElement.appendChild(afterElement);
         }
         
-        // Configurar o scroll para manter o elemento visível
-        this.scrollManager.setCurrentElement(highlightElement);
+        // Garantir que o elemento destacado tenha um estilo que o torne mais visível
+        highlightElement.style.display = 'inline-block';
+        highlightElement.style.position = 'relative';
+        highlightElement.style.zIndex = '100'; // Aumentar z-index para garantir visibilidade
+        
+        // Forçar um reflow para garantir que as mudanças de estilo sejam aplicadas
+        highlightElement.getBoundingClientRect();
+        
+        // Reduzir o atraso para tornar a experiência mais responsiva
+        const scrollDelay = Math.max(10, this.settings.updateDelay / 2);
+        
+        // Aguardar um pequeno intervalo para garantir que o DOM foi atualizado
+        // antes de configurar o scroll, isso melhora a precisão do posicionamento
+        setTimeout(() => {
+            // Forçar o foco no elemento para garantir que ele receba atenção
+            highlightElement.focus({ preventScroll: true });
+            
+            // Adicionar classe temporária para chamar atenção visual
+            highlightElement.classList.add('scroll-highlight');
+            
+            // Encontrar o contêiner de scroll do texto (txt-content)
+            const scrollContainer = this.findScrollContainer(this.currentTextElement);
+            
+            // Usar uma abordagem de dois níveis para garantir o scroll:
+            // 1. Primeiro tentar usar o contêiner específico de texto
+            // 2. Depois usar o ScrollManager global como backup
+            
+            // Primeiro nível: scroll no contêiner específico
+            if (scrollContainer) {
+                // Usar scroll direto no contêiner de texto
+                this.scrollToHighlightedElement(highlightElement, scrollContainer);
+                console.log('TextNarrationTracker: Usando scroll do contêiner de texto');
+            }
+            
+            // Segundo nível: sempre usar o ScrollManager global também
+            // Isso garante que, mesmo que o contêiner específico falhe,
+            // o ScrollManager global tentará manter o elemento visível
+            if (this.scrollManager) {
+                // Ajustar configurações do ScrollManager para melhor visibilidade
+                if (this.scrollManager.settings) {
+                    this.scrollManager.settings.behavior = 'smooth';
+                    this.scrollManager.settings.verticalAlignment = 0.35; // Posicionar mais ao centro
+                    this.scrollManager.settings.margin = 120; // Aumentar margem de segurança
+                    this.scrollManager.settings.scrollDelay = 50; // Reduzir atraso para resposta mais rápida
+                }
+                
+                // Definir o elemento atual e forçar o scroll
+                this.scrollManager.setCurrentElement(highlightElement);
+                console.log('TextNarrationTracker: Usando ScrollManager global como backup');
+            }
+            
+            // Remover a classe de destaque após um tempo
+            setTimeout(() => {
+                highlightElement.classList.remove('scroll-highlight');
+            }, 1000);
+            
+        }, scrollDelay);
+    }
+    
+    /**
+     * Encontra o contêiner com scroll que contém o elemento
+     * @param {HTMLElement} element - Elemento para encontrar o contêiner
+     * @returns {HTMLElement|null} - Contêiner com scroll ou null se não encontrar
+     */
+    findScrollContainer(element) {
+        if (!element) return null;
+        
+        // Primeiro, tentar encontrar diretamente o contêiner txt-content
+        // que é o contêiner principal de texto na aplicação
+        const txtContent = document.querySelector('.txt-content');
+        if (txtContent) {
+            console.log('TextNarrationTracker: Contêiner txt-content encontrado diretamente');
+            return txtContent;
+        }
+        
+        // Se não encontrou diretamente, procurar nos elementos pais
+        let parent = element.parentElement;
+        
+        while (parent) {
+            // Verificar se o elemento tem scroll
+            const style = getComputedStyle(parent);
+            const hasScroll = (
+                parent.scrollHeight > parent.clientHeight &&
+                (style.overflowY === 'auto' || 
+                 style.overflowY === 'scroll' ||
+                 style.overflow === 'auto' ||
+                 style.overflow === 'scroll')
+            );
+            
+            // Verificar também se é um contêiner de texto conhecido
+            // Adicionamos mais classes que podem ser usadas como contêineres de texto
+            const isTextContainer = (
+                parent.classList.contains('txt-content') ||
+                parent.classList.contains('text-container') ||
+                parent.classList.contains('txt-container') ||
+                parent.classList.contains('extracted-text-container') ||
+                parent.id === 'imagesContainer'
+            );
+            
+            if (hasScroll || isTextContainer) {
+                console.log('TextNarrationTracker: Contêiner de scroll encontrado:', 
+                    parent.className || parent.id || 'elemento sem classe/id');
+                return parent;
+            }
+            
+            parent = parent.parentElement;
+        }
+        
+        // Se não encontrou nenhum contêiner específico, usar o body como último recurso
+        console.log('TextNarrationTracker: Nenhum contêiner específico encontrado, usando document.body');
+        return document.body;
+    }
+    
+    /**
+     * Centraliza o elemento destacado no contêiner de scroll
+     * @param {HTMLElement} element - Elemento a ser centralizado
+     * @param {HTMLElement} container - Contêiner de scroll
+     */
+    scrollToHighlightedElement(element, container) {
+        if (!element || !container) return;
+        
+        // Obter as dimensões do elemento e do contêiner
+        const elementRect = element.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        // Calcular a posição relativa do elemento dentro do contêiner
+        const relativeTop = elementRect.top - containerRect.top + container.scrollTop;
+        
+        // Calcular a posição de destino para centralizar o elemento
+        // Usar 0.35 como fator de centralização para posicionar um pouco acima do centro
+        // mas não tão alto que fique muito próximo do topo
+        const targetScroll = relativeTop - (containerRect.height * 0.35) + (elementRect.height / 2);
+        
+        // Margem de segurança para considerar o elemento visível (em pixels)
+        const safetyMargin = 80;
+        
+        // Verificar se o elemento já está visível no viewport do contêiner
+        // Tornamos a verificação mais precisa para garantir que o elemento esteja bem visível
+        const isVisible = (
+            relativeTop >= container.scrollTop + safetyMargin &&
+            relativeTop + elementRect.height <= container.scrollTop + containerRect.height - safetyMargin
+        );
+        
+        // Sempre fazer o scroll para garantir que o elemento esteja centralizado
+        // Isso resolve o problema de elementos que estão tecnicamente visíveis
+        // mas não estão em uma posição ideal para leitura
+        
+        // Adicionar classe de destaque para chamar atenção
+        element.classList.add('scroll-highlight');
+        
+        // Fazer o scroll com animação suave
+        container.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
+        
+        // Remover a classe de destaque após um tempo
+        setTimeout(() => {
+            element.classList.remove('scroll-highlight');
+        }, 1500);
+        
+        console.log('TextNarrationTracker: Elemento centralizado no contêiner de scroll');
     }
     
     /**

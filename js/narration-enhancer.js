@@ -10,6 +10,7 @@ class NarrationEnhancer {
         // Instanciar os componentes
         this.textHighlighter = new TextHighlighter();
         this.autoScroll = new AutoScroll();
+        this.scrollManager = new ScrollManager(); // Adicionar ScrollManager para melhor controle de rolagem
         this.textSelection = new TextSelection();
         
         // Referência ao narrador principal
@@ -139,10 +140,11 @@ class NarrationEnhancer {
         
         this.isEnhancedNarrationActive = true;
         
-        // Iniciar rolagem automática
+        // Iniciar rolagem automática usando ambos os sistemas para garantir compatibilidade
         this.autoScroll.start();
+        this.scrollManager.activate(); // Ativar o ScrollManager para rolagem suave
         
-        console.log('Narração aprimorada ativada');
+        console.log('Narração aprimorada ativada com rolagem automática');
     }
     
     /**
@@ -153,8 +155,9 @@ class NarrationEnhancer {
         
         this.isEnhancedNarrationActive = false;
         
-        // Parar rolagem automática
+        // Parar rolagem automática em ambos os sistemas
         this.autoScroll.stop();
+        this.scrollManager.deactivate(); // Desativar o ScrollManager
         
         // Remover destaques
         this.textHighlighter.reset();
@@ -189,8 +192,9 @@ class NarrationEnhancer {
                 return;
             }
             
-            // Definir o elemento destacado para rolagem automática
+            // Definir o elemento destacado para rolagem automática em ambos os sistemas
             this.autoScroll.setCurrentElement(this.textHighlighter.highlightedElement);
+            this.scrollManager.setCurrentElement(this.textHighlighter.highlightedElement); // Usar o ScrollManager para rolagem mais suave
             
             // Criar utterance para a sentença
             const utterance = new SpeechSynthesisUtterance(sentence);

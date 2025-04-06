@@ -164,5 +164,9 @@ class ScrollManager {
     }
 }
 
-// Exportar a classe
+// Exportar a classe e criar uma instância global para uso em outros componentes
 window.ScrollManager = ScrollManager;
+
+// Criar uma instância global do ScrollManager para uso em outros componentes
+window.scrollManager = new ScrollManager();
+console.log('ScrollManager: Instância global criada e disponível');

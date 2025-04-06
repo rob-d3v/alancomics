@@ -159,10 +159,19 @@ class TextHighlighter {
 
     /**
      * Rola a página para manter o elemento destacado visível e centralizado
+     * Utiliza o ScrollManager se disponível, ou faz a rolagem diretamente
      */
     scrollToHighlightedElement() {
         if (!this.highlightedElement) return;
         
+        // Verificar se existe uma instância do ScrollManager disponível globalmente
+        if (window.scrollManager) {
+            // Usar o ScrollManager global para rolagem suave e consistente
+            window.scrollManager.setCurrentElement(this.highlightedElement);
+            return;
+        }
+        
+        // Fallback: implementação própria de rolagem se o ScrollManager não estiver disponível
         // Obter a posição do elemento destacado
         const rect = this.highlightedElement.getBoundingClientRect();
         

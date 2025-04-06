@@ -950,6 +950,12 @@ class ComicNarrator {
         if (this.narrationTracker) {
             this.narrationTracker.deactivate();
         }
+        
+        // Desativar o ScrollManager global se estiver disponível
+        if (window.scrollManager) {
+            window.scrollManager.deactivate();
+            console.log('ScrollManager global desativado após fim da narração');
+        }
 
         // Update UI
         this.startNarrationBtn.innerHTML = '<i class="fas fa-book-reader"></i> Iniciar Narração';
@@ -1310,7 +1316,25 @@ class ComicNarrator {
                     // Ativar o rastreador
                     this.narrationTracker.activate(textElement);
                     
-                    // Iniciar narração com destaque
+                    // Garantir que o ScrollManager global também esteja ativado
+                    if (window.scrollManager) {
+                        window.scrollManager.activate();
+                        console.log('ScrollManager global ativado para acompanhar a narração');
+                    }
+                    
+                    // Configurar evento onboundary ANTES de iniciar a narração com destaque
+                    // Isso garante que o evento seja registrado antes de passar o utterance para o TextNarrationTracker
+                    utterance.onboundary = (event) => {
+                        if (event.name === 'word') {
+                            // Atualizar o ScrollManager global para manter o texto visível
+                            if (window.scrollManager && this.narrationTracker.highlightedElement) {
+                                window.scrollManager.setCurrentElement(this.narrationTracker.highlightedElement);
+                                console.log('ScrollManager: Atualizando elemento destacado durante narração');
+                            }
+                        }
+                    };
+                    
+                    // Iniciar narração com destaque APÓS configurar o evento onboundary
                     this.narrationTracker.startNarration(text, utterance);
                 }
             }
