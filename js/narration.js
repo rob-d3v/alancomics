@@ -51,112 +51,112 @@ class ComicNarrator {
 
         // Try to load voices immediately
         this.loadVoices();
-        
+
         // Tentar forçar carregamento de vozes SAPI do Windows
         this.forceWindowsVoicesDetection();
-        
+
         // Tentar acessar vozes do narrador do Windows
         this.tryAccessNarratorVoices();
     }
-    
+
     // Método específico para tentar acessar as vozes do narrador do Windows
     tryAccessNarratorVoices() {
         console.log("🔍 Tentando acessar especificamente as vozes do Narrador do Windows (Antonio e Francisca)...");
-        
+
         // Verificar se já temos as vozes do narrador
         const hasAntonioVoice = this.voices.some(voice => voice.name.includes('Antonio'));
         const hasFranciscaVoice = this.voices.some(voice => voice.name.includes('Francisca'));
-        
+
         if (hasAntonioVoice && hasFranciscaVoice) {
             console.log("✅ Vozes Antonio e Francisca já estão disponíveis!");
             return;
         }
-        
+
         // Tentar forçar a inicialização do serviço de voz com uma fala vazia
         try {
             console.log("🔄 Tentando inicializar o serviço de voz para detectar vozes do Narrador...");
-            
+
             // Criar um utterance vazio e falar para inicializar o serviço
             const initUtterance = new SpeechSynthesisUtterance('');
             // Definir propriedades que podem ajudar a inicializar o serviço completo
             initUtterance.lang = 'pt-BR';
             initUtterance.volume = 0; // Sem som
-            
+
             // Falar e cancelar imediatamente
             window.speechSynthesis.speak(initUtterance);
             window.speechSynthesis.cancel();
-            
+
             // Tentar carregar as vozes novamente após um breve intervalo
             setTimeout(() => {
                 this.voices = this.synth.getVoices();
-                
+
                 // Verificar novamente por Antonio e Francisca
                 const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
                 const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
-                
+
                 if (antonioVoice || franciscaVoice) {
                     console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
                     if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice);
                     if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice);
-                    
+
                     // Recarregar a interface com as novas vozes
                     this.loadVoices();
                 } else {
                     console.log("⚠️ Vozes do Narrador ainda não detectadas após inicialização forçada.");
                 }
             }, 500);
-            
+
         } catch (e) {
             console.warn("⚠️ Erro ao tentar acessar vozes do Narrador:", e);
         }
     }
-    
+
     // Método para registrar detalhes completos de todas as vozes disponíveis
     logVoiceDetails() {
         console.log("📊 DETALHES COMPLETOS DE TODAS AS VOZES DISPONÍVEIS:");
         console.log("==================================================");
-        
+
         if (this.voices.length === 0) {
             console.warn("⚠️ Nenhuma voz detectada! Verifique as permissões do navegador.");
             return;
         }
-        
+
         // Agrupar vozes por tipo (sistema vs navegador)
         const systemVoices = this.voices.filter(v => v.localService);
         const browserVoices = this.voices.filter(v => !v.localService);
-        
-        console.log(`🪟 VOZES DO SISTEMA (${systemVoices.length}):`);        
+
+        console.log(`🪟 VOZES DO SISTEMA (${systemVoices.length}):`);
         systemVoices.forEach((voice, i) => {
-            console.log(`${i+1}. ${voice.name}`);
-            console.log(`   - Idioma: ${voice.lang}`);            
-            console.log(`   - Local: ${voice.localService ? 'Sim ✓' : 'Não ✗'}`);            
-            console.log(`   - Default: ${voice.default ? 'Sim ✓' : 'Não ✗'}`);            
-            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);            
+            console.log(`${i + 1}. ${voice.name}`);
+            console.log(`   - Idioma: ${voice.lang}`);
+            console.log(`   - Local: ${voice.localService ? 'Sim ✓' : 'Não ✗'}`);
+            console.log(`   - Default: ${voice.default ? 'Sim ✓' : 'Não ✗'}`);
+            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
             // Listar todas as propriedades disponíveis
             console.log(`   - Todas as propriedades:`, Object.getOwnPropertyNames(voice));
         });
-        
-        console.log(`🌐 VOZES DO NAVEGADOR (${browserVoices.length}):`);        
+
+        console.log(`🌐 VOZES DO NAVEGADOR (${browserVoices.length}):`);
         browserVoices.forEach((voice, i) => {
-            console.log(`${i+1}. ${voice.name}`);
-            console.log(`   - Idioma: ${voice.lang}`);            
-            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);            
+            console.log(`${i + 1}. ${voice.name}`);
+            console.log(`   - Idioma: ${voice.lang}`);
+            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
         });
-        
+
         console.log("==================================================");
     }
-    
+
     // Método para forçar a detecção de vozes SAPI do Windows e do Narrador
     forceWindowsVoicesDetection() {
         console.log("🔄 Tentando forçar detecção de vozes do Windows e do Narrador...");
-        
+
         // Mostrar indicador de carregamento
         this.readingIndicator.textContent = 'Detectando vozes do Windows e do Narrador...';
         this.readingIndicator.style.display = 'block';
-        
+
         // Tentar várias vezes com intervalos crescentes (mais tentativas e mais tempo)
         const attempts = [500, 1000, 2000, 3000, 5000, 7000];
-        
+
         // Tentar forçar a inicialização do serviço de voz do Windows
         try {
             // Criar um utterance vazio e falar para inicializar o serviço
@@ -167,41 +167,41 @@ class ComicNarrator {
         } catch (e) {
             console.warn("⚠️ Não foi possível inicializar o serviço de voz:", e);
         }
-        
+
         attempts.forEach((delay, index) => {
             setTimeout(() => {
                 console.log(`🔍 Tentativa ${index + 1} de detectar vozes do Windows e do Narrador...`);
                 this.loadVoices();
-                
+
                 // Na última tentativa, atualizar a mensagem
                 if (index === attempts.length - 1) {
                     // Buscar vozes do Windows de forma mais abrangente
-                    const windowsVoices = this.voices.filter(voice => 
+                    const windowsVoices = this.voices.filter(voice =>
                         voice.localService && (
-                            voice.name.includes('Desktop') || 
-                            voice.name.includes('SAPI') || 
+                            voice.name.includes('Desktop') ||
+                            voice.name.includes('SAPI') ||
                             voice.name.includes('Microsoft') ||
                             // Tentar detectar vozes do narrador mesmo sem os prefixos comuns
-                            voice.name.includes('Antonio') || 
+                            voice.name.includes('Antonio') ||
                             voice.name.includes('Francisca')
                         ));
-                    
+
                     // Verificar especificamente por Antonio e Francisca
                     const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
                     const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
-                    
+
                     if (antonioVoice || franciscaVoice) {
                         let vozesDetetadas = [];
                         if (antonioVoice) vozesDetetadas.push('Antonio');
                         if (franciscaVoice) vozesDetetadas.push('Francisca');
-                        
+
                         this.readingIndicator.textContent = `✅ Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}!`;
                         console.log(`🎉 SUCESSO! Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}`);
-                        
+
                         // Destacar essas vozes no console para debug
                         if (antonioVoice) console.log("🔍 Detalhes da voz Antonio:", antonioVoice);
                         if (franciscaVoice) console.log("🔍 Detalhes da voz Francisca:", franciscaVoice);
-                        
+
                         setTimeout(() => {
                             this.readingIndicator.style.display = 'none';
                         }, 5000);
@@ -229,13 +229,13 @@ class ComicNarrator {
         try {
             // Não solicitar mais acesso ao microfone, apenas tentar carregar as vozes
             console.log("Carregando vozes do sistema sem solicitar permissões de microfone");
-            
+
             // Tentar carregar as vozes diretamente
             setTimeout(() => {
                 this.loadVoices();
                 console.log("Tentativa adicional de carregar vozes do sistema");
             }, 1000);
-            
+
             return true;
         } catch (error) {
             console.warn("Erro ao carregar vozes do sistema:", error);
@@ -249,11 +249,11 @@ class ComicNarrator {
 
         // Limpar seletor de vozes
         this.voiceSelect.innerHTML = '';
-        
+
         // Verificar especificamente por Antonio e Francisca (vozes do Narrador)
         const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
         const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
-        
+
         if (antonioVoice || franciscaVoice) {
             console.log("🎉 VOZES DO NARRADOR ENCONTRADAS!");
             if (antonioVoice) console.log("   - Antonio: ", antonioVoice.name, "(", antonioVoice.lang, ")");
@@ -272,21 +272,21 @@ class ComicNarrator {
             // Vozes SAPI do Windows (geralmente são as instaladas no sistema)
             (voice.localService === true && (voice.name.includes('Desktop') || voice.name.includes('SAPI')))
         );
-        
+
         // Forçar detecção de vozes SAPI do Windows e do Narrador
         console.log("🔍 Procurando por vozes SAPI do Windows, Microsoft e do Narrador...");
-        const windowsVoices = this.voices.filter(voice => 
+        const windowsVoices = this.voices.filter(voice =>
             // Vozes do sistema Windows
-            (voice.localService === true && 
-            (voice.name.includes('Desktop') || voice.name.includes('SAPI') || voice.name.includes('Microsoft'))) ||
+            (voice.localService === true &&
+                (voice.name.includes('Desktop') || voice.name.includes('SAPI') || voice.name.includes('Microsoft'))) ||
             // Ou vozes do Narrador (mesmo que não sejam detectadas como localService)
             voice.name.includes('Antonio') || voice.name.includes('Francisca')
         );
-        
+
         if (windowsVoices.length > 0) {
             console.log(`✅ Encontradas ${windowsVoices.length} vozes do sistema Windows/Narrador:`);
             windowsVoices.forEach(voice => console.log(`   - ${voice.name} (${voice.lang}) - Local: ${voice.localService ? 'Sim' : 'Não'}`));
-            
+
             // Adicionar vozes do Windows à lista de premium se ainda não estiverem lá
             windowsVoices.forEach(voice => {
                 if (!premiumVoices.includes(voice)) {
@@ -303,11 +303,11 @@ class ComicNarrator {
         });
 
         // Separar vozes premium em categorias
-        const windowsVoicesPremium = premiumVoices.filter(voice => 
+        const windowsVoicesPremium = premiumVoices.filter(voice =>
             voice.localService && (voice.name.includes('Desktop') || voice.name.includes('SAPI')));
-        const otherPremiumVoices = premiumVoices.filter(voice => 
+        const otherPremiumVoices = premiumVoices.filter(voice =>
             !windowsVoicesPremium.includes(voice));
-            
+
         // Criar seção especial para vozes do Windows (SAPI)
         if (windowsVoicesPremium.length > 0) {
             const windowsGroup = document.createElement('optgroup');
@@ -330,7 +330,7 @@ class ComicNarrator {
 
             this.voiceSelect.appendChild(windowsGroup);
         }
-        
+
         // Criar seção para outras vozes premium
         if (otherPremiumVoices.length > 0) {
             const premiumGroup = document.createElement('optgroup');
@@ -395,19 +395,19 @@ class ComicNarrator {
             voicesByLanguage[lang].forEach(voiceInfo => {
                 const option = document.createElement('option');
                 const qualityStars = '★'.repeat(voiceInfo.quality);
-                const isWindowsVoice = voiceInfo.voice.localService && 
+                const isWindowsVoice = voiceInfo.voice.localService &&
                     (voiceInfo.voice.name.includes('Desktop') || voiceInfo.voice.name.includes('SAPI'));
-                
+
                 // Adicionar ícone para vozes do Windows
                 const voiceIcon = isWindowsVoice ? '🪟 ' : '';
                 option.textContent = `${voiceIcon}${voiceInfo.voice.name} ${qualityStars}`;
                 option.value = voiceInfo.index;
-                
+
                 // Adicionar atributo data para estilização
                 if (voiceInfo.voice.localService) {
                     option.setAttribute('data-local', 'true');
                 }
-                
+
                 // Adicionar informação sobre ser voz do Windows
                 if (isWindowsVoice) {
                     option.style.fontWeight = 'bold';
@@ -445,7 +445,7 @@ class ComicNarrator {
         if (voice.name.includes('Antonio') || voice.name.includes('Francisca')) {
             return 5; // Qualidade máxima absoluta para vozes do Narrador
         }
-        
+
         // Outras vozes premium brasileiras
         if (voice.name.includes('Ricardo') ||
             voice.name.includes('Maria') ||
@@ -454,7 +454,7 @@ class ComicNarrator {
         }
 
         // Vozes SAPI do Windows (instaladas no sistema)
-        if (voice.localService === true && 
+        if (voice.localService === true &&
             (voice.name.includes('Desktop') || voice.name.includes('SAPI'))) {
             quality += 2; // Bônus maior para vozes do sistema Windows
         }
@@ -511,9 +511,9 @@ class ComicNarrator {
             voice.name.includes('Francisca')) {
             return false;
         }
-        
+
         // Nunca filtrar vozes SAPI do Windows (instaladas no sistema)
-        if (voice.localService === true && 
+        if (voice.localService === true &&
             (voice.name.includes('Desktop') || voice.name.includes('SAPI'))) {
             return false;
         }
@@ -539,10 +539,10 @@ class ComicNarrator {
         panel.className = 'voice-info-panel';
         panel.innerHTML = `
             <div class="voice-info-content">
-                <p>Para uma experiência narrativa melhor, utilize o Firefox:</p>
                 <ul>
-                    <li><span class="voice-step">1</span> Instale narradores de nível superior em sua máquina</li>
-                    <li><span class="voice-step">2</span> Ajuste o tom e velocidade conforme sua preferência</li>
+                    <li><span class="voice-step">1</span> Para uma experiência narrativa melhor, utilize o navegador: Firefox</li>
+                    <li><span class="voice-step">2</span> Instale narradores de nível superior em sua máquina</li>
+                    <li><span class="voice-step">3</span> Ajuste o tom e velocidade conforme sua preferência</li>
                 </ul>
             </div>
         `;
@@ -558,7 +558,7 @@ class ComicNarrator {
         //         refreshButton.classList.remove('refreshing');
         //     }, 500);
         // });
-        
+
         // // Botão específico para forçar detecção de vozes do Windows
         // const windowsVoicesButton = document.createElement('button');
         // windowsVoicesButton.className = 'windows-voices-button';
@@ -571,7 +571,7 @@ class ComicNarrator {
         //         windowsVoicesButton.classList.remove('refreshing');
         //     }, 3000);
         // });
-        
+
         // Botão específico para tentar detectar as vozes do Narrador (Antonio e Francisca)
         const narratorVoicesButton = document.createElement('button');
         narratorVoicesButton.className = 'narrator-voices-button';
@@ -581,28 +581,28 @@ class ComicNarrator {
             narratorVoicesButton.classList.add('refreshing');
             this.readingIndicator.textContent = 'Tentando acessar vozes do Narrador (Antonio e Francisca)...';
             this.readingIndicator.style.display = 'block';
-            
+
             // Tentar métodos específicos para o narrador sem solicitar permissões de microfone
             this.tryAccessNarratorVoices();
-            
+
             // Tentar várias vezes com intervalos diferentes
             setTimeout(() => this.tryAccessNarratorVoices(), 1000);
             setTimeout(() => this.tryAccessNarratorVoices(), 2000);
-            
+
             setTimeout(() => {
                 // Verificar se encontramos as vozes do narrador
                 const hasAntonioVoice = this.voices.some(voice => voice.name.includes('Antonio'));
                 const hasFranciscaVoice = this.voices.some(voice => voice.name.includes('Francisca'));
-                
+
                 if (hasAntonioVoice || hasFranciscaVoice) {
                     this.readingIndicator.textContent = `✅ Vozes do Narrador detectadas!`;
                     this.loadVoices(); // Recarregar a interface
                 } else {
                     this.readingIndicator.textContent = '⚠️ Não foi possível detectar as vozes do Narrador.';
                 }
-                
+
                 narratorVoicesButton.classList.remove('refreshing');
-                
+
                 setTimeout(() => {
                     this.readingIndicator.style.display = 'none';
                 }, 3000);
@@ -945,12 +945,12 @@ class ComicNarrator {
             this.fallbackAudio.src = '';
             this.fallbackAudio = null;
         }
-        
+
         // Desativar o rastreador de narração se estiver ativo
         if (this.narrationTracker) {
             this.narrationTracker.deactivate();
         }
-        
+
         // Desativar o ScrollManager global se estiver disponível
         if (window.scrollManager) {
             window.scrollManager.deactivate();
@@ -1298,30 +1298,30 @@ class ComicNarrator {
                 console.error('Speech error:', event);
                 reject(new Error('Speech synthesis error'));
             };
-            
+
             // Verificar se estamos em um arquivo de texto para ativar o destaque
             const isTextFile = this.isTextFile();
-            
+
             // Se for um arquivo de texto, ativar o rastreador de narração
             if (isTextFile) {
                 // Inicializar o rastreador de narração se ainda não existe
                 if (!this.narrationTracker) {
                     this.narrationTracker = new TextNarrationTracker();
                 }
-                
+
                 // Encontrar o elemento de texto atual
                 const textElement = this.findTextElement();
-                
+
                 if (textElement) {
                     // Ativar o rastreador
                     this.narrationTracker.activate(textElement);
-                    
+
                     // Garantir que o ScrollManager global também esteja ativado
                     if (window.scrollManager) {
                         window.scrollManager.activate();
                         console.log('ScrollManager global ativado para acompanhar a narração');
                     }
-                    
+
                     // Configurar evento onboundary ANTES de iniciar a narração com destaque
                     // Isso garante que o evento seja registrado antes de passar o utterance para o TextNarrationTracker
                     utterance.onboundary = (event) => {
@@ -1333,7 +1333,7 @@ class ComicNarrator {
                             }
                         }
                     };
-                    
+
                     // Iniciar narração com destaque APÓS configurar o evento onboundary
                     this.narrationTracker.startNarration(text, utterance);
                 }
@@ -1366,15 +1366,15 @@ class ComicNarrator {
             // Verificamos se algum dos botões de pausa está no estado pausado
             const mainPauseButton = document.querySelector('.narration-play-pause');
             const viewerPauseButton = document.getElementById('pauseNarration');
-            
+
             // Verificamos se o botão principal está com a classe 'paused' ou se o botão do visualizador
             // está mostrando o ícone de play (o que indica que está pausado)
             const mainButtonPaused = mainPauseButton && mainPauseButton.classList.contains('paused');
             const viewerButtonPaused = viewerPauseButton && viewerPauseButton.innerHTML.includes('fa-play');
-            
+
             // Se qualquer um dos botões indicar que a narração foi pausada manualmente
             const manuallyPaused = mainButtonPaused || viewerButtonPaused;
-            
+
             // Se estiver pausado mas NÃO foi pausado manualmente, então retoma
             if (this.synth.paused && !manuallyPaused) {
                 console.log('Speech synthesis paused unexpectedly, resuming...');
@@ -1412,7 +1412,7 @@ class ComicNarrator {
 
         return voicesByLanguage;
     }
-    
+
     /**
      * Verifica se o conteúdo atual é um arquivo de texto
      * @returns {boolean} - Verdadeiro se for um arquivo de texto
@@ -1420,11 +1420,11 @@ class ComicNarrator {
     isTextFile() {
         const imagesContainer = document.getElementById('imagesContainer');
         if (!imagesContainer) return false;
-        
+
         // Verificar se há um elemento txt-container
         return !!imagesContainer.querySelector('.txt-container');
     }
-    
+
     /**
      * Encontra o elemento de texto atual
      * @returns {HTMLElement|null} - Elemento de texto ou null se não encontrado
@@ -1432,11 +1432,11 @@ class ComicNarrator {
     findTextElement() {
         const imagesContainer = document.getElementById('imagesContainer');
         if (!imagesContainer) return null;
-        
+
         // Encontrar o container de texto
         const txtContainer = imagesContainer.querySelector('.txt-container');
         if (!txtContainer) return null;
-        
+
         // Encontrar o elemento de conteúdo de texto
         return txtContainer.querySelector('.txt-content');
     }
