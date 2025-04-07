@@ -652,19 +652,27 @@ class RectangularSelectionManager {
      * Limpa todas as seleções
      */
     clearAllSelections() {
-        // Remover elementos de seleção
-        const containers = document.querySelectorAll('.rectangular-selection-container');
-        containers.forEach(container => {
-            const selections = container.querySelectorAll('.rectangular-selection');
-            selections.forEach(selection => selection.remove());
-        });
+        // Limpar a fila de processamento
+        this.processingQueue.clearQueue();
         
-        // Limpar lista de seleções
+        // Remover todos os elementos de seleção
+        const selectionElements = document.querySelectorAll('.rectangular-selection');
+        selectionElements.forEach(element => element.remove());
+        
+        // Limpar array de seleções
         this.selections = [];
-        this.currentSelection = null;
+        
+        // Ocultar container de texto extraído
+        if (this.extractedTextContainer) {
+            this.extractedTextContainer.style.display = 'none';
+            const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
+            if (itemsContainer) {
+                itemsContainer.innerHTML = '';
+            }
+        }
         
         // Mostrar notificação
-        this.showNotification('Todas as seleções foram removidas.', 'info');
+        this.showNotification('Todas as seleções foram removidas', 'info');
     }
     
     /**
@@ -809,6 +817,18 @@ class RectangularSelectionManager {
                     throw new Error('Dimensões de seleção inválidas');
                 }
                 
+                // Log detalhado das coordenadas para depuração
+                console.log('Coordenadas de extração:', {
+                    left: left,
+                    top: top,
+                    width: width,
+                    height: height,
+                    imageWidth: imageElement.width,
+                    imageHeight: imageElement.height,
+                    naturalWidth: imageElement.naturalWidth,
+                    naturalHeight: imageElement.naturalHeight
+                });
+                
                 // Criar canvas
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -817,12 +837,37 @@ class RectangularSelectionManager {
                 canvas.width = width;
                 canvas.height = height;
                 
-                // Desenhar região da imagem no canvas
+                // Calcular a escala entre as dimensões naturais e as dimensões exibidas
+                const scaleX = imageElement.naturalWidth / imageElement.width;
+                const scaleY = imageElement.naturalHeight / imageElement.height;
+                
+                // Ajustar coordenadas para a escala real da imagem
+                const scaledLeft = left * scaleX;
+                const scaledTop = top * scaleY;
+                const scaledWidth = width * scaleX;
+                const scaledHeight = height * scaleY;
+                
+                // Log das coordenadas ajustadas
+                console.log('Coordenadas ajustadas para escala real:', {
+                    scaledLeft,
+                    scaledTop,
+                    scaledWidth,
+                    scaledHeight,
+                    scaleX,
+                    scaleY
+                });
+                
+                // Desenhar região da imagem no canvas usando as coordenadas ajustadas
                 ctx.drawImage(
                     imageElement,
-                    left, top, width, height,
+                    scaledLeft, scaledTop, scaledWidth, scaledHeight,
                     0, 0, width, height
                 );
+                
+                // Criar visualização de depuração se estiver em modo de desenvolvimento
+                if (window.DEBUG_OCR_EXTRACTION || true) { // Temporariamente ativado para todos
+                    this.showDebugExtraction(imageElement, left, top, width, height, canvas);
+                }
                 
                 // Resolver com o canvas
                 resolve(canvas);
@@ -831,6 +876,135 @@ class RectangularSelectionManager {
                 reject(error);
             }
         });
+    }
+    
+    /**
+     * Mostra uma visualização de depuração da extração de imagem
+     * @param {HTMLImageElement} originalImage - Imagem original
+     * @param {number} left - Posição X da seleção
+     * @param {number} top - Posição Y da seleção
+     * @param {number} width - Largura da seleção
+     * @param {number} height - Altura da seleção
+     * @param {HTMLCanvasElement} extractedCanvas - Canvas com a região extraída
+     */
+    showDebugExtraction(originalImage, left, top, width, height, extractedCanvas) {
+        // Calcular a escala entre as dimensões naturais e as dimensões exibidas
+        const scaleX = originalImage.naturalWidth / originalImage.width;
+        const scaleY = originalImage.naturalHeight / originalImage.height;
+        
+        // Ajustar coordenadas para a escala real da imagem
+        const scaledLeft = left * scaleX;
+        const scaledTop = top * scaleY;
+        const scaledWidth = width * scaleX;
+        const scaledHeight = height * scaleY;
+        // Criar ou obter o container de depuração
+        let debugContainer = document.getElementById('ocr-debug-container');
+        if (!debugContainer) {
+            debugContainer = document.createElement('div');
+            debugContainer.id = 'ocr-debug-container';
+            debugContainer.style.position = 'fixed';
+            debugContainer.style.top = '10px';
+            debugContainer.style.right = '10px';
+            debugContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            debugContainer.style.padding = '10px';
+            debugContainer.style.borderRadius = '5px';
+            debugContainer.style.zIndex = '9999';
+            debugContainer.style.color = 'white';
+            debugContainer.style.maxWidth = '400px';
+            debugContainer.style.maxHeight = '80vh';
+            debugContainer.style.overflow = 'auto';
+            document.body.appendChild(debugContainer);
+        }
+        
+        // Limpar container
+        debugContainer.innerHTML = '';
+        
+        // Adicionar título
+        const title = document.createElement('h3');
+        title.textContent = 'Depuração de Extração OCR';
+        title.style.margin = '0 0 10px 0';
+        debugContainer.appendChild(title);
+        
+        // Adicionar botão para fechar
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'X';
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '5px';
+        closeButton.style.right = '5px';
+        closeButton.style.backgroundColor = 'red';
+        closeButton.style.color = 'white';
+        closeButton.style.border = 'none';
+        closeButton.style.borderRadius = '50%';
+        closeButton.style.width = '20px';
+        closeButton.style.height = '20px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.addEventListener('click', () => {
+            debugContainer.remove();
+        });
+        debugContainer.appendChild(closeButton);
+        
+        // Adicionar informações de coordenadas
+        const coordInfo = document.createElement('div');
+        coordInfo.innerHTML = `
+            <p><strong>Coordenadas na tela:</strong></p>
+            <ul>
+                <li>Left: ${left}px</li>
+                <li>Top: ${top}px</li>
+                <li>Width: ${width}px</li>
+                <li>Height: ${height}px</li>
+            </ul>
+            <p><strong>Coordenadas ajustadas para OCR:</strong></p>
+            <ul>
+                <li>Left: ${scaledLeft.toFixed(2)}px</li>
+                <li>Top: ${scaledTop.toFixed(2)}px</li>
+                <li>Width: ${scaledWidth.toFixed(2)}px</li>
+                <li>Height: ${scaledHeight.toFixed(2)}px</li>
+                <li>Escala X: ${scaleX.toFixed(2)}</li>
+                <li>Escala Y: ${scaleY.toFixed(2)}</li>
+            </ul>
+        `;
+        debugContainer.appendChild(coordInfo);
+        
+        // Adicionar visualização da imagem original com retângulo
+        const originalPreview = document.createElement('div');
+        originalPreview.innerHTML = '<p><strong>Imagem Original com Seleção:</strong></p>';
+        
+        // Criar canvas para mostrar a imagem original com retângulo
+        const originalCanvas = document.createElement('canvas');
+        const maxPreviewWidth = 350;
+        const scale = Math.min(1, maxPreviewWidth / originalImage.width);
+        originalCanvas.width = originalImage.width * scale;
+        originalCanvas.height = originalImage.height * scale;
+        originalCanvas.style.border = '1px solid #ccc';
+        
+        const originalCtx = originalCanvas.getContext('2d');
+        originalCtx.drawImage(originalImage, 0, 0, originalCanvas.width, originalCanvas.height);
+        
+        // Desenhar retângulo na posição da seleção
+        originalCtx.strokeStyle = 'red';
+        originalCtx.lineWidth = 2;
+        originalCtx.strokeRect(
+            left * scale,
+            top * scale,
+            width * scale,
+            height * scale
+        );
+        
+        originalPreview.appendChild(originalCanvas);
+        debugContainer.appendChild(originalPreview);
+        
+        // Adicionar visualização da região extraída
+        const extractedPreview = document.createElement('div');
+        extractedPreview.innerHTML = '<p><strong>Região Extraída para OCR:</strong></p>';
+        
+        // Criar canvas para mostrar a região extraída
+        const extractedImg = document.createElement('img');
+        extractedImg.src = extractedCanvas.toDataURL();
+        extractedImg.style.maxWidth = '100%';
+        extractedImg.style.border = '1px solid #ccc';
+        
+        extractedPreview.appendChild(extractedImg);
+        debugContainer.appendChild(extractedPreview);
     }
     
     /**

@@ -1,0 +1,80 @@
+/**
+ * Estilos para o container de depuração do OCR
+ */
+
+#ocr-debug-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 9999;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#ocr-debug-container h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #3498db;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #555;
+}
+
+#ocr-debug-container p {
+    margin: 10px 0 5px 0;
+}
+
+#ocr-debug-container ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+#ocr-debug-container li {
+    margin-bottom: 3px;
+}
+
+#ocr-debug-container canvas,
+#ocr-debug-container img {
+    display: block;
+    margin: 10px 0;
+    max-width: 100%;
+    border: 1px solid #555;
+}
+
+#ocr-debug-container button.close-debug {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ocr-debug-container button.close-debug:hover {
+    background-color: #c0392b;
+}
+
+#ocr-debug-container .debug-section {
+    margin-bottom: 15px;
+}
+
+#ocr-debug-container .debug-section:last-child {
+    margin-bottom: 0;
+}
