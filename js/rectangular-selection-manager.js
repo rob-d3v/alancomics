@@ -150,20 +150,20 @@ class RectangularSelectionManager {
         }
         
         // Criar o botão
-        const selectTextBtn = document.createElement('button');
-        selectTextBtn.id = 'selectRectangularText';
-        selectTextBtn.className = 'select-rectangular-text';
-        selectTextBtn.innerHTML = '<i class="fas fa-object-group"></i> Selecionar trechos de texto';
-        selectTextBtn.title = 'Selecione áreas específicas de texto em imagens para narração sequencial';
+        // const selectTextBtn = document.createElement('button');
+        // selectTextBtn.id = 'selectRectangularText';
+        // selectTextBtn.className = 'select-rectangular-text';
+        // selectTextBtn.innerHTML = '<i class="fas fa-object-group"></i> Selecionar trechos de texto';
+        // selectTextBtn.title = 'Selecione áreas específicas de texto em imagens para narração sequencial';
         
-        // Adicionar evento de clique
-        selectTextBtn.addEventListener('click', () => this.toggleSelectionMode());
+        // // Adicionar evento de clique
+        // selectTextBtn.addEventListener('click', () => this.toggleSelectionMode());
         
         // Adicionar ao painel de controles
-        narrationControls.appendChild(selectTextBtn);
+        // narrationControls.appendChild(selectTextBtn);
         
         // Armazenar referência ao botão
-        this.selectTextBtn = selectTextBtn;
+        // this.selectTextBtn = selectTextBtn;
     }
     
     /**
@@ -302,9 +302,9 @@ class RectangularSelectionManager {
         this.selectionIndicator.style.display = 'flex';
         this.selectionControls.style.display = 'flex';
         
-        if (this.selectTextBtn) {
-            this.selectTextBtn.classList.add('active');
-        }
+        // if (this.selectTextBtn) {
+        //     this.selectTextBtn.classList.add('active');
+        // }
         
         // Adicionar listeners para imagens
         this.addImageListeners();
@@ -325,9 +325,9 @@ class RectangularSelectionManager {
         this.selectionIndicator.style.display = 'none';
         this.selectionControls.style.display = 'none';
         
-        if (this.selectTextBtn) {
-            this.selectTextBtn.classList.remove('active');
-        }
+        // if (this.selectTextBtn) {
+        //     this.selectTextBtn.classList.remove('active');
+        // }
         
         // Remover listeners de imagens
         this.removeImageListeners();
