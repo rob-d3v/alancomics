@@ -574,15 +574,44 @@ class RectangularSelectionManager {
         const rect = this.currentSelection.getBoundingClientRect();
         const imgRect = this.currentImage.getBoundingClientRect();
         
+        // Obter dimensões da seleção a partir do estilo ou do getBoundingClientRect
+        // Usar getBoundingClientRect como fallback para garantir valores válidos
+        const left = parseFloat(this.currentSelection.style.left) || 0;
+        const top = parseFloat(this.currentSelection.style.top) || 0;
+        const width = parseFloat(this.currentSelection.style.width) || rect.width;
+        const height = parseFloat(this.currentSelection.style.height) || rect.height;
+        
+        // Verificar se os valores são válidos
+        if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
+            console.error('Dimensões de seleção inválidas:', { left, top, width, height });
+            this.showNotification('Erro: Dimensões de seleção inválidas. Tente novamente.', 'error');
+            this.cancelCurrentSelection();
+            return;
+        }
+        
+        // Garantir que a imagem tenha um ID para referência futura
+        if (!this.currentImage.id) {
+            this.currentImage.id = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        }
+        
         // Calcular posição relativa à imagem
         const selection = {
-            image: this.currentImage,
-            left: parseFloat(this.currentSelection.style.left),
-            top: parseFloat(this.currentSelection.style.top),
-            width: parseFloat(this.currentSelection.style.width),
-            height: parseFloat(this.currentSelection.style.height),
+            // Não armazenar a referência direta à imagem, apenas o ID
+            imageId: this.currentImage.id,
+            imageSrc: this.currentImage.src, // Armazenar também a URL da imagem como referência adicional
+            left: left,
+            top: top,
+            width: width,
+            height: height,
             index: this.selections.length
         };
+        
+        // Garantir que a imagem tenha um ID para referência futura
+        if (!this.currentImage.id) {
+            this.currentImage.id = selection.imageId;
+        }
+        
+        console.log('Seleção confirmada com dimensões:', selection);
         
         // Adicionar à lista de seleções
         this.selections.push(selection);
@@ -660,22 +689,41 @@ class RectangularSelectionManager {
         // Limpar fila de processamento
         this.processingQueue.clearQueue();
         
+        // Criar cópias das seleções para evitar problemas de referência
+        const selectionsCopy = this.selections.map(selection => ({
+            ...selection,
+            // Garantir que todas as propriedades necessárias existam
+            imageId: selection.imageId || '',
+            imageSrc: selection.imageSrc || '',
+            left: selection.left || 0,
+            top: selection.top || 0,
+            width: selection.width || 100,
+            height: selection.height || 100,
+            index: selection.index || 0
+        }));
+        
         // Adicionar cada seleção à fila de processamento
-        this.selections.forEach(selection => {
-            this.processingQueue.addItem(selection, { index: selection.index });
+        selectionsCopy.forEach(selection => {
+            // Usar a função de processamento diretamente como item da fila
+            this.processingQueue.addItem(async () => {
+                try {
+                    // Extrair região da imagem
+                    const imageRegion = await this.extractImageRegion(selection);
+                    
+                    // Processar OCR na região
+                    const text = await this.ocrProcessor.processImage(imageRegion);
+                    
+                    return text;
+                } catch (error) {
+                    console.error('Erro ao processar seleção:', error, selection);
+                    throw error;
+                }
+            }, { index: selection.index });
         });
         
         // Iniciar processamento
         try {
-            await this.processingQueue.start(async (selection, metadata) => {
-                // Extrair região da imagem
-                const imageRegion = await this.extractImageRegion(selection);
-                
-                // Processar OCR na região
-                const text = await this.ocrProcessor.processImage(imageRegion);
-                
-                return text;
-            });
+            await this.processingQueue.startProcessing();
         } catch (error) {
             console.error('Erro ao processar seleções:', error);
             this.showNotification(`Erro ao processar seleções: ${error.message}`, 'error');
@@ -691,24 +739,95 @@ class RectangularSelectionManager {
     async extractImageRegion(selection) {
         return new Promise((resolve, reject) => {
             try {
+                // Verificar se a seleção é válida
+                if (!selection) {
+                    throw new Error('Objeto de seleção não fornecido');
+                }
+                
+                console.log('Processando seleção:', JSON.stringify(selection));
+                
+                // Obter a imagem usando várias estratégias de recuperação
+                let imageElement = null;
+                
+                // Estratégia 1: Buscar pelo ID (se existir)
+                if (selection.imageId && typeof selection.imageId === 'string') {
+                    imageElement = document.getElementById(selection.imageId);
+                    console.log('Estratégia 1 (ID):', imageElement ? 'Imagem encontrada' : 'Imagem não encontrada');
+                }
+                
+                // Estratégia 2: Buscar por seletor de classe e ID
+                if (!imageElement && selection.imageId && typeof selection.imageId === 'string') {
+                    const images = document.querySelectorAll('img.selectable-image');
+                    for (const img of images) {
+                        if (img.id === selection.imageId) {
+                            imageElement = img;
+                            console.log('Estratégia 2 (Classe+ID): Imagem encontrada');
+                            break;
+                        }
+                    }
+                }
+                
+                // Estratégia 3: Buscar por URL da imagem
+                if (!imageElement && selection.imageSrc) {
+                    const images = document.querySelectorAll('img');
+                    for (const img of images) {
+                        if (img.src === selection.imageSrc) {
+                            imageElement = img;
+                            console.log('Estratégia 3 (URL): Imagem encontrada');
+                            break;
+                        }
+                    }
+                }
+                
+                // Estratégia 4: Buscar qualquer imagem selecionável (último recurso)
+                if (!imageElement) {
+                    const images = document.querySelectorAll('img.selectable-image');
+                    if (images.length > 0) {
+                        console.warn('Não foi possível encontrar a imagem específica. Usando a primeira imagem selecionável disponível.');
+                        imageElement = images[0];
+                    }
+                }
+                
+                // Estratégia 5: Usar a imagem atual se estiver disponível
+                if (!imageElement && this.currentImage) {
+                    console.warn('Usando a imagem atual como fallback');
+                    imageElement = this.currentImage;
+                }
+                
+                // Verificar se a imagem foi encontrada
+                if (!imageElement) {
+                    throw new Error('Seleção inválida: imagem não encontrada');
+                }
+                
+                // Verificar se as dimensões são válidas e fornecer valores padrão se necessário
+                const width = selection.width || 100;
+                const height = selection.height || 100;
+                const left = selection.left || 0;
+                const top = selection.top || 0;
+                
+                if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
+                    throw new Error('Dimensões de seleção inválidas');
+                }
+                
                 // Criar canvas
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
                 // Definir tamanho do canvas
-                canvas.width = selection.width;
-                canvas.height = selection.height;
+                canvas.width = width;
+                canvas.height = height;
                 
                 // Desenhar região da imagem no canvas
                 ctx.drawImage(
-                    selection.image,
-                    selection.left, selection.top, selection.width, selection.height,
-                    0, 0, selection.width, selection.height
+                    imageElement,
+                    left, top, width, height,
+                    0, 0, width, height
                 );
                 
                 // Resolver com o canvas
                 resolve(canvas);
             } catch (error) {
+                console.error('Erro ao extrair região da imagem:', error, selection);
                 reject(error);
             }
         });
