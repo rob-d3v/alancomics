@@ -1133,8 +1133,29 @@ class ComicNarrator {
             this.readingIndicator.textContent = 'Extraindo texto da imagem...';
             this.readingIndicator.style.display = 'block';
         }
-
+        
         try {
+            // Verificar se o OCR está ativado e se existem seleções retangulares para esta imagem
+            const ocrEnabled = document.getElementById('enableOCR') && document.getElementById('enableOCR').checked;
+            
+            if (ocrEnabled && window.rectangularSelectionManager) {
+                // Buscar textos já extraídos para esta imagem
+                const extractedTexts = window.rectangularSelectionManager.getExtractedTextsForImage(imgElement);
+                
+                if (extractedTexts && extractedTexts.length > 0) {
+                    console.log('Usando textos já extraídos pelo OCR para narração');
+                    
+                    // Destacar a primeira área selecionada
+                    window.rectangularSelectionManager.highlightSelection(0);
+                    
+                    // Juntar todos os textos extraídos em um único texto
+                    const combinedText = extractedTexts.join('\n\n');
+                    this.isProcessing = false;
+                    return combinedText || 'Não foi possível extrair texto desta imagem.';
+                }
+            }
+            
+            // Se não houver OCR ativado ou não houver seleções, usar o método padrão
             // Check if Tesseract is available
             if (typeof Tesseract === 'undefined') {
                 throw new Error('Tesseract OCR not available');

@@ -16,6 +16,10 @@ class RectangularSelectionManager {
         this.startY = 0;
         this.isMouseDown = false;
         
+        // Armazenar textos extraídos por imagem
+        this.extractedTexts = new Map(); // Map de imageId -> array de textos extraídos
+        this.currentNarrationIndex = -1; // Índice da seleção sendo narrada atualmente
+        
         // Elementos DOM
         this.selectionControls = null;
         this.selectionIndicator = null;
@@ -516,6 +520,11 @@ class RectangularSelectionManager {
         
         // Armazenar referência à seleção atual
         this.currentSelection = selectionElement;
+        
+        // Garantir que a imagem tenha um ID para referência futura
+        if (!img.id) {
+            img.id = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        }
     }
     
     /**
@@ -697,6 +706,12 @@ class RectangularSelectionManager {
         // Limpar fila de processamento
         this.processingQueue.clearQueue();
         
+        // Limpar textos extraídos para a imagem atual
+        if (this.currentImage) {
+            const imageId = this.currentImage.id || this.currentImage.src;
+            this.extractedTexts.set(imageId, []);
+        }
+        
         // Criar cópias das seleções para evitar problemas de referência
         const selectionsCopy = this.selections.map(selection => ({
             ...selection,
@@ -720,6 +735,17 @@ class RectangularSelectionManager {
                     
                     // Processar OCR na região
                     const text = await this.ocrProcessor.processImage(imageRegion);
+                    
+                    // Armazenar o texto extraído para esta imagem
+                    if (selection.imageId) {
+                        if (!this.extractedTexts.has(selection.imageId)) {
+                            this.extractedTexts.set(selection.imageId, []);
+                        }
+                        
+                        const textsForImage = this.extractedTexts.get(selection.imageId);
+                        textsForImage[selection.index] = text; // Usar o índice da seleção
+                        this.extractedTexts.set(selection.imageId, textsForImage);
+                    }
                     
                     return text;
                 } catch (error) {
@@ -1018,6 +1044,9 @@ class RectangularSelectionManager {
         
         console.log('Iniciando narração com texto:', text.substring(0, 50) + '...');
         
+        // Resetar o índice de narração
+        this.currentNarrationIndex = 0;
+        
         // Enviar texto para o narrador
         this.narrator.speakText(text);
     }
@@ -1168,5 +1197,68 @@ class RectangularSelectionManager {
         setTimeout(() => {
             notification.style.display = 'none';
         }, 5000);
+    }
+    
+    /**
+     * Obtém os textos extraídos para uma imagem específica
+     * @param {HTMLImageElement} imgElement - Elemento de imagem
+     * @returns {Array<string>} - Array de textos extraídos para a imagem
+     */
+    getExtractedTextsForImage(imgElement) {
+        if (!imgElement) return [];
+        
+        const imageId = imgElement.id || imgElement.src;
+        return this.extractedTexts.has(imageId) ? this.extractedTexts.get(imageId) : [];
+    }
+    
+    /**
+     * Destaca uma seleção específica durante a narração
+     * @param {number} index - Índice da seleção a ser destacada
+     */
+    highlightSelection(index) {
+        // Remover destaque de todas as seleções
+        document.querySelectorAll('.rectangular-selection').forEach(sel => {
+            sel.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+            sel.style.borderColor = '#2ecc71';
+            sel.style.boxShadow = 'none';
+        });
+        
+        // Encontrar a seleção pelo número (índice + 1)
+        const selectionNumber = index + 1;
+        const selectionElement = document.querySelector(`.rectangular-selection:nth-child(${selectionNumber})`);
+        
+        if (selectionElement) {
+            // Destacar a seleção atual
+            selectionElement.style.backgroundColor = 'rgba(52, 152, 219, 0.4)';
+            selectionElement.style.borderColor = '#3498db';
+            selectionElement.style.boxShadow = '0 0 15px rgba(52, 152, 219, 0.7)';
+            
+            // Rolar para a seleção
+            this.scrollToSelection(selectionElement);
+            
+            // Atualizar o índice atual
+            this.currentNarrationIndex = index;
+        }
+    }
+    
+    /**
+     * Rola a página para mostrar a seleção
+     * @param {HTMLElement} selectionElement - Elemento de seleção
+     */
+    scrollToSelection(selectionElement) {
+        if (!selectionElement) return;
+        
+        // Obter a posição da seleção
+        const rect = selectionElement.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Calcular a posição de destino (centro da viewport)
+        const targetTop = rect.top + scrollTop - (window.innerHeight / 2) + (rect.height / 2);
+        
+        // Rolar suavemente para a posição
+        window.scrollTo({
+            top: targetTop,
+            behavior: 'smooth'
+        });
     }
 }
