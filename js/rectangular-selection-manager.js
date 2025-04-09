@@ -1042,13 +1042,40 @@ class RectangularSelectionManager {
             return;
         }
         
-        console.log('Iniciando narração com texto:', text.substring(0, 50) + '...');
+        // Processar o texto para remover quebras de linha desnecessárias
+        const processedText = this.processTextForNarration(text);
+        
+        console.log('Iniciando narração com texto processado:', processedText.substring(0, 50) + '...');
         
         // Resetar o índice de narração
         this.currentNarrationIndex = 0;
         
-        // Enviar texto para o narrador
-        this.narrator.speakText(text);
+        // Enviar texto processado para o narrador
+        this.narrator.speakText(processedText);
+    }
+    
+    /**
+     * Processa o texto extraído para melhorar a narração
+     * @param {string} text - Texto original extraído do OCR
+     * @returns {string} - Texto processado para narração
+     */
+    processTextForNarration(text) {
+        if (!text) return '';
+        
+        // Remover quebras de linha desnecessárias, preservando parágrafos
+        let processedText = text
+            // Substituir múltiplas quebras de linha por um marcador de parágrafo temporário
+            .replace(/\n{2,}/g, '§PARAGRAPH§')
+            // Remover quebras de linha simples
+            .replace(/\n/g, ' ')
+            // Restaurar parágrafos com uma única quebra de linha
+            .replace(/§PARAGRAPH§/g, '\n')
+            // Remover espaços múltiplos
+            .replace(/\s+/g, ' ')
+            // Remover espaços no início e fim
+            .trim();
+            
+        return processedText;
     }
     
     /**

@@ -1149,7 +1149,18 @@ class ComicNarrator {
                     window.rectangularSelectionManager.highlightSelection(0);
                     
                     // Juntar todos os textos extraídos em um único texto
-                    const combinedText = extractedTexts.join('\n\n');
+                    let combinedText = extractedTexts.join(' ');
+                    
+                    // Processar o texto combinado para melhorar a narração
+                    // Usar o método do RectangularSelectionManager se disponível
+                    if (window.rectangularSelectionManager.processTextForNarration) {
+                        combinedText = window.rectangularSelectionManager.processTextForNarration(combinedText);
+                    } else {
+                        // Fallback: processar o texto aqui mesmo se o método não estiver disponível
+                        combinedText = combinedText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                    }
+                    
+                    console.log('Texto combinado processado para narração:', combinedText.substring(0, 50) + '...');
                     this.isProcessing = false;
                     return combinedText || 'Não foi possível extrair texto desta imagem.';
                 }
