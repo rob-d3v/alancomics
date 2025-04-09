@@ -98,8 +98,9 @@ class RectangularSelectionManager {
         this.processingQueue.setOnItemProcessed((result, metadata, index) => {
             console.log(`Trecho #${index + 1} processado:`, result.substring(0, 50) + '...');
             
-            // Se for o primeiro item, iniciar narração imediatamente
-            if (index === 0 && result && result.trim()) {
+            // Iniciar narração para todos os itens, não apenas o primeiro
+            // A pausa de 1,5 segundos será aplicada automaticamente pelo método startNarrationWithText
+            if (result && result.trim()) {
                 this.startNarrationWithText(result);
             }
             
@@ -122,6 +123,23 @@ class RectangularSelectionManager {
             
             // Mostrar notificação de conclusão
             this.showNotification('Todos os trechos foram processados e enviados para narração', 'success');
+            
+            // Importante: Garantir que o sistema não tente processar outras imagens automaticamente
+            // Isso resolve o problema de narrar imagens inteiras próximas
+            if (this.narrator && typeof this.narrator.stopNarration === 'function') {
+                this.narrator.stopNarration();
+            }
+        });
+        
+        // Quando ocorre um erro
+        this.processingQueue.setOnError((error, metadata, index) => {
+            console.error(`Erro ao processar trecho #${index + 1}:`, error);
+            
+            // Mostrar notificação de erro
+            this.showNotification(`Erro ao processar trecho #${index + 1}: ${error.message}`, 'error');
+            
+            // Adicionar mensagem de erro ao elemento visual
+            this.appendExtractedText(`[Erro ao processar trecho #${index + 1}]`, index);
         });
         
         // Quando ocorre um erro
@@ -318,6 +336,15 @@ class RectangularSelectionManager {
         if (this.currentSelection) {
             this.cancelCurrentSelection();
         }
+        
+        // Limpar referência à imagem atual para permitir selecionar em outras imagens
+        this.currentImage = null;
+        
+        // Resetar o estado da seleção
+        this.isMouseDown = false;
+        
+        // Resetar o índice de narração
+        this.currentNarrationIndex = -1;
     }
     
     /**
@@ -706,11 +733,16 @@ class RectangularSelectionManager {
         // Limpar fila de processamento
         this.processingQueue.clearQueue();
         
-        // Limpar textos extraídos para a imagem atual
-        if (this.currentImage) {
-            const imageId = this.currentImage.id || this.currentImage.src;
-            this.extractedTexts.set(imageId, []);
-        }
+        // Resetar o índice de narração para evitar que continue processando após o término
+        this.currentNarrationIndex = -1;
+        
+        // Limpar textos extraídos para todas as imagens processadas
+        // Isso garante que não haja conflito entre diferentes imagens
+        this.extractedTexts.clear();
+        
+        // Liberar a referência à imagem atual imediatamente após processar as seleções
+        // Isso permitirá selecionar quadros de outras imagens posteriormente
+        this.currentImage = null;
         
         // Criar cópias das seleções para evitar problemas de referência
         const selectionsCopy = this.selections.map(selection => ({
@@ -1047,11 +1079,40 @@ class RectangularSelectionManager {
         
         console.log('Iniciando narração com texto processado:', processedText.substring(0, 50) + '...');
         
-        // Resetar o índice de narração
-        this.currentNarrationIndex = 0;
+        // Manter o índice de narração como -1 até que a narração atual termine
+        // Isso evita que o sistema tente reutilizar os mesmos quadros para a próxima imagem
+        this.currentNarrationIndex = -1;
         
-        // Enviar texto processado para o narrador
-        this.narrator.speakText(processedText);
+        // Verificar se há uma narração em andamento
+        if (this.narrator.synth.speaking) {
+            console.log('Narração em andamento detectada. Adicionando pausa de 1,5 segundos entre seleções de texto...');
+            
+            // Criar uma função para verificar periodicamente se a narração terminou
+            const checkAndSpeak = () => {
+                if (this.narrator.synth.speaking) {
+                    // Ainda falando, verificar novamente após um curto período
+                    setTimeout(checkAndSpeak, 100);
+                } else {
+                    // Narração anterior terminou, adicionar pausa e então falar
+                    console.log('Narração anterior concluída, aguardando 1,5 segundos antes da próxima seleção...');
+                    setTimeout(() => {
+                        console.log('Iniciando próxima narração após pausa...');
+                        this.narrator.speakText(processedText);
+                    }, 1500); // 1,5 segundos em milissegundos
+                }
+            };
+            
+            // Iniciar a verificação
+            checkAndSpeak();
+        } else {
+            // Se não houver narração em andamento, iniciar imediatamente
+            console.log('Nenhuma narração em andamento, iniciando imediatamente...');
+            // Garantir que a pausa seja aplicada mesmo na primeira narração
+            // para dar tempo ao usuário de se preparar
+            setTimeout(() => {
+                this.narrator.speakText(processedText);
+            }, 500); // Pausa menor para a primeira narração (0,5 segundos)
+        }
     }
     
     /**
