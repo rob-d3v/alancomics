@@ -115,10 +115,10 @@ class RectangularSelectionManager {
                     this.extractedTexts.set(this.currentImage.id, []);
                 }
                 this.extractedTexts.get(this.currentImage.id).push(trimmedResult);
-            }  // <-- Estava faltando este fechamento
+            }
 
-            // Iniciar narração apenas para o texto extraído da seleção
-            if (result && result.trim()) {
+            // Iniciar narração apenas se houver seleções ativas e o texto for válido
+            if (this.isSelectionModeActive && this.selections.length > 0 && result && result.trim()) {
                 this.startNarrationWithText(result);
             }
 
@@ -186,12 +186,31 @@ class RectangularSelectionManager {
      * @param {string} text - O texto a ser narrado
      */
     startNarrationWithText(text) {
-        if (!this.narrator) {
-            console.warn('Narrador não disponível para narração de texto');
+        if (!this.narrator || !this.isSelectionModeActive) {
+            console.warn('Narrador não disponível ou modo de seleção inativo');
             return;
         }
 
         try {
+            // Verificar se existem seleções ativas
+            if (this.selections.length === 0 || !this.currentImage) {
+                console.log('Não há seleções ativas para narrar ou imagem atual não definida');
+                this.narrator.stopNarration();
+                return;
+            }
+
+            // Verificar se o texto pertence à imagem atual
+            const currentTexts = this.extractedTexts.get(this.currentImage.id) || [];
+            if (!currentTexts.includes(text.trim())) {
+                console.log('Texto não pertence à seleção atual');
+                return;
+            }
+
+            // Inicializar índice de narração se necessário
+            if (this.currentNarrationIndex === -1) {
+                this.currentNarrationIndex = 0;
+            }
+
             // Criar um novo utterance para o texto
             const utterance = new SpeechSynthesisUtterance(text);
 
@@ -207,16 +226,27 @@ class RectangularSelectionManager {
             // Configurar eventos para controle de scroll
             utterance.onboundary = (event) => {
                 if (event.name === 'word') {
-                    // Encontrar o elemento de texto atual
-                    const textElement = document.querySelector('.current-narration-text');
-                    if (textElement) {
+                    // Encontrar a seleção atual
+                    const currentSelection = this.selections[this.currentNarrationIndex];
+                    if (currentSelection) {
                         // Usar ScrollManager para scroll suave
                         if (window.scrollManager) {
                             window.scrollManager.settings.behavior = 'smooth';
                             window.scrollManager.settings.verticalAlignment = 0.35;
-                            window.scrollManager.setCurrentElement(textElement);
+                            window.scrollManager.setCurrentElement(currentSelection);
                         }
                     }
+                }
+            };
+
+            // Configurar evento de fim da narração
+            utterance.onend = () => {
+                // Avançar para a próxima seleção
+                this.currentNarrationIndex++;
+                if (this.currentNarrationIndex >= this.selections.length) {
+                    // Não há mais seleções para narrar
+                    this.narrator.stopNarration();
+                    this.currentNarrationIndex = -1;
                 }
             };
 
@@ -281,13 +311,33 @@ class RectangularSelectionManager {
 
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
+            
+            // Remover o texto correspondente da lista de textos extraídos
+            if (this.currentImage && this.extractedTexts.has(this.currentImage.id)) {
+                const index = this.selections.indexOf(selection);
+                if (index > -1) {
+                    const texts = this.extractedTexts.get(this.currentImage.id);
+                    if (texts && texts[index]) {
+                        texts.splice(index, 1);
+                        if (texts.length === 0) {
+                            this.extractedTexts.delete(this.currentImage.id);
+                        }
+                    }
+                }
+            }
+
+            // Remover elementos visuais
             selection.remove();
             deleteButton.remove();
+            
             // Remover a seleção do array de seleções
             const index = this.selections.indexOf(selection);
             if (index > -1) {
                 this.selections.splice(index, 1);
             }
+
+            // Atualizar interface se necessário
+            this.updateExtractedTextDisplay();
         });
 
         selection.style.pointerEvents = 'none';
