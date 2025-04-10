@@ -15,6 +15,7 @@ class RectangularSelectionManager {
         this.startX = 0;
         this.startY = 0;
         this.isMouseDown = false;
+        this.isNarrationActive = false; // Novo estado para controlar visibilidade durante narração
 
         // Armazenar textos extraídos por imagem
         this.extractedTexts = new Map(); // Map de imageId -> array de textos extraídos
@@ -50,6 +51,12 @@ class RectangularSelectionManager {
      * Configura o módulo de seleção
      */
     setup() {
+        // Observar mudanças no estado de narração
+        document.addEventListener('narrationStateChanged', (event) => {
+            this.isNarrationActive = event.detail.isActive;
+            this.updateSelectionsVisibility();
+        });
+
         // Obter referência ao narrador principal
         if (window.comicNarrator) {
             this.narrator = window.comicNarrator;
@@ -83,7 +90,7 @@ class RectangularSelectionManager {
         // Criar indicador de modo de seleção
         this.createSelectionIndicator();
 
-        // Criar container para texto extraído
+        // Criar container para exibir o texto extraído
         this.createExtractedTextContainer();
 
         // Adicionar estilos CSS se necessário
@@ -98,8 +105,19 @@ class RectangularSelectionManager {
         this.processingQueue.setOnItemProcessed((result, metadata, index) => {
             console.log(`Trecho #${index + 1} processado:`, result.substring(0, 50) + '...');
 
-            // Iniciar narração para todos os itens, não apenas o primeiro
-            // A pausa de 1,5 segundos será aplicada automaticamente pelo método startNarrationWithText
+            // Verificar se o texto já existe antes de adicionar
+            const existingTexts = this.extractedTexts.get(this.currentImage.id) || [];
+            const trimmedResult = result.trim();
+
+            // Só adicionar se o texto não existir e não estiver vazio
+            if (trimmedResult && !existingTexts.includes(trimmedResult)) {
+                if (!this.extractedTexts.has(this.currentImage.id)) {
+                    this.extractedTexts.set(this.currentImage.id, []);
+                }
+                this.extractedTexts.get(this.currentImage.id).push(trimmedResult);
+            }  // <-- Estava faltando este fechamento
+
+            // Iniciar narração apenas para o texto extraído da seleção
             if (result && result.trim()) {
                 this.startNarrationWithText(result);
             }
@@ -141,17 +159,6 @@ class RectangularSelectionManager {
             // Adicionar mensagem de erro ao elemento visual
             this.appendExtractedText(`[Erro ao processar trecho #${index + 1}]`, index);
         });
-
-        // Quando ocorre um erro
-        this.processingQueue.setOnError((error, metadata, index) => {
-            console.error(`Erro ao processar trecho #${index + 1}:`, error);
-
-            // Mostrar notificação de erro
-            this.showNotification(`Erro ao processar trecho #${index + 1}: ${error.message}`, 'error');
-
-            // Adicionar mensagem de erro ao elemento visual
-            this.appendExtractedText(`[Erro ao processar trecho #${index + 1}]`, index);
-        });
     }
 
     /**
@@ -172,6 +179,119 @@ class RectangularSelectionManager {
         }
 
         // Função mantida para compatibilidade, mas sem implementação de botão
+    }
+
+    /**
+     * Inicia a narração de um texto específico
+     * @param {string} text - O texto a ser narrado
+     */
+    startNarrationWithText(text) {
+        if (!this.narrator) {
+            console.warn('Narrador não disponível para narração de texto');
+            return;
+        }
+
+        try {
+            // Criar um novo utterance para o texto
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // Configurar a voz se disponível
+            if (this.narrator.currentVoice) {
+                utterance.voice = this.narrator.currentVoice;
+            }
+
+            // Configurar pitch e rate se disponíveis
+            if (this.narrator.pitch) utterance.pitch = this.narrator.pitch;
+            if (this.narrator.rate) utterance.rate = this.narrator.rate;
+
+            // Configurar eventos para controle de scroll
+            utterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    // Encontrar o elemento de texto atual
+                    const textElement = document.querySelector('.current-narration-text');
+                    if (textElement) {
+                        // Usar ScrollManager para scroll suave
+                        if (window.scrollManager) {
+                            window.scrollManager.settings.behavior = 'smooth';
+                            window.scrollManager.settings.verticalAlignment = 0.35;
+                            window.scrollManager.setCurrentElement(textElement);
+                        }
+                    }
+                }
+            };
+
+            // Falar o texto
+            window.speechSynthesis.speak(utterance);
+
+            // Atualizar estado de narração
+            this.narrator.isNarrating = true;
+
+            // Disparar evento de mudança de estado
+            document.dispatchEvent(new CustomEvent('narrationStateChanged', {
+                detail: { isActive: true }
+            }));
+        } catch (error) {
+            console.error('Erro ao iniciar narração:', error);
+            this.showNotification('Erro ao iniciar narração: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Atualiza a visibilidade das seleções baseado no estado de narração
+     */
+    updateSelectionsVisibility() {
+        const selections = document.querySelectorAll('.rectangular-selection');
+        selections.forEach(selection => {
+            selection.style.display = this.isNarrationActive ? 'none' : 'block';
+            const deleteButton = selection.querySelector('.delete-selection-button');
+            if (deleteButton) {
+                deleteButton.style.display = this.isNarrationActive ? 'none' : 'block';
+            }
+        });
+    }
+
+    /**
+     * Adiciona um botão flutuante de exclusão à seleção
+     * @param {HTMLElement} selection - Elemento de seleção
+     */
+    addDeleteButton(selection) {
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-selection-button';
+        deleteButton.innerHTML = '<i class="fas fa-times"></i>';
+        deleteButton.style.cssText = `
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 9999;
+            transition: all 0.2s;
+            pointer-events: auto !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        `;
+
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selection.remove();
+            deleteButton.remove();
+            // Remover a seleção do array de seleções
+            const index = this.selections.indexOf(selection);
+            if (index > -1) {
+                this.selections.splice(index, 1);
+            }
+        });
+
+        selection.style.pointerEvents = 'none';
+        selection.appendChild(deleteButton);
     }
 
     /**
@@ -248,22 +368,17 @@ class RectangularSelectionManager {
             return;
         }
 
-        // Criar container
+        // Criar container (mantido oculto)
         this.extractedTextContainer = document.createElement('div');
         this.extractedTextContainer.className = 'rectangular-extracted-text-container';
-        this.extractedTextContainer.style.display = 'none';
+        this.extractedTextContainer.style.cssText = 'position: absolute; display: none !important; visibility: hidden; top: -9999px; left: -9999px;';
 
-        // Adicionar título
-        const title = document.createElement('h3');
-        title.textContent = 'Texto extraído das seleções';
-        this.extractedTextContainer.appendChild(title);
-
-        // Adicionar container para itens de texto
+        // Adicionar container para itens de texto (sem título visível)
         const itemsContainer = document.createElement('div');
         itemsContainer.className = 'extracted-text-items';
         this.extractedTextContainer.appendChild(itemsContainer);
 
-        // Adicionar ao corpo do documento
+        // Adicionar ao corpo do documento (mas mantendo oculto)
         document.body.appendChild(this.extractedTextContainer);
     }
 
@@ -308,7 +423,9 @@ class RectangularSelectionManager {
         // Atualizar interface
         document.body.classList.add('rectangular-selection-mode');
         this.selectionIndicator.style.display = 'flex';
-        this.selectionControls.style.display = 'flex';
+
+        // Ocultar controles de seleção pois agora temos confirmação automática
+        this.selectionControls.style.display = 'none';
 
         // Adicionar listeners para imagens
         this.addImageListeners();
@@ -473,7 +590,11 @@ class RectangularSelectionManager {
         // Finalizar seleção
         this.isMouseDown = false;
 
-        // Verificar se a seleção tem tamanho mínimo
+        // Verificar se a seleção tem tamanho mínimo e é válida
+        if (!this.currentSelection) {
+            return;
+        }
+
         const selectionRect = this.currentSelection.getBoundingClientRect();
         if (selectionRect.width < 10 || selectionRect.height < 10) {
             // Seleção muito pequena, cancelar
@@ -481,10 +602,17 @@ class RectangularSelectionManager {
             return;
         }
 
-        // Mostrar controles de seleção
-        this.showSelectionControls();
-    }
+        // Armazenar uma referência à seleção atual antes de confirmá-la
+        const confirmedSelection = this.currentSelection;
 
+        // Confirmar seleção automaticamente
+        this.confirmCurrentSelection();
+
+        // Adicionar botão flutuante de exclusão à seleção confirmada
+        if (confirmedSelection && confirmedSelection.parentElement) {
+            this.addDeleteButton(confirmedSelection);
+        }
+    }
     /**
      * Manipula o evento de sair da imagem com o mouse
      * @param {MouseEvent} event - Evento de mouse
@@ -525,6 +653,9 @@ class RectangularSelectionManager {
             const parent = img.parentElement;
             parent.insertBefore(selectionContainer, img);
             selectionContainer.appendChild(img);
+
+            // Armazenar referência ao container para evitar retorno à primeira imagem
+            img.selectionContainer = selectionContainer;
         }
 
         // Criar elemento de seleção
@@ -599,7 +730,7 @@ class RectangularSelectionManager {
     }
 
     /**
-     * Confirma a seleção atual
+     * Confirma a seleção atual e inicia o processamento OCR
      */
     confirmCurrentSelection() {
         if (!this.currentSelection) {
@@ -652,10 +783,13 @@ class RectangularSelectionManager {
         // Adicionar à lista de seleções
         this.selections.push(selection);
 
-        // Atualizar estilo da seleção para confirmada
+        // Atualizar estilo da seleção para confirmada e bloquear edição
         this.currentSelection.classList.add('confirmed');
         this.currentSelection.style.border = '2px solid #2ecc71';
         this.currentSelection.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+        this.currentSelection.style.pointerEvents = 'none'; // Bloquear interações com a seleção
+        // Adicionar classe para indicar que a seleção está bloqueada
+        this.currentSelection.classList.add('locked');
 
         // Adicionar número da seleção
         const numberElement = document.createElement('div');
@@ -677,11 +811,46 @@ class RectangularSelectionManager {
         numberElement.style.zIndex = '101';
         this.currentSelection.appendChild(numberElement);
 
+        // Mostrar container de texto extraído
+        this.extractedTextContainer.style.display = 'block';
+
+        // Iniciar processamento OCR para esta seleção
+        this.processingQueue.addItem(
+            async () => {
+                // Criar um canvas temporário para a região selecionada
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = selection.width;
+                canvas.height = selection.height;
+
+                // Desenhar apenas a região selecionada da imagem
+                ctx.drawImage(
+                    this.currentImage,
+                    selection.left,
+                    selection.top,
+                    selection.width,
+                    selection.height,
+                    0, 0,
+                    selection.width,
+                    selection.height
+                );
+
+                // Processar a região selecionada com OCR
+                return await this.ocrProcessor.processImage(canvas);
+            },
+            { selection, imageId: this.currentImage.id }
+        );
+
+        // Iniciar o processamento se não estiver em andamento
+        if (!this.processingQueue.isProcessing) {
+            this.processingQueue.startProcessing();
+        }
+
         // Limpar seleção atual
         this.currentSelection = null;
 
         // Mostrar notificação
-        this.showNotification(`Seleção #${selection.index + 1} confirmada. Selecione mais áreas ou clique em "Processar seleções".`, 'success');
+        this.showNotification(`Seleção #${selection.index + 1} confirmada. Processando texto...`, 'success');
     }
 
     /**
@@ -1296,7 +1465,33 @@ class RectangularSelectionManager {
         if (!imgElement) return [];
 
         const imageId = imgElement.id || imgElement.src;
-        return this.extractedTexts.has(imageId) ? this.extractedTexts.get(imageId) : [];
+
+        // Verificar se há textos extraídos para esta imagem
+        if (!this.extractedTexts.has(imageId)) {
+            return [];
+        }
+
+        // Obter os textos extraídos
+        const textsArray = this.extractedTexts.get(imageId);
+
+        // Filtrar textos vazios e undefined, mantendo a ordem original das seleções
+        const validTexts = textsArray.filter(text => text && text.trim());
+
+        // Se não houver textos válidos, retornar array vazio
+        if (validTexts.length === 0) {
+            return [];
+        }
+
+        // Verificar se o OCR está ativado
+        const ocrEnabled = document.getElementById('enableOCR') && document.getElementById('enableOCR').checked;
+
+        // Se o OCR estiver ativado, retornar apenas os textos das seleções
+        if (ocrEnabled) {
+            console.log(`Retornando ${validTexts.length} textos das seleções retangulares para narração`);
+            return validTexts;
+        }
+
+        return [];
     }
 
     /**
