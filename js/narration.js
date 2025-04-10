@@ -989,7 +989,6 @@ class ComicNarrator {
         this.bufferNextPages();
     }
 
-    // New method to buffer text from upcoming pages
     async bufferNextPages() {
         if (!this.isNarrating || !this.isBuffering) return;
 
@@ -1003,33 +1002,28 @@ class ComicNarrator {
                 if (this.textBuffer.length > i - this.currentPage - 1) continue; // Skip if already buffered
 
                 const page = this.pages[i];
-                let text = '';
+                let textContent = '';
 
                 // Extract text based on content type
                 if (page.tagName === 'IMG' || page.dataset.type === 'image') {
-                    text = await this.extractTextFromImage(page);
+                    textContent = await this.extractTextFromImage(page);
                 } else if (page.classList.contains('pdf-page') || page.dataset.type === 'pdf') {
-                    text = await this.extractTextFromPdfPage(page);
+                    textContent = await this.extractTextFromPdfPage(page);
                 } else if (page.classList.contains('epub-page') || page.dataset.type === 'epub') {
-                    text = await this.extractTextFromEpubPage(page);
+                    textContent = await this.extractTextFromEpubPage(page);
                 } else {
                     // Try to determine the type from child elements
                     const img = page.querySelector('img');
                     if (img) {
-                        text = await this.extractTextFromImage(img);
+                        textContent = await this.extractTextFromImage(img);
                     } else {
                         // Default fallback - try to get any text content
-                        text = page.textContent || 'Não foi possível determinar o tipo de conteúdo.';
+                        textContent = page.textContent || 'Não foi possível determinar o tipo de conteúdo.';
                     }
                 }
 
-                // If no text was extracted, use a placeholder
-                if (!text || text.trim() === '') {
-                    text = 'Não foi possível extrair texto desta página.';
-                }
-
                 // Add to buffer
-                this.textBuffer.push(text);
+                this.textBuffer.push(textContent);
 
                 // Stop if narration has been stopped
                 if (!this.isNarrating || !this.isBuffering) return;
@@ -1050,42 +1044,36 @@ class ComicNarrator {
         // Scroll to the current page
         page.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        // Extract text from the page or use buffered text
         // Não exibir mensagem de status durante a narração normal
         this.readingIndicator.style.display = 'none';
 
         try {
-            let text = '';
+            let textContent = '';
 
             // Check if we have this page in the buffer
             if (this.textBuffer.length > 0) {
                 // Use the first item in the buffer
-                text = this.textBuffer.shift();
+                textContent = this.textBuffer.shift();
 
                 // Trigger buffering of more pages
                 this.bufferNextPages();
             } else {
                 // No buffered text, extract directly
                 if (page.tagName === 'IMG' || page.dataset.type === 'image') {
-                    text = await this.extractTextFromImage(page);
+                    textContent = await this.extractTextFromImage(page);
                 } else if (page.classList.contains('pdf-page') || page.dataset.type === 'pdf') {
-                    text = await this.extractTextFromPdfPage(page);
+                    textContent = await this.extractTextFromPdfPage(page);
                 } else if (page.classList.contains('epub-page') || page.dataset.type === 'epub') {
-                    text = await this.extractTextFromEpubPage(page);
+                    textContent = await this.extractTextFromEpubPage(page);
                 } else {
                     // Try to determine the type from child elements
                     const img = page.querySelector('img');
                     if (img) {
-                        text = await this.extractTextFromImage(img);
+                        textContent = await this.extractTextFromImage(img);
                     } else {
                         // Default fallback - try to get any text content
-                        text = page.textContent || 'Não foi possível determinar o tipo de conteúdo.';
+                        textContent = page.textContent || 'Não foi possível determinar o tipo de conteúdo.';
                     }
-                }
-
-                // If no text was extracted, use a placeholder
-                if (!text || text.trim() === '') {
-                    text = 'Não foi possível extrair texto desta página.';
                 }
 
                 // Start buffering next pages if not already buffering
@@ -1094,20 +1082,62 @@ class ComicNarrator {
                 }
             }
 
-            // Read the text
-            // Não exibir mensagem de 'Lendo...' durante a narração normal
-            this.readingIndicator.style.display = 'none';
-            await this.speakText(text);
+            // Verificar se temos múltiplos textos do OCR para narrar
+            if (textContent && typeof textContent === 'object' && textContent.isMultiText) {
+                // Vamos narrar cada texto individualmente
+                for (let i = 0; i < textContent.texts.length; i++) {
+                    if (!this.isNarrating) break; // Verificar se a narração foi interrompida
 
-            // Wait for the specified pause time
-            await new Promise(resolve => setTimeout(resolve, this.pauseTime * 1000));
+                    const text = textContent.texts[i];
 
-            // Move to the next page
-            this.currentPage++;
+                    // Destacar a seleção atual no gerenciador
+                    if (window.rectangularSelectionManager) {
+                        window.rectangularSelectionManager.highlightSelection(i);
+                    }
 
-            // Continue reading if still narrating
-            if (this.isNarrating) {
-                this.readNextPage();
+                    console.log(`Narrando texto ${i + 1} de ${textContent.texts.length}: ${text.substring(0, 30)}...`);
+
+                    // Narrar o texto atual
+                    await this.speakText(text);
+
+                    // Esperar o tempo de pausa entre os textos, exceto após o último
+                    if (i < textContent.texts.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, this.pauseTime * 1000));
+                    }
+                }
+
+                // Após narrar todos os textos, aguardar o tempo de pausa e ir para a próxima página
+                if (this.isNarrating) {
+                    await new Promise(resolve => setTimeout(resolve, this.pauseTime * 1000));
+                    this.currentPage++;
+                    this.readNextPage();
+                }
+            } else {
+                // Caso padrão: texto único
+                const text = typeof textContent === 'string' ? textContent :
+                    (textContent ? JSON.stringify(textContent) : 'Não foi possível extrair texto.');
+
+                // Verificar se há texto para narrar
+                if (!text || text.trim() === '') {
+                    console.log('Texto vazio, pulando para próxima página');
+                    this.currentPage++;
+                    this.readNextPage();
+                    return;
+                }
+
+                // Narrar o texto e continuar para a próxima página
+                await this.speakText(text);
+
+                // Wait for the specified pause time
+                await new Promise(resolve => setTimeout(resolve, this.pauseTime * 1000));
+
+                // Move to the next page
+                this.currentPage++;
+
+                // Continue reading if still narrating
+                if (this.isNarrating) {
+                    this.readNextPage();
+                }
             }
 
         } catch (error) {
@@ -1133,39 +1163,36 @@ class ComicNarrator {
             this.readingIndicator.textContent = 'Extraindo texto da imagem...';
             this.readingIndicator.style.display = 'block';
         }
-        
+
         try {
             // Verificar se o OCR está ativado e se existem seleções retangulares para esta imagem
             const ocrEnabled = document.getElementById('enableOCR') && document.getElementById('enableOCR').checked;
-            
+
             if (ocrEnabled && window.rectangularSelectionManager) {
                 // Buscar textos já extraídos para esta imagem
                 const extractedTexts = window.rectangularSelectionManager.getExtractedTextsForImage(imgElement);
-                
+
                 if (extractedTexts && extractedTexts.length > 0) {
-                    console.log('Usando textos já extraídos pelo OCR para narração');
-                    
-                    // Destacar a primeira área selecionada
-                    window.rectangularSelectionManager.highlightSelection(0);
-                    
-                    // Juntar todos os textos extraídos em um único texto
-                    let combinedText = extractedTexts.join(' ');
-                    
-                    // Processar o texto combinado para melhorar a narração
-                    // Usar o método do RectangularSelectionManager se disponível
-                    if (window.rectangularSelectionManager.processTextForNarration) {
-                        combinedText = window.rectangularSelectionManager.processTextForNarration(combinedText);
-                    } else {
-                        // Fallback: processar o texto aqui mesmo se o método não estiver disponível
-                        combinedText = combinedText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-                    }
-                    
-                    console.log('Texto combinado processado para narração:', combinedText.substring(0, 50) + '...');
+                    console.log(`Encontrados ${extractedTexts.length} textos extraídos para narração.`);
+
+                    // Retornar os textos separados para processamento individual
                     this.isProcessing = false;
-                    return combinedText || 'Não foi possível extrair texto desta imagem.';
+
+                    // Indicar que existem múltiplos textos para narrar com um prefixo especial
+                    return {
+                        isMultiText: true,
+                        texts: extractedTexts.map((text, index) => {
+                            // Processar cada texto individualmente
+                            if (window.rectangularSelectionManager.processTextForNarration) {
+                                return window.rectangularSelectionManager.processTextForNarration(text);
+                            } else {
+                                return text.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                            }
+                        })
+                    };
                 }
             }
-            
+
             // Se não houver OCR ativado ou não houver seleções, usar o método padrão
             // Check if Tesseract is available
             if (typeof Tesseract === 'undefined') {
