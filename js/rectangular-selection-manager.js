@@ -11,6 +11,7 @@ class RectangularSelectionManager {
         this.isSelectionModeActive = false;
         this.currentImage = null;
         this.selections = [];
+        this.scrollManager = window.scrollManager; // Referência ao ScrollManager global
         this.currentSelection = null;
         this.startX = 0;
         this.startY = 0;
@@ -19,6 +20,7 @@ class RectangularSelectionManager {
         // Armazenar textos extraídos por imagem
         this.extractedTexts = new Map(); // Map de imageId -> array de textos extraídos
         this.currentNarrationIndex = -1; // Índice da seleção sendo narrada atualmente
+        this.isNarrating = false; // Indica se há narração em andamento
 
         // Elementos DOM
         this.selectionControls = null;
@@ -88,6 +90,51 @@ class RectangularSelectionManager {
 
         // Adicionar estilos CSS se necessário
         this.ensureStylesLoaded();
+    }
+
+    /**
+     * Atualiza o scroll para a seleção atual durante a narração
+     * @param {number} index - Índice da seleção atual
+     */
+    updateScrollForCurrentSelection(index) {
+        if (!this.isSelectionModeActive || !this.scrollManager || index < 0 || index >= this.selections.length) {
+            return;
+        }
+
+        const currentSelection = this.selections[index];
+        if (currentSelection && currentSelection.element) {
+            // Atualizar o ScrollManager para manter a seleção visível
+            this.scrollManager.setCurrentElement(currentSelection.element);
+        }
+    }
+
+    /**
+     * Inicia a narração de um texto extraído
+     * @param {string} text - Texto a ser narrado
+     */
+    startNarrationWithText(text) {
+        if (!this.narrator || !text.trim()) return;
+
+        this.isNarrating = true;
+        this.currentNarrationIndex++;
+
+        // Atualizar o scroll para a seleção atual
+        this.updateScrollForCurrentSelection(this.currentNarrationIndex);
+
+        // Iniciar a narração
+        this.narrator.speak(text, () => {
+            // Callback chamado quando a narração deste trecho terminar
+            if (this.currentNarrationIndex >= this.selections.length - 1) {
+                // Se era o último trecho, resetar o estado
+                this.isNarrating = false;
+                this.currentNarrationIndex = -1;
+
+                // Ativar scroll automático para próxima página se não houver mais narrações
+                if (this.scrollManager) {
+                    this.scrollManager.activate();
+                }
+            }
+        });
     }
 
     /**
@@ -1076,6 +1123,15 @@ class RectangularSelectionManager {
         console.log("Texto: " + text)
         // Processar o texto para remover quebras de linha desnecessárias
         const processedText = this.processTextForNarration(text);
+
+        // Ativar o ScrollManager e definir a seleção atual como elemento a ser mantido visível
+        if (this.scrollManager) {
+            this.scrollManager.activate();
+            const currentSelection = this.currentSelection;
+            if (currentSelection) {
+                this.scrollManager.setCurrentElement(currentSelection);
+            }
+        }
 
         console.log('Iniciando narração com texto processado:', processedText.substring(0, 50) + '...');
 
