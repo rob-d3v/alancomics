@@ -25,7 +25,7 @@ class RectangularSelectionManager {
         // Elementos DOM
         this.selectionControls = null;
         this.selectionIndicator = null;
-        this.extractedTextContainer = null;
+        // this.extractedTextContainer = null;
 
         // Referências a outros módulos
         this.narrator = null;
@@ -86,7 +86,7 @@ class RectangularSelectionManager {
         this.createSelectionIndicator();
 
         // Criar container para texto extraído
-        this.createExtractedTextContainer();
+        // this.createExtractedTextContainer();
 
         // Adicionar estilos CSS se necessário
         this.ensureStylesLoaded();
@@ -103,8 +103,23 @@ class RectangularSelectionManager {
 
         const currentSelection = this.selections[index];
         if (currentSelection && currentSelection.element) {
+            // Forçar desativação do scroll automático durante a narração das seleções
+            this.scrollManager.deactivate();
+
+            // Configurar o ScrollManager para um comportamento mais preciso
+            this.scrollManager.settings.behavior = 'smooth';
+            this.scrollManager.settings.verticalAlignment = 0.35; // Posicionar mais ao centro
+            this.scrollManager.settings.margin = 120; // Aumentar margem de segurança
+            this.scrollManager.settings.scrollDelay = 50; // Reduzir atraso para resposta mais rápida
+
             // Atualizar o ScrollManager para manter a seleção visível
             this.scrollManager.setCurrentElement(currentSelection.element);
+
+            // Adicionar destaque visual temporário
+            currentSelection.element.classList.add('current-selection-highlight');
+            setTimeout(() => {
+                currentSelection.element.classList.remove('current-selection-highlight');
+            }, 1500);
         }
     }
 
@@ -118,6 +133,12 @@ class RectangularSelectionManager {
         this.isNarrating = true;
         this.currentNarrationIndex++;
 
+        // Garantir que o scroll automático esteja desativado antes de iniciar a narração
+        if (this.scrollManager) {
+            this.scrollManager.deactivate();
+            console.log('RectangularSelectionManager: Scroll automático desativado para narração de seleção');
+        }
+
         // Atualizar o scroll para a seleção atual
         this.updateScrollForCurrentSelection(this.currentNarrationIndex);
 
@@ -129,13 +150,29 @@ class RectangularSelectionManager {
                 this.isNarrating = false;
                 this.currentNarrationIndex = -1;
 
-                // Ativar scroll automático para próxima página se não houver mais narrações
-                if (this.scrollManager) {
+                // Reativar scroll automático apenas se não houver mais narrações
+                if (this.scrollManager && !this.isNarrating) {
+                    console.log('RectangularSelectionManager: Reativando scroll automático após última seleção');
                     this.scrollManager.activate();
+                    // Restaurar configurações padrão do ScrollManager
+                    this.scrollManager.settings.behavior = 'smooth';
+                    this.scrollManager.settings.verticalAlignment = 0.3;
+                    this.scrollManager.settings.margin = 50;
+                    this.scrollManager.settings.scrollDelay = 100;
                 }
+            } else {
+                // Preparar para a próxima seleção
+                setTimeout(() => {
+                    if (this.isNarrating) {
+                        this.updateScrollForCurrentSelection(this.currentNarrationIndex + 1);
+                    }
+                }, 500); // Pequeno atraso para transição suave
             }
         });
+
+        console.log(`RectangularSelectionManager: Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
     }
+
 
     /**
      * Configura os callbacks da fila de processamento
@@ -288,31 +325,31 @@ class RectangularSelectionManager {
     /**
      * Cria o container para exibir o texto extraído
      */
-    createExtractedTextContainer() {
+    // createExtractedTextContainer() {
         // Verificar se o container já existe
-        if (document.querySelector('.rectangular-extracted-text-container')) {
-            this.extractedTextContainer = document.querySelector('.rectangular-extracted-text-container');
-            return;
-        }
+        // if (document.querySelector('.rectangular-extracted-text-container')) {
+            // this.extractedTextContainer = document.querySelector('.rectangular-extracted-text-container');
+            // return;
+        // }
 
         // Criar container
-        this.extractedTextContainer = document.createElement('div');
-        this.extractedTextContainer.className = 'rectangular-extracted-text-container';
-        this.extractedTextContainer.style.display = 'none';
+        // this.extractedTextContainer = document.createElement('div');
+        // this.extractedTextContainer.className = 'rectangular-extracted-text-container';
+        // this.extractedTextContainer.style.display = 'none';
 
         // Adicionar título
-        const title = document.createElement('h3');
-        title.textContent = 'Texto extraído das seleções';
-        this.extractedTextContainer.appendChild(title);
+        // const title = document.createElement('h3');
+        // title.textContent = 'Texto extraído das seleções';
+        // this.extractedTextContainer.appendChild(title);
 
         // Adicionar container para itens de texto
-        const itemsContainer = document.createElement('div');
-        itemsContainer.className = 'extracted-text-items';
-        this.extractedTextContainer.appendChild(itemsContainer);
+        // const itemsContainer = document.createElement('div');
+        // itemsContainer.className = 'extracted-text-items';
+        // this.extractedTextContainer.appendChild(itemsContainer);
 
         // Adicionar ao corpo do documento
-        document.body.appendChild(this.extractedTextContainer);
-    }
+        // document.body.appendChild(this.extractedTextContainer);
+    // }
 
     /**
      * Garante que os estilos CSS necessários estejam carregados
@@ -746,13 +783,13 @@ class RectangularSelectionManager {
         this.selections = [];
 
         // Ocultar container de texto extraído
-        if (this.extractedTextContainer) {
-            this.extractedTextContainer.style.display = 'none';
-            const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
-            if (itemsContainer) {
-                itemsContainer.innerHTML = '';
-            }
-        }
+        // if (this.extractedTextContainer) {
+            // this.extractedTextContainer.style.display = 'none';
+            // const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
+            // if (itemsContainer) {
+        //         itemsContainer.innerHTML = '';
+        //     }
+        // }
 
         // Mostrar notificação
         this.showNotification('Todas as seleções foram removidas', 'info');
@@ -768,11 +805,11 @@ class RectangularSelectionManager {
         }
 
         // Mostrar container de texto extraído
-        this.extractedTextContainer.style.display = 'block';
+        // this.extractedTextContainer.style.display = 'block';
 
         // Limpar itens anteriores
-        const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
-        itemsContainer.innerHTML = '';
+        // const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
+        // itemsContainer.innerHTML = '';
 
         // Mostrar indicador de progresso
         this.showProgressIndicator('Preparando para processar seleções...');
@@ -1201,14 +1238,14 @@ class RectangularSelectionManager {
      * @param {number} index - Índice da seleção
      */
     appendExtractedText(text, index) {
-        if (!this.extractedTextContainer) {
-            return;
-        }
+        // if (!this.extractedTextContainer) {
+            // return;
+        // }
 
-        const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
-        if (!itemsContainer) {
-            return;
-        }
+        // const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
+        // if (!itemsContainer) {
+        //     return;
+        // }
 
         // Criar item de texto
         const textItem = document.createElement('div');
@@ -1227,10 +1264,10 @@ class RectangularSelectionManager {
         textItem.appendChild(content);
 
         // Adicionar ao container
-        itemsContainer.appendChild(textItem);
+        // itemsContainer.appendChild(textItem);
 
         // Mostrar container
-        this.extractedTextContainer.style.display = 'block';
+        // this.extractedTextContainer.style.display = 'block';
     }
 
     /**
