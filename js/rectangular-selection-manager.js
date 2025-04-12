@@ -31,6 +31,13 @@ class RectangularSelectionManager {
         this.narrator = null;
         this.ocrProcessor = null;
         this.processingQueue = null;
+        
+        // Vincular métodos de manipulação de eventos para preservar o contexto 'this'
+        // e permitir a remoção correta dos event listeners
+        this.boundHandleImageMouseDown = this.handleImageMouseDown.bind(this);
+        this.boundHandleImageMouseMove = this.handleImageMouseMove.bind(this);
+        this.boundHandleImageMouseUp = this.handleImageMouseUp.bind(this);
+        this.boundHandleImageMouseLeave = this.handleImageMouseLeave.bind(this);
 
         // Inicializar
         this.initialize();
@@ -97,7 +104,8 @@ class RectangularSelectionManager {
      * @param {number} index - Índice da seleção atual
      */
     updateScrollForCurrentSelection(index) {
-        if (!this.isSelectionModeActive || !this.scrollManager || index < 0 || index >= this.selections.length) {
+        // Verificar se o índice é válido e se temos um ScrollManager
+        if (!this.scrollManager || index < 0 || index >= this.selections.length) {
             return;
         }
 
@@ -120,6 +128,22 @@ class RectangularSelectionManager {
             setTimeout(() => {
                 currentSelection.element.classList.remove('current-selection-highlight');
             }, 1500);
+            
+            // Garantir que a imagem que contém a seleção esteja visível
+            if (currentSelection.imageId) {
+                const img = document.getElementById(currentSelection.imageId);
+                if (img) {
+                    // Rolar para a imagem com um pequeno offset para melhor visualização
+                    const rect = img.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const targetTop = rect.top + scrollTop - 100; // 100px acima da imagem
+                    
+                    window.scrollTo({
+                        top: targetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            }
         }
     }
 
@@ -139,11 +163,17 @@ class RectangularSelectionManager {
             console.log('RectangularSelectionManager: Scroll automático desativado para narração de seleção');
         }
 
+        // Garantir que os elementos de seleção estejam ocultos durante a narração
+        this.hideSelectionElementsDuringNarration();
+
         // Atualizar o scroll para a seleção atual
         this.updateScrollForCurrentSelection(this.currentNarrationIndex);
 
+        // Processar o texto para melhorar a narração
+        const processedText = this.processTextForNarration(text);
+
         // Iniciar a narração
-        this.narrator.speak(text, () => {
+        this.narrator.speak(processedText, () => {
             // Callback chamado quando a narração deste trecho terminar
             if (this.currentNarrationIndex >= this.selections.length - 1) {
                 // Se era o último trecho, resetar o estado
@@ -159,14 +189,27 @@ class RectangularSelectionManager {
                     this.scrollManager.settings.verticalAlignment = 0.3;
                     this.scrollManager.settings.margin = 50;
                     this.scrollManager.settings.scrollDelay = 100;
+                    
+                    // Rolar até o final da página após a última narração
+                    setTimeout(() => {
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 1000);
                 }
+                
+                // Restaurar a visibilidade dos elementos de seleção
+                setTimeout(() => {
+                    this.restoreSelectionElementsVisibility();
+                }, 1500);
             } else {
                 // Preparar para a próxima seleção
                 setTimeout(() => {
                     if (this.isNarrating) {
                         this.updateScrollForCurrentSelection(this.currentNarrationIndex + 1);
                     }
-                }, 500); // Pequeno atraso para transição suave
+                }, 800); // Aumentar o atraso para uma transição mais suave
             }
         });
 
@@ -415,6 +458,41 @@ class RectangularSelectionManager {
 
         // Resetar o índice de narração
         this.currentNarrationIndex = -1;
+        
+        // Restaurar tamanho original das imagens que foram modificadas
+        const selectionContainers = document.querySelectorAll('.rectangular-selection-container');
+        console.log(`Restaurando ${selectionContainers.length} containers de seleção`);
+        
+        selectionContainers.forEach((container, index) => {
+            const img = container.querySelector('img');
+            if (img) {
+                console.log(`Restaurando imagem #${index + 1}: ${img.id || 'sem ID'}`);
+                
+                // Remover estilos aplicados à imagem
+                img.style.width = '';
+                img.style.height = '';
+                img.style.maxWidth = '';
+                
+                // Mover a imagem de volta para seu pai original se possível
+                if (container.parentElement) {
+                    container.parentElement.insertBefore(img, container);
+                    // Remover o container vazio
+                    container.remove();
+                }
+            }
+        });
+        
+        // Remover qualquer container de depuração OCR
+        const debugContainer = document.getElementById('ocr-debug-container');
+        if (debugContainer) {
+            debugContainer.remove();
+        }
+        
+        // Limpar todas as seleções
+        this.clearAllSelections();
+        
+        // Mostrar notificação
+        this.showNotification('Modo de seleção de texto desativado', 'info');
     }
 
     /**
@@ -435,11 +513,11 @@ class RectangularSelectionManager {
             // Adicionar classe para indicar que a imagem é selecionável
             img.classList.add('selectable-image');
 
-            // Adicionar listeners de eventos
-            img.addEventListener('mousedown', this.handleImageMouseDown.bind(this));
-            img.addEventListener('mousemove', this.handleImageMouseMove.bind(this));
-            img.addEventListener('mouseup', this.handleImageMouseUp.bind(this));
-            img.addEventListener('mouseleave', this.handleImageMouseLeave.bind(this));
+            // Adicionar listeners de eventos usando as funções vinculadas
+            img.addEventListener('mousedown', this.boundHandleImageMouseDown);
+            img.addEventListener('mousemove', this.boundHandleImageMouseMove);
+            img.addEventListener('mouseup', this.boundHandleImageMouseUp);
+            img.addEventListener('mouseleave', this.boundHandleImageMouseLeave);
         });
     }
 
@@ -460,11 +538,11 @@ class RectangularSelectionManager {
             // Remover classe de imagem selecionável
             img.classList.remove('selectable-image');
 
-            // Remover listeners de eventos
-            img.removeEventListener('mousedown', this.handleImageMouseDown.bind(this));
-            img.removeEventListener('mousemove', this.handleImageMouseMove.bind(this));
-            img.removeEventListener('mouseup', this.handleImageMouseUp.bind(this));
-            img.removeEventListener('mouseleave', this.handleImageMouseLeave.bind(this));
+            // Remover listeners de eventos usando as funções vinculadas
+            img.removeEventListener('mousedown', this.boundHandleImageMouseDown);
+            img.removeEventListener('mousemove', this.boundHandleImageMouseMove);
+            img.removeEventListener('mouseup', this.boundHandleImageMouseUp);
+            img.removeEventListener('mouseleave', this.boundHandleImageMouseLeave);
         });
     }
 
@@ -482,9 +560,25 @@ class RectangularSelectionManager {
 
         // Obter a imagem alvo
         const img = event.target;
+        
+        // Verificar se é uma imagem válida
+        if (!(img instanceof HTMLImageElement)) {
+            console.warn('O elemento clicado não é uma imagem válida');
+            return;
+        }
 
-        // Armazenar a imagem atual
+        // Cancelar qualquer seleção atual antes de iniciar uma nova
+        if (this.currentSelection) {
+            this.cancelCurrentSelection();
+        }
+
+        // Armazenar a imagem atual temporariamente apenas para esta seleção
         this.currentImage = img;
+        
+        // Garantir que a imagem tenha um ID para referência futura
+        if (!img.id) {
+            img.id = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        }
 
         // Obter posição do mouse relativa à imagem
         const rect = img.getBoundingClientRect();
@@ -496,6 +590,8 @@ class RectangularSelectionManager {
 
         // Criar elemento de seleção
         this.createSelectionElement(img, this.startX, this.startY, 0, 0);
+        
+        console.log(`Iniciando seleção na imagem: ${img.id}`);
     }
 
     /**
@@ -509,6 +605,21 @@ class RectangularSelectionManager {
 
         // Impedir comportamento padrão
         event.preventDefault();
+
+        // Verificar se temos uma imagem atual válida
+        if (!this.currentImage) {
+            console.warn('Imagem atual não definida durante o movimento do mouse');
+            return;
+        }
+        
+        // Verificar se o evento ocorreu na imagem atual
+        // Isso evita problemas quando o mouse sai da imagem durante a seleção
+        if (event.target !== this.currentImage) {
+            // Se o mouse saiu da imagem, não atualizar a seleção
+            // mas também não cancelar, permitindo que o usuário continue a seleção
+            // quando o mouse voltar para a imagem
+            return;
+        }
 
         // Obter posição do mouse relativa à imagem
         const img = this.currentImage;
@@ -583,18 +694,37 @@ class RectangularSelectionManager {
      * @param {number} height - Altura inicial
      */
     createSelectionElement(img, x, y, width, height) {
-        // Criar container de seleção se não existir
-        let selectionContainer = img.parentElement.querySelector('.rectangular-selection-container');
+        // Verificar se a imagem já está em um container de seleção
+        let selectionContainer = img.closest('.rectangular-selection-container');
+        
+        // Se não estiver, criar um novo container
         if (!selectionContainer) {
+            // Obter as dimensões originais da imagem antes de qualquer modificação
+            const originalWidth = img.width || img.naturalWidth;
+            const originalHeight = img.height || img.naturalHeight;
+            
             selectionContainer = document.createElement('div');
             selectionContainer.className = 'rectangular-selection-container';
             selectionContainer.style.position = 'relative';
             selectionContainer.style.display = 'inline-block';
+            selectionContainer.style.width = originalWidth + 'px'; // Usar dimensões originais
+            selectionContainer.style.height = originalHeight + 'px';
+            
+            // Armazenar referência à imagem original no container
+            selectionContainer.dataset.originalImageId = img.id || '';
 
             // Substituir a imagem pelo container
             const parent = img.parentElement;
             parent.insertBefore(selectionContainer, img);
             selectionContainer.appendChild(img);
+            
+            // Garantir que a imagem mantenha seu tamanho original
+            // mas não modificar o estilo se já estiver definido
+            if (!img.style.width) {
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.maxWidth = 'none';
+            }
         }
 
         // Criar elemento de seleção
@@ -672,20 +802,27 @@ class RectangularSelectionManager {
      * Confirma a seleção atual
      */
     confirmCurrentSelection() {
-        if (!this.currentSelection) {
+        if (!this.currentSelection || !this.currentImage) {
+            console.warn('Não é possível confirmar a seleção: seleção ou imagem atual não definida');
             return;
         }
 
-        // Obter informações da seleção
-        const rect = this.currentSelection.getBoundingClientRect();
-        const imgRect = this.currentImage.getBoundingClientRect();
-
-        // Obter dimensões da seleção a partir do estilo ou do getBoundingClientRect
-        // Usar getBoundingClientRect como fallback para garantir valores válidos
+        // Obter informações da seleção diretamente do estilo para maior precisão
+        // Isso evita problemas com getBoundingClientRect que pode ser afetado pelo scroll
         const left = parseFloat(this.currentSelection.style.left) || 0;
         const top = parseFloat(this.currentSelection.style.top) || 0;
-        const width = parseFloat(this.currentSelection.style.width) || rect.width;
-        const height = parseFloat(this.currentSelection.style.height) || rect.height;
+        const width = parseFloat(this.currentSelection.style.width) || 0;
+        const height = parseFloat(this.currentSelection.style.height) || 0;
+        
+        // Verificar se as dimensões são válidas
+        if (width < 10 || height < 10) {
+            console.warn('Seleção muito pequena, cancelando');
+            this.cancelCurrentSelection();
+            return;
+        }
+        
+        // Obter informações da imagem
+        const imgRect = this.currentImage.getBoundingClientRect();
 
         // Verificar se os valores são válidos
         if (isNaN(width) || width <= 0 || isNaN(height) || height <= 0) {
@@ -698,6 +835,7 @@ class RectangularSelectionManager {
         // Garantir que a imagem tenha um ID para referência futura
         if (!this.currentImage.id) {
             this.currentImage.id = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            console.log(`ID gerado para a imagem: ${this.currentImage.id}`);
         }
 
         // Calcular posição relativa à imagem
@@ -709,13 +847,15 @@ class RectangularSelectionManager {
             top: top,
             width: width,
             height: height,
-            index: this.selections.length
+            index: this.selections.length,
+            // Armazenar informações adicionais sobre a imagem para facilitar a recuperação
+            imageRect: {
+                width: this.currentImage.width,
+                height: this.currentImage.height,
+                naturalWidth: this.currentImage.naturalWidth,
+                naturalHeight: this.currentImage.naturalHeight
+            }
         };
-
-        // Garantir que a imagem tenha um ID para referência futura
-        if (!this.currentImage.id) {
-            this.currentImage.id = selection.imageId;
-        }
 
         console.log('Seleção confirmada com dimensões:', selection);
 
@@ -872,13 +1012,6 @@ class RectangularSelectionManager {
             return;
         }
 
-        // Mostrar container de texto extraído
-        // this.extractedTextContainer.style.display = 'block';
-
-        // Limpar itens anteriores
-        // const itemsContainer = this.extractedTextContainer.querySelector('.extracted-text-items');
-        // itemsContainer.innerHTML = '';
-
         // Mostrar indicador de progresso
         this.showProgressIndicator('Preparando para processar seleções...');
 
@@ -895,6 +1028,9 @@ class RectangularSelectionManager {
         // Liberar a referência à imagem atual imediatamente após processar as seleções
         // Isso permitirá selecionar quadros de outras imagens posteriormente
         this.currentImage = null;
+        
+        // Ocultar elementos de seleção durante a narração
+        this.hideSelectionElementsDuringNarration();
 
         // Criar cópias das seleções para evitar problemas de referência
         const selectionsCopy = this.selections.map(selection => ({
@@ -906,8 +1042,13 @@ class RectangularSelectionManager {
             top: selection.top || 0,
             width: selection.width || 100,
             height: selection.height || 100,
-            index: selection.index || 0
+            index: selection.index || 0,
+            // Preservar informações da imagem
+            imageRect: selection.imageRect || null
         }));
+
+        // Ordenar seleções por índice para garantir a ordem correta de processamento
+        selectionsCopy.sort((a, b) => a.index - b.index);
 
         // Adicionar cada seleção à fila de processamento
         selectionsCopy.forEach(selection => {
@@ -927,7 +1068,7 @@ class RectangularSelectionManager {
                         }
 
                         const textsForImage = this.extractedTexts.get(selection.imageId);
-                        textsForImage[selection.index] = text // Usar o índice da seleção
+                        textsForImage[selection.index] = text; // Usar o índice da seleção
                         this.extractedTexts.set(selection.imageId, textsForImage);
                     }
 
@@ -946,6 +1087,8 @@ class RectangularSelectionManager {
             console.error('Erro ao processar seleções:', error);
             this.showNotification(`Erro ao processar seleções: ${error.message}`, 'error');
             this.hideProgressIndicator();
+            // Restaurar a visibilidade dos elementos de seleção em caso de erro
+            this.restoreSelectionElementsVisibility();
         }
     }
 
@@ -1006,12 +1149,6 @@ class RectangularSelectionManager {
                     }
                 }
 
-                // Estratégia 5: Usar a imagem atual se estiver disponível
-                if (!imageElement && this.currentImage) {
-                    console.warn('Usando a imagem atual como fallback');
-                    imageElement = this.currentImage;
-                }
-
                 // Verificar se a imagem foi encontrada
                 if (!imageElement) {
                     throw new Error('Seleção inválida: imagem não encontrada');
@@ -1048,8 +1185,19 @@ class RectangularSelectionManager {
                 canvas.height = height;
 
                 // Calcular a escala entre as dimensões naturais e as dimensões exibidas
-                const scaleX = imageElement.naturalWidth / imageElement.width;
-                const scaleY = imageElement.naturalHeight / imageElement.height;
+                let scaleX, scaleY;
+                
+                // Se temos informações armazenadas sobre a imagem na seleção, use-as
+                if (selection.imageRect) {
+                    scaleX = selection.imageRect.naturalWidth / selection.imageRect.width;
+                    scaleY = selection.imageRect.naturalHeight / selection.imageRect.height;
+                    console.log('Usando escala armazenada na seleção');
+                } else {
+                    // Caso contrário, calcule a partir da imagem atual
+                    scaleX = imageElement.naturalWidth / imageElement.width;
+                    scaleY = imageElement.naturalHeight / imageElement.height;
+                    console.log('Calculando escala a partir da imagem atual');
+                }
 
                 // Ajustar coordenadas para a escala real da imagem
                 const scaledLeft = left * scaleX;
@@ -1107,6 +1255,7 @@ class RectangularSelectionManager {
         const scaledTop = top * scaleY;
         const scaledWidth = width * scaleX;
         const scaledHeight = height * scaleY;
+        
         // Criar ou obter o container de depuração
         let debugContainer = document.getElementById('ocr-debug-container');
         if (!debugContainer) {
@@ -1115,90 +1264,43 @@ class RectangularSelectionManager {
             debugContainer.style.position = 'fixed';
             debugContainer.style.top = '10px';
             debugContainer.style.right = '10px';
-            debugContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            debugContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            debugContainer.style.color = 'white';
             debugContainer.style.padding = '10px';
             debugContainer.style.borderRadius = '5px';
             debugContainer.style.zIndex = '9999';
-            debugContainer.style.color = 'white';
-            debugContainer.style.maxWidth = '400px';
+            debugContainer.style.maxWidth = '300px';
             debugContainer.style.maxHeight = '80vh';
-            debugContainer.style.overflow = 'auto';
+            debugContainer.style.overflowY = 'auto';
+            debugContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
             document.body.appendChild(debugContainer);
         }
-
-        // Limpar container
+        
+        // Limpar conteúdo anterior
         debugContainer.innerHTML = '';
-
+        
         // Adicionar título
         const title = document.createElement('h3');
-        title.textContent = 'Depuração de Extração OCR';
+        title.textContent = 'Depuração OCR';
         title.style.margin = '0 0 10px 0';
         debugContainer.appendChild(title);
-
-        // Adicionar botão para fechar
-        const closeButton = document.createElement('button');
-        closeButton.textContent = 'X';
-        closeButton.style.position = 'absolute';
-        closeButton.style.top = '5px';
-        closeButton.style.right = '5px';
-        closeButton.style.backgroundColor = 'red';
-        closeButton.style.color = 'white';
-        closeButton.style.border = 'none';
-        closeButton.style.borderRadius = '50%';
-        closeButton.style.width = '20px';
-        closeButton.style.height = '20px';
-        closeButton.style.cursor = 'pointer';
-        closeButton.addEventListener('click', () => {
-            debugContainer.remove();
-        });
-        debugContainer.appendChild(closeButton);
-
-        // Adicionar informações de coordenadas
-        const coordInfo = document.createElement('div');
-        coordInfo.innerHTML = `
-            <p><strong>Coordenadas na tela:</strong></p>
-            <ul>
-                <li>Left: ${left}px</li>
-                <li>Top: ${top}px</li>
-                <li>Width: ${width}px</li>
-                <li>Height: ${height}px</li>
-            </ul>
-            <p><strong>Coordenadas ajustadas para OCR:</strong></p>
-            <ul>
-                <li>Left: ${scaledLeft.toFixed(2)}px</li>
-                <li>Top: ${scaledTop.toFixed(2)}px</li>
-                <li>Width: ${scaledWidth.toFixed(2)}px</li>
-                <li>Height: ${scaledHeight.toFixed(2)}px</li>
-                <li>Escala X: ${scaleX.toFixed(2)}</li>
-                <li>Escala Y: ${scaleY.toFixed(2)}</li>
-            </ul>
-        `;
-        debugContainer.appendChild(coordInfo);
-
-        // Adicionar visualização da imagem original com retângulo
+        
+        // Adicionar visualização da imagem original
         const originalPreview = document.createElement('div');
         originalPreview.innerHTML = '<p><strong>Imagem Original com Seleção:</strong></p>';
-
-        // Criar canvas para mostrar a imagem original com retângulo
+        
+        // Criar canvas para mostrar a imagem original com a seleção
         const originalCanvas = document.createElement('canvas');
-        const maxPreviewWidth = 350;
-        const scale = Math.min(1, maxPreviewWidth / originalImage.width);
-        originalCanvas.width = originalImage.width * scale;
-        originalCanvas.height = originalImage.height * scale;
+        originalCanvas.width = originalImage.width;
+        originalCanvas.height = originalImage.height;
+        originalCanvas.style.maxWidth = '100%';
         originalCanvas.style.border = '1px solid #ccc';
-
-        const originalCtx = originalCanvas.getContext('2d');
-        originalCtx.drawImage(originalImage, 0, 0, originalCanvas.width, originalCanvas.height);
-
-        // Desenhar retângulo na posição da seleção
-        originalCtx.strokeStyle = 'red';
-        originalCtx.lineWidth = 2;
-        originalCtx.strokeRect(
-            left * scale,
-            top * scale,
-            width * scale,
-            height * scale
-        );
+        
+        const ctx = originalCanvas.getContext('2d');
+        ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(left, top, width, height);
 
         originalPreview.appendChild(originalCanvas);
         debugContainer.appendChild(originalPreview);
@@ -1509,5 +1611,122 @@ class RectangularSelectionManager {
             top: targetTop,
             behavior: 'smooth'
         });
+    }
+    
+    /**
+     * Oculta os elementos de seleção durante a narração
+     */
+    hideSelectionElementsDuringNarration() {
+        // Armazenar o estado atual de visibilidade para restaurar depois
+        this._selectionElementsVisible = false;
+        
+        // Ocultar todos os elementos de seleção
+        const selectionElements = document.querySelectorAll('.rectangular-selection');
+        selectionElements.forEach(element => {
+            // Guardar o estado original de visibilidade
+            element._originalDisplay = element.style.display;
+            // Ocultar o elemento
+            element.style.display = 'none';
+        });
+        
+        // Ocultar números de seleção
+        const numberElements = document.querySelectorAll('.selection-number');
+        numberElements.forEach(element => {
+            element._originalDisplay = element.style.display;
+            element.style.display = 'none';
+        });
+        
+        // Ocultar botões de exclusão
+        const deleteButtons = document.querySelectorAll('.selection-delete-button');
+        deleteButtons.forEach(element => {
+            element._originalDisplay = element.style.display;
+            element.style.display = 'none';
+        });
+        
+        // Ocultar controles de seleção
+        if (this.selectionControls) {
+            this.selectionControls._originalDisplay = this.selectionControls.style.display;
+            this.selectionControls.style.display = 'none';
+        }
+        
+        // Ocultar indicador de modo de seleção
+        if (this.selectionIndicator) {
+            this.selectionIndicator._originalDisplay = this.selectionIndicator.style.display;
+            this.selectionIndicator.style.display = 'none';
+        }
+        
+        // Ocultar container de depuração OCR
+        const debugContainer = document.getElementById('ocr-debug-container');
+        if (debugContainer) {
+            debugContainer._originalDisplay = debugContainer.style.display;
+            debugContainer.style.display = 'none';
+        }
+        
+        // Ocultar notificações
+        const notifications = document.querySelectorAll('.rectangular-selection-notification, .ocr-notification');
+        notifications.forEach(element => {
+            element._originalDisplay = element.style.display;
+            element.style.display = 'none';
+        });
+        
+        console.log('Elementos de seleção e depuração ocultados durante a narração');
+    }
+    
+    /**
+     * Restaura a visibilidade dos elementos de seleção após a narração
+     */
+    restoreSelectionElementsVisibility() {
+        if (this._selectionElementsVisible) return; // Já estão visíveis
+        
+        // Restaurar visibilidade dos elementos de seleção
+        const selectionElements = document.querySelectorAll('.rectangular-selection');
+        selectionElements.forEach(element => {
+            if (element._originalDisplay !== undefined) {
+                element.style.display = element._originalDisplay;
+            }
+        });
+        
+        // Restaurar números de seleção
+        const numberElements = document.querySelectorAll('.selection-number');
+        numberElements.forEach(element => {
+            if (element._originalDisplay !== undefined) {
+                element.style.display = element._originalDisplay;
+            }
+        });
+        
+        // Restaurar botões de exclusão
+        const deleteButtons = document.querySelectorAll('.selection-delete-button');
+        deleteButtons.forEach(element => {
+            if (element._originalDisplay !== undefined) {
+                element.style.display = element._originalDisplay;
+            }
+        });
+        
+        // Restaurar controles de seleção
+        if (this.selectionControls && this.selectionControls._originalDisplay !== undefined) {
+            this.selectionControls.style.display = this.selectionControls._originalDisplay;
+        }
+        
+        // Restaurar indicador de modo de seleção
+        if (this.selectionIndicator && this.selectionIndicator._originalDisplay !== undefined) {
+            this.selectionIndicator.style.display = this.selectionIndicator._originalDisplay;
+        }
+        
+        // Restaurar container de depuração OCR
+        const debugContainer = document.getElementById('ocr-debug-container');
+        if (debugContainer && debugContainer._originalDisplay !== undefined) {
+            debugContainer.style.display = debugContainer._originalDisplay;
+        }
+        
+        // Restaurar notificações
+        const notifications = document.querySelectorAll('.rectangular-selection-notification, .ocr-notification');
+        notifications.forEach(element => {
+            if (element._originalDisplay !== undefined) {
+                element.style.display = element._originalDisplay;
+            }
+        });
+        
+        this._selectionElementsVisible = true;
+        console.log('Visibilidade dos elementos de seleção e depuração restaurada');
     }
 }
