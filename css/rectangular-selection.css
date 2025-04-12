@@ -52,6 +52,32 @@ body.rectangular-selection-mode img.selectable-image {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* Botão de exclusão de seleção */
+.selection-delete-button {
+    position: absolute;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 101;
+    top: -12px;
+    right: -12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.selection-delete-button:hover {
+    background-color: #c0392b;
+    transform: scale(1.1);
+}
+
 /* Botões de controle da seleção */
 .rectangular-selection-controls {
     position: fixed;

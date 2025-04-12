@@ -126,6 +126,7 @@ class OCRControls {
         // Atualizar estado do botão
         if (this.rectangularSelectionManager.isSelectionModeActive) {
             this.selectRectangularTextBtn.classList.add('active');
+            this.showNotification('Modo de seleção ativado. Desenhe retângulos sobre o texto que deseja extrair. Cada seleção será confirmada automaticamente.', 'info');
         } else {
             this.selectRectangularTextBtn.classList.remove('active');
         }

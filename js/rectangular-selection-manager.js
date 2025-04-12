@@ -273,20 +273,6 @@ class RectangularSelectionManager {
         this.selectionControls.className = 'rectangular-selection-controls';
         this.selectionControls.style.display = 'none';
 
-        // Botão para cancelar a seleção atual
-        const cancelButton = document.createElement('button');
-        cancelButton.className = 'selection-button cancel';
-        cancelButton.innerHTML = '<i class="fas fa-times"></i> Cancelar seleção';
-        cancelButton.addEventListener('click', () => this.cancelCurrentSelection());
-        this.selectionControls.appendChild(cancelButton);
-
-        // Botão para confirmar a seleção atual
-        const confirmButton = document.createElement('button');
-        confirmButton.className = 'selection-button confirm';
-        confirmButton.innerHTML = '<i class="fas fa-check"></i> Confirmar seleção';
-        confirmButton.addEventListener('click', () => this.confirmCurrentSelection());
-        this.selectionControls.appendChild(confirmButton);
-
         // Botão para processar todas as seleções
         const processButton = document.createElement('button');
         processButton.className = 'selection-button process';
@@ -565,8 +551,8 @@ class RectangularSelectionManager {
             return;
         }
 
-        // Mostrar controles de seleção
-        this.showSelectionControls();
+        // Confirmar automaticamente a seleção em vez de mostrar controles
+        this.confirmCurrentSelection();
     }
 
     /**
@@ -740,6 +726,9 @@ class RectangularSelectionManager {
         this.currentSelection.classList.add('confirmed');
         this.currentSelection.style.border = '2px solid #2ecc71';
         this.currentSelection.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+        
+        // Armazenar referência ao elemento de seleção no objeto selection
+        selection.element = this.currentSelection;
 
         // Adicionar número da seleção
         const numberElement = document.createElement('div');
@@ -760,6 +749,35 @@ class RectangularSelectionManager {
         numberElement.style.fontWeight = 'bold';
         numberElement.style.zIndex = '101';
         this.currentSelection.appendChild(numberElement);
+        
+        // Adicionar botão de exclusão flutuante
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'selection-delete-button';
+        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+        deleteButton.style.position = 'absolute';
+        deleteButton.style.top = '-12px';
+        deleteButton.style.right = '-12px';
+        deleteButton.style.backgroundColor = '#e74c3c';
+        deleteButton.style.color = 'white';
+        deleteButton.style.border = 'none';
+        deleteButton.style.borderRadius = '50%';
+        deleteButton.style.width = '24px';
+        deleteButton.style.height = '24px';
+        deleteButton.style.display = 'flex';
+        deleteButton.style.alignItems = 'center';
+        deleteButton.style.justifyContent = 'center';
+        deleteButton.style.fontSize = '12px';
+        deleteButton.style.cursor = 'pointer';
+        deleteButton.style.zIndex = '101';
+        deleteButton.title = 'Excluir seleção';
+        
+        // Adicionar evento de clique para excluir a seleção
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evitar propagação do evento
+            this.deleteSelection(selection.index);
+        });
+        
+        this.currentSelection.appendChild(deleteButton);
 
         // Limpar seleção atual
         this.currentSelection = null;
@@ -768,6 +786,54 @@ class RectangularSelectionManager {
         this.showNotification(`Seleção #${selection.index + 1} confirmada. Selecione mais áreas ou clique em "Processar seleções".`, 'success');
     }
 
+    /**
+     * Exclui uma seleção específica pelo índice
+     * @param {number} index - Índice da seleção a ser excluída
+     */
+    deleteSelection(index) {
+        // Verificar se o índice é válido
+        if (index < 0 || index >= this.selections.length) {
+            console.error('Índice de seleção inválido:', index);
+            return;
+        }
+        
+        // Obter a seleção a ser excluída
+        const selection = this.selections[index];
+        
+        // Remover o elemento visual da seleção, se existir
+        if (selection.element) {
+            selection.element.remove();
+        }
+        
+        // Remover a seleção do array
+        this.selections.splice(index, 1);
+        
+        // Atualizar os índices das seleções restantes
+        this.selections.forEach((sel, i) => {
+            sel.index = i;
+            
+            // Atualizar o número exibido, se o elemento existir
+            if (sel.element) {
+                const numberElement = sel.element.querySelector('.selection-number');
+                if (numberElement) {
+                    numberElement.textContent = i + 1;
+                }
+            }
+        });
+        
+        // Remover o texto extraído para esta seleção, se existir
+        if (selection.imageId && this.extractedTexts.has(selection.imageId)) {
+            const textsForImage = this.extractedTexts.get(selection.imageId);
+            if (textsForImage[index]) {
+                textsForImage.splice(index, 1);
+                this.extractedTexts.set(selection.imageId, textsForImage);
+            }
+        }
+        
+        // Mostrar notificação
+        this.showNotification(`Seleção #${index + 1} excluída`, 'info');
+    }
+    
     /**
      * Limpa todas as seleções
      */
