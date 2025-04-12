@@ -726,6 +726,8 @@ class RectangularSelectionManager {
         this.currentSelection.classList.add('confirmed');
         this.currentSelection.style.border = '2px solid #2ecc71';
         this.currentSelection.style.backgroundColor = 'rgba(46, 204, 113, 0.2)';
+        // Habilitar interações com o mouse para permitir clicar no botão de exclusão
+        this.currentSelection.style.pointerEvents = 'auto';
         
         // Armazenar referência ao elemento de seleção no objeto selection
         selection.element = this.currentSelection;
