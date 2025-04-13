@@ -883,8 +883,34 @@ class ComicNarrator {
     async startNarration() {
         if (!this.enableNarration.checked || this.isNarrating) return;
 
-        // Removida a solicitação de permissões de áudio que não é necessária para text-to-speech
+        // Verificar se o modo de seleção de texto em imagens está ativo
+        const rectangularSelectionManager = window.rectangularSelectionManager;
+        if (rectangularSelectionManager && rectangularSelectionManager.isSelectionModeActive) {
+            // Se o modo de seleção estiver ativo, verificar se há seleções
+            if (rectangularSelectionManager.selections && rectangularSelectionManager.selections.length > 0) {
+                console.log('Modo de seleção de texto em imagens ativo. Lendo apenas o texto das seleções OCR.');
+                this.isNarrating = true;
+                this.startNarrationBtn.innerHTML = '<i class="fas fa-stop"></i> Parar Narração';
+                this.startNarrationBtn.classList.add('active');
+                
+                // Disable other controls
+                this.disableOtherControls(true);
+                
+                // Iniciar processamento das seleções
+                rectangularSelectionManager.processSelections();
+                return; // Não continuar com a narração normal
+            } else {
+                // Se não houver seleções, mostrar mensagem
+                this.readingIndicator.textContent = 'Não há seleções de texto para narrar. Faça seleções nas imagens primeiro.';
+                this.readingIndicator.style.display = 'block';
+                setTimeout(() => {
+                    this.readingIndicator.style.display = 'none';
+                }, 3000);
+                return;
+            }
+        }
 
+        // Comportamento normal quando o modo de seleção não está ativo
         // Get the images container element
         const imagesContainer = document.getElementById('imagesContainer');
         if (!imagesContainer) {

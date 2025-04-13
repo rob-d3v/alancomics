@@ -251,10 +251,10 @@ class RectangularSelectionManager {
             // Mostrar notificação de conclusão
             this.showNotification('Todos os trechos foram processados e enviados para narração', 'success');
 
-            // Importante: Garantir que o sistema não tente processar outras imagens automaticamente
-            // Isso resolve o problema de narrar imagens inteiras próximas
-            if (this.narrator && typeof this.narrator.stopNarration === 'function') {
-                this.narrator.stopNarration();
+            // NÃO interromper a narração aqui para permitir que todas as seleções sejam narradas
+            // Apenas verificar se a narração está em andamento
+            if (this.narrator && this.narrator.synth && this.narrator.synth.speaking) {
+                console.log('Narração em andamento após processamento de todas as seleções. Permitindo que continue...');
             }
         });
 
