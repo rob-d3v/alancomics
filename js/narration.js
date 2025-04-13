@@ -16,6 +16,9 @@ class ComicNarrator {
         this.isBuffering = false;
         this.bufferSize = 3; // Number of pages to buffer ahead
 
+        // Controle para evitar múltiplas inicializações de vozes
+        this.voicesInitialized = false;
+
         // DOM elements
         this.enableNarration = document.getElementById('enableNarration');
         this.narrationControls = document.getElementById('narrationControls');
@@ -38,9 +41,24 @@ class ComicNarrator {
     }
 
     initVoices() {
+        // Verificar se as vozes já foram inicializadas para evitar múltiplas inicializações
+        if (this.voicesInitialized) {
+            console.log('ComicNarrator: Lista de vozes já foi inicializada anteriormente');
+            return;
+        }
+
+        console.log('ComicNarrator: Inicializando lista de vozes (primeira vez)');
+        this.voicesInitialized = true;
+
         // Populate voices when available
         if (this.synth.onvoiceschanged !== undefined) {
             this.synth.onvoiceschanged = () => {
+                // Verificar novamente para evitar múltiplas chamadas do evento onvoiceschanged
+                if (this.voices.length > 0) {
+                    console.log('ComicNarrator: Evento onvoiceschanged ignorado, vozes já carregadas');
+                    return;
+                }
+                
                 this.loadVoices();
                 // Registrar detalhes das vozes após carregamento
                 this.logVoiceDetails();
@@ -61,7 +79,12 @@ class ComicNarrator {
 
     // Método específico para tentar acessar as vozes do narrador do Windows
     tryAccessNarratorVoices() {
-        console.log("🔍 Tentando acessar especificamente as vozes do Narrador do Windows (Antonio e Francisca)...");
+        // Verificar se já temos vozes suficientes carregadas
+        if (this.voices.length > 5) {
+            console.log("🔍 Verificando vozes do Narrador entre as", this.voices.length, "vozes já carregadas");
+        } else {
+            console.log("🔍 Tentando acessar especificamente as vozes do Narrador do Windows (Antonio e Francisca)...");
+        }
 
         // Verificar se já temos as vozes do narrador
         const hasAntonioVoice = this.voices.some(voice => voice.name.includes('Antonio'));
@@ -69,6 +92,12 @@ class ComicNarrator {
 
         if (hasAntonioVoice && hasFranciscaVoice) {
             console.log("✅ Vozes Antonio e Francisca já estão disponíveis!");
+            return;
+        }
+
+        // Se já temos muitas vozes mas não as do narrador, provavelmente não estão disponíveis
+        if (this.voices.length > 10 && !hasAntonioVoice && !hasFranciscaVoice) {
+            console.log("⚠️ Muitas vozes disponíveis, mas Antonio e Francisca não foram encontradas. Provavelmente não estão instaladas no sistema.");
             return;
         }
 
@@ -88,21 +117,41 @@ class ComicNarrator {
 
             // Tentar carregar as vozes novamente após um breve intervalo
             setTimeout(() => {
-                this.voices = this.synth.getVoices();
+                // Verificar se já temos vozes suficientes antes de tentar novamente
+                if (this.voices.length > 0) {
+                    // Verificar novamente por Antonio e Francisca
+                    const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
+                    const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
-                // Verificar novamente por Antonio e Francisca
-                const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
-                const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
+                    if (antonioVoice || franciscaVoice) {
+                        console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
+                        if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
+                        if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
+                        return;
+                    }
+                }
 
-                if (antonioVoice || franciscaVoice) {
-                    console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
-                    if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice);
-                    if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice);
+                // Tentar obter as vozes novamente apenas se necessário
+                const currentVoices = this.synth.getVoices();
+                if (currentVoices.length > this.voices.length) {
+                    this.voices = currentVoices;
+                    
+                    // Verificar novamente por Antonio e Francisca
+                    const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
+                    const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
-                    // Recarregar a interface com as novas vozes
-                    this.loadVoices();
-                } else {
-                    console.log("⚠️ Vozes do Narrador ainda não detectadas após inicialização forçada.");
+                    if (antonioVoice || franciscaVoice) {
+                        console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
+                        if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
+                        if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
+
+                        // Recarregar a interface com as novas vozes apenas se necessário
+                        if (this.voiceSelect && this.voiceSelect.options.length === 0) {
+                            this.loadVoices();
+                        }
+                    } else {
+                        console.log("⚠️ Vozes do Narrador ainda não detectadas após inicialização forçada.");
+                    }
                 }
             }, 500);
 
@@ -148,14 +197,36 @@ class ComicNarrator {
 
     // Método para forçar a detecção de vozes SAPI do Windows e do Narrador
     forceWindowsVoicesDetection() {
+        // Verificar se já temos vozes suficientes antes de tentar forçar a detecção
+        if (this.voices.length > 5) {
+            // Verificar se já temos vozes do Windows ou do Narrador
+            const hasWindowsVoices = this.voices.some(voice => 
+                voice.localService && (
+                    voice.name.includes('Desktop') ||
+                    voice.name.includes('SAPI') ||
+                    voice.name.includes('Microsoft')
+                )
+            );
+            
+            const hasNarratorVoices = this.voices.some(voice => 
+                voice.name.includes('Antonio') || voice.name.includes('Francisca')
+            );
+            
+            if (hasWindowsVoices || hasNarratorVoices) {
+                console.log("✅ Já existem vozes do Windows ou do Narrador carregadas. Ignorando detecção forçada.");
+                this.readingIndicator.style.display = 'none';
+                return;
+            }
+        }
+        
         console.log("🔄 Tentando forçar detecção de vozes do Windows e do Narrador...");
 
         // Mostrar indicador de carregamento
         this.readingIndicator.textContent = 'Detectando vozes do Windows e do Narrador...';
         this.readingIndicator.style.display = 'block';
 
-        // Tentar várias vezes com intervalos crescentes (mais tentativas e mais tempo)
-        const attempts = [500, 1000, 2000, 3000, 5000, 7000];
+        // Reduzir o número de tentativas para evitar sobrecarga
+        const attempts = [500, 2000, 5000];
 
         // Tentar forçar a inicialização do serviço de voz do Windows
         try {
@@ -168,13 +239,26 @@ class ComicNarrator {
             console.warn("⚠️ Não foi possível inicializar o serviço de voz:", e);
         }
 
+        // Variável para controlar se já encontramos vozes suficientes
+        let voicesFound = false;
+
         attempts.forEach((delay, index) => {
             setTimeout(() => {
+                // Verificar se já encontramos vozes em tentativas anteriores
+                if (voicesFound) {
+                    console.log(`🛑 Ignorando tentativa ${index + 1} pois vozes já foram encontradas`);
+                    return;
+                }
+                
                 console.log(`🔍 Tentativa ${index + 1} de detectar vozes do Windows e do Narrador...`);
-                this.loadVoices();
+                
+                // Verificar se já temos vozes suficientes antes de tentar carregar novamente
+                if (this.voices.length === 0) {
+                    this.loadVoices();
+                }
 
-                // Na última tentativa, atualizar a mensagem
-                if (index === attempts.length - 1) {
+                // Verificar se encontramos vozes suficientes
+                if (this.voices.length > 0) {
                     // Buscar vozes do Windows de forma mais abrangente
                     const windowsVoices = this.voices.filter(voice =>
                         voice.localService && (
@@ -190,34 +274,59 @@ class ComicNarrator {
                     const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
                     const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
-                    if (antonioVoice || franciscaVoice) {
-                        let vozesDetetadas = [];
-                        if (antonioVoice) vozesDetetadas.push('Antonio');
-                        if (franciscaVoice) vozesDetetadas.push('Francisca');
+                    if (windowsVoices.length > 0 || antonioVoice || franciscaVoice) {
+                        voicesFound = true;
+                        
+                        if (antonioVoice || franciscaVoice) {
+                            let vozesDetetadas = [];
+                            if (antonioVoice) vozesDetetadas.push('Antonio');
+                            if (franciscaVoice) vozesDetetadas.push('Francisca');
 
-                        this.readingIndicator.textContent = `✅ Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}!`;
-                        console.log(`🎉 SUCESSO! Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}`);
-
-                        // Destacar essas vozes no console para debug
-                        if (antonioVoice) console.log("🔍 Detalhes da voz Antonio:", antonioVoice);
-                        if (franciscaVoice) console.log("🔍 Detalhes da voz Francisca:", franciscaVoice);
-
-                        setTimeout(() => {
-                            this.readingIndicator.style.display = 'none';
-                        }, 5000);
+                            this.readingIndicator.textContent = `✅ Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}!`;
+                            console.log(`🎉 SUCESSO! Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}`);
+                        } else {
+                            this.readingIndicator.textContent = `✅ ${windowsVoices.length} vozes do Windows detectadas!`;
+                            console.log(`✅ ${windowsVoices.length} vozes do Windows detectadas!`);
+                        }
                     }
-                    else if (windowsVoices.length > 0) {
-                        this.readingIndicator.textContent = `✅ Detectadas ${windowsVoices.length} vozes do Windows!`;
-                        console.log(`✅ Detectadas ${windowsVoices.length} vozes do Windows, mas Antonio e Francisca não foram encontrados.`);
-                        setTimeout(() => {
-                            this.readingIndicator.style.display = 'none';
-                        }, 3000);
-                    } else {
-                        this.readingIndicator.textContent = '⚠️ Nenhuma voz do Windows ou do Narrador detectada. Tente recarregar a página.';
-                        console.warn("⚠️ Nenhuma voz do Windows ou do Narrador detectada após múltiplas tentativas.");
+                }
+
+                // Na última tentativa, atualizar a mensagem e ocultar o indicador
+                if (index === attempts.length - 1) {
+                    // Verificar novamente por Antonio e Francisca no escopo correto
+                    const finalAntonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
+                    const finalFranciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
+                    
+                    if (finalAntonioVoice || finalFranciscaVoice) {
+                        // Destacar essas vozes no console para debug
+                        if (finalAntonioVoice) console.log("🔍 Detalhes da voz Antonio:", finalAntonioVoice);
+                        if (finalFranciscaVoice) console.log("🔍 Detalhes da voz Francisca:", finalFranciscaVoice);
+
                         setTimeout(() => {
                             this.readingIndicator.style.display = 'none';
                         }, 5000);
+                    } else {
+                        // Verificar vozes do Windows no escopo correto
+                        const finalWindowsVoices = this.voices.filter(voice =>
+                            voice.localService && (
+                                voice.name.includes('Desktop') ||
+                                voice.name.includes('SAPI') ||
+                                voice.name.includes('Microsoft')
+                            ));
+                            
+                        if (finalWindowsVoices.length > 0) {
+                            this.readingIndicator.textContent = `✅ Detectadas ${finalWindowsVoices.length} vozes do Windows!`;
+                            console.log(`✅ Detectadas ${finalWindowsVoices.length} vozes do Windows, mas Antonio e Francisca não foram encontrados.`);
+                            setTimeout(() => {
+                                this.readingIndicator.style.display = 'none';
+                            }, 3000);
+                        } else {
+                            this.readingIndicator.textContent = '⚠️ Nenhuma voz do Windows ou do Narrador detectada. Tente recarregar a página.';
+                            console.warn("⚠️ Nenhuma voz do Windows ou do Narrador detectada após múltiplas tentativas.");
+                            setTimeout(() => {
+                                this.readingIndicator.style.display = 'none';
+                            }, 5000);
+                        }
                     }
                 }
             }, delay);
@@ -244,8 +353,20 @@ class ComicNarrator {
     }
 
     loadVoices() {
+        // Verificar se já temos vozes carregadas e se o seletor já foi preenchido
+        if (this.voices.length > 0 && this.voiceSelect && this.voiceSelect.options.length > 0) {
+            console.log("🔄 Ignorando carregamento de vozes, já existem", this.voices.length, "vozes carregadas");
+            return;
+        }
+
         this.voices = this.synth.getVoices();
         console.log("🎭 Descobrindo vozes disponíveis:", this.voices.length);
+
+        // Verificar se o seletor de vozes existe antes de tentar limpar
+        if (!this.voiceSelect) {
+            console.warn("⚠️ Seletor de vozes não encontrado no DOM");
+            return;
+        }
 
         // Limpar seletor de vozes
         this.voiceSelect.innerHTML = '';
