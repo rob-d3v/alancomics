@@ -482,10 +482,11 @@ class RectangularSelectionManager {
             }
         });
         
-        // Remover qualquer container de depuração OCR
+        // Remover qualquer container de depuração OCR que possa existir de versões anteriores
         const debugContainer = document.getElementById('ocr-debug-container');
         if (debugContainer) {
             debugContainer.remove();
+            console.log('Container de depuração OCR removido');
         }
         
         // Limpar todas as seleções
@@ -1246,77 +1247,15 @@ class RectangularSelectionManager {
      * @param {HTMLCanvasElement} extractedCanvas - Canvas com a região extraída
      */
     showDebugExtraction(originalImage, left, top, width, height, extractedCanvas) {
-        // Calcular a escala entre as dimensões naturais e as dimensões exibidas
-        const scaleX = originalImage.naturalWidth / originalImage.width;
-        const scaleY = originalImage.naturalHeight / originalImage.height;
-
-        // Ajustar coordenadas para a escala real da imagem
-        const scaledLeft = left * scaleX;
-        const scaledTop = top * scaleY;
-        const scaledWidth = width * scaleX;
-        const scaledHeight = height * scaleY;
+        // Método modificado para não exibir a janela de depuração OCR
+        // A função ainda é mantida para compatibilidade com o resto do código,
+        // mas não cria nem exibe a janela de depuração
         
-        // Criar ou obter o container de depuração
-        let debugContainer = document.getElementById('ocr-debug-container');
-        if (!debugContainer) {
-            debugContainer = document.createElement('div');
-            debugContainer.id = 'ocr-debug-container';
-            debugContainer.style.position = 'fixed';
-            debugContainer.style.top = '10px';
-            debugContainer.style.right = '10px';
-            debugContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
-            debugContainer.style.color = 'white';
-            debugContainer.style.padding = '10px';
-            debugContainer.style.borderRadius = '5px';
-            debugContainer.style.zIndex = '9999';
-            debugContainer.style.maxWidth = '300px';
-            debugContainer.style.maxHeight = '80vh';
-            debugContainer.style.overflowY = 'auto';
-            debugContainer.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
-            document.body.appendChild(debugContainer);
-        }
+        // Registrar informações no console apenas para fins de desenvolvimento
+        console.debug('OCR realizado em região:', { left, top, width, height });
         
-        // Limpar conteúdo anterior
-        debugContainer.innerHTML = '';
-        
-        // Adicionar título
-        const title = document.createElement('h3');
-        title.textContent = 'Depuração OCR';
-        title.style.margin = '0 0 10px 0';
-        debugContainer.appendChild(title);
-        
-        // Adicionar visualização da imagem original
-        const originalPreview = document.createElement('div');
-        originalPreview.innerHTML = '<p><strong>Imagem Original com Seleção:</strong></p>';
-        
-        // Criar canvas para mostrar a imagem original com a seleção
-        const originalCanvas = document.createElement('canvas');
-        originalCanvas.width = originalImage.width;
-        originalCanvas.height = originalImage.height;
-        originalCanvas.style.maxWidth = '100%';
-        originalCanvas.style.border = '1px solid #ccc';
-        
-        const ctx = originalCanvas.getContext('2d');
-        ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
-        ctx.strokeStyle = '#e74c3c';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(left, top, width, height);
-
-        originalPreview.appendChild(originalCanvas);
-        debugContainer.appendChild(originalPreview);
-
-        // Adicionar visualização da região extraída
-        const extractedPreview = document.createElement('div');
-        extractedPreview.innerHTML = '<p><strong>Região Extraída para OCR:</strong></p>';
-
-        // Criar canvas para mostrar a região extraída
-        const extractedImg = document.createElement('img');
-        extractedImg.src = extractedCanvas.toDataURL();
-        extractedImg.style.maxWidth = '100%';
-        extractedImg.style.border = '1px solid #ccc';
-
-        extractedPreview.appendChild(extractedImg);
-        debugContainer.appendChild(extractedPreview);
+        // Não criar nem exibir o container de depuração
+        // Isso evita que a janela apareça e atrapalhe a experiência do usuário
     }
 
     /**
@@ -1712,11 +1651,14 @@ class RectangularSelectionManager {
             this.selectionIndicator.style.display = this.selectionIndicator._originalDisplay;
         }
         
-        // Restaurar container de depuração OCR
+        // Não é mais necessário restaurar o container de depuração OCR, pois ele não é mais criado
+        // Mantido comentado para referência
+        /*
         const debugContainer = document.getElementById('ocr-debug-container');
         if (debugContainer && debugContainer._originalDisplay !== undefined) {
             debugContainer.style.display = debugContainer._originalDisplay;
         }
+        */
         
         // Restaurar notificações
         const notifications = document.querySelectorAll('.rectangular-selection-notification, .ocr-notification');
@@ -1727,6 +1669,6 @@ class RectangularSelectionManager {
         });
         
         this._selectionElementsVisible = true;
-        console.log('Visibilidade dos elementos de seleção e depuração restaurada');
+        console.log('Visibilidade dos elementos de seleção restaurada');
     }
 }
