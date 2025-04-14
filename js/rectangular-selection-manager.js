@@ -100,6 +100,40 @@ class RectangularSelectionManager {
     }
 
     /**
+     * Destaca visualmente a seleção atual durante a narração
+     * @param {number} index - Índice da seleção a ser destacada
+     */
+    highlightSelection(index) {
+        // Remover destaque de todas as seleções primeiro
+        this.selections.forEach(selection => {
+            if (selection.element) {
+                selection.element.classList.remove('current-selection-highlight');
+            }
+        });
+        
+        // Verificar se o índice é válido
+        if (index < 0 || index >= this.selections.length) {
+            return;
+        }
+        
+        // Destacar a seleção atual
+        const selection = this.selections[index];
+        if (selection && selection.element) {
+            selection.element.classList.add('current-selection-highlight');
+            
+            // Atualizar o scroll para manter a seleção visível
+            this.updateScrollForCurrentSelection(index);
+            
+            // Remover o destaque após um tempo
+            setTimeout(() => {
+                if (selection.element) {
+                    selection.element.classList.remove('current-selection-highlight');
+                }
+            }, 3000);
+        }
+    }
+    
+    /**
      * Atualiza o scroll para a seleção atual durante a narração
      * @param {number} index - Índice da seleção atual
      */
@@ -1004,6 +1038,96 @@ class RectangularSelectionManager {
         this.showNotification('Todas as seleções foram removidas', 'info');
     }
 
+    /**
+     * Verifica se já existem textos extraídos para as seleções atuais
+     * @returns {boolean} - True se existem textos extraídos, false caso contrário
+     */
+    hasProcessedSelections() {
+        if (this.selections.length === 0) {
+            return false;
+        }
+        
+        // Verificar se há textos extraídos para pelo menos uma seleção
+        for (const selection of this.selections) {
+            const imageId = selection.imageId;
+            const selectionIndex = selection.index;
+            
+            if (imageId && this.extractedTexts.has(imageId)) {
+                const textsForImage = this.extractedTexts.get(imageId);
+                if (textsForImage && textsForImage[selectionIndex]) {
+                    return true; // Pelo menos uma seleção tem texto extraído
+                }
+            }
+        }
+        
+        return false; // Nenhuma seleção tem texto extraído
+    }
+    
+    /**
+     * Narra os textos já processados sem reprocessar OCR
+     */
+    narrateProcessedSelections() {
+        if (this.selections.length === 0) {
+            this.showNotification('Nenhuma seleção para narrar. Selecione áreas de texto nas imagens.', 'warning');
+            return;
+        }
+        
+        // Verificar se há textos extraídos
+        if (!this.hasProcessedSelections()) {
+            this.showNotification('Nenhum texto extraído encontrado. Processando seleções primeiro.', 'info');
+            this.processSelections();
+            return;
+        }
+        
+        // Resetar o índice de narração
+        this.currentNarrationIndex = -1;
+        this.isNarrating = true;
+        
+        // Ocultar elementos de seleção durante a narração
+        this.hideSelectionElementsDuringNarration();
+        
+        // Coletar todos os textos extraídos de todas as imagens
+        let allTexts = [];
+        
+        // Ordenar as seleções por índice para garantir a ordem correta
+        const orderedSelections = [...this.selections].sort((a, b) => a.index - b.index);
+        
+        // Para cada seleção, obter o texto extraído correspondente
+        orderedSelections.forEach(selection => {
+            const imageId = selection.imageId;
+            const selectionIndex = selection.index;
+            
+            if (imageId && this.extractedTexts.has(imageId)) {
+                const textsForImage = this.extractedTexts.get(imageId);
+                if (textsForImage && textsForImage[selectionIndex]) {
+                    allTexts.push(textsForImage[selectionIndex]);
+                }
+            }
+        });
+        
+        if (allTexts.length === 0) {
+            this.showNotification('Nenhum texto extraído encontrado. Tente processar as seleções novamente.', 'warning');
+            return;
+        }
+        
+        console.log(`Narrando ${allTexts.length} textos já extraídos sem reprocessar OCR`);
+        
+        // Criar um objeto com múltiplos textos para narração
+        const multiText = {
+            isMultiText: true,
+            texts: allTexts
+        };
+        
+        // Iniciar narração usando o narrador principal
+        if (this.narrator) {
+            // Passar o objeto multiText para o narrador
+            // O narrador já sabe como lidar com objetos multiText
+            this.narrator.speakMultipleTexts(multiText);
+        } else {
+            this.showNotification('Narrador não disponível', 'error');
+        }
+    }
+    
     /**
      * Processa as seleções para extrair texto
      */
