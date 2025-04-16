@@ -86,6 +86,21 @@ class TextNarrationTracker {
                     box-shadow: 0 0 25px rgba(52, 152, 219, 1) !important;
                     transition: all 0.3s ease-in-out;
                 }
+                
+                /* Estilo para destacar o elemento antes da narração começar */
+                .pre-narration-highlight {
+                    background-color: rgba(255, 193, 7, 0.3);
+                    box-shadow: 0 0 20px rgba(255, 193, 7, 0.6);
+                    border-radius: 5px;
+                    outline: 2px solid rgba(255, 193, 7, 0.7);
+                    transition: all 0.5s ease-in-out;
+                    animation: pre-narration-pulse 1.5s infinite alternate;
+                }
+                
+                @keyframes pre-narration-pulse {
+                    0% { background-color: rgba(255, 193, 7, 0.3); box-shadow: 0 0 15px rgba(255, 193, 7, 0.5); }
+                    100% { background-color: rgba(255, 193, 7, 0.5); box-shadow: 0 0 25px rgba(255, 193, 7, 0.8); }
+                }
             `;
             document.head.appendChild(style);
         }
@@ -125,11 +140,17 @@ class TextNarrationTracker {
         this.currentText = text;
         this.utterance = utterance;
         
-        // Configurar eventos para rastrear o progresso da narração
-        this.setupUtteranceEvents(utterance);
+        // Primeiro, fazer scroll suave até o elemento antes de iniciar a narração
+        this.scrollToCurrentElement();
         
-        // Destacar o início do texto
-        this.highlightTextPosition(0);
+        // Pequeno atraso para garantir que o scroll termine antes da narração começar
+        setTimeout(() => {
+            // Configurar eventos para rastrear o progresso da narração
+            this.setupUtteranceEvents(utterance);
+            
+            // Destacar o início do texto
+            this.highlightTextPosition(0);
+        }, 500); // 500ms de atraso para garantir que o scroll seja concluído
     }
     
     /**
@@ -246,7 +267,6 @@ class TextNarrationTracker {
             if (scrollContainer) {
                 // Usar scroll direto no contêiner de texto
                 this.scrollToHighlightedElement(highlightElement, scrollContainer);
-
             }
             
             // Segundo nível: sempre usar o ScrollManager global também
@@ -263,7 +283,6 @@ class TextNarrationTracker {
                 
                 // Definir o elemento atual e forçar o scroll
                 this.scrollManager.setCurrentElement(highlightElement);
-
             }
             
             // Remover a classe de destaque após um tempo
@@ -374,8 +393,6 @@ class TextNarrationTracker {
         setTimeout(() => {
             element.classList.remove('scroll-highlight');
         }, 1500);
-        
-
     }
     
     /**
@@ -424,6 +441,58 @@ class TextNarrationTracker {
         
         // Limpar referência ao elemento destacado
         this.highlightedElement = null;
+    }
+    
+    /**
+     * Faz scroll suave até o elemento atual antes de iniciar a narração
+     * Este método é chamado antes de iniciar a narração para garantir que
+     * o elemento esteja visível na tela
+     */
+    scrollToCurrentElement() {
+        if (!this.currentTextElement) return;
+        
+        // Adicionar classe temporária para destacar visualmente
+        this.currentTextElement.classList.add('pre-narration-highlight');
+        
+        // Encontrar o contêiner de scroll
+        const scrollContainer = this.findScrollContainer(this.currentTextElement);
+        
+        // Primeiro nível: scroll no contêiner específico
+        if (scrollContainer) {
+            // Obter as dimensões do elemento e do contêiner
+            const elementRect = this.currentTextElement.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+            
+            // Calcular a posição relativa do elemento dentro do contêiner
+            const relativeTop = elementRect.top - containerRect.top + scrollContainer.scrollTop;
+            
+            // Calcular a posição de destino para centralizar o elemento
+            const targetScroll = relativeTop - (containerRect.height * 0.35) + (elementRect.height / 2);
+            
+            // Fazer o scroll com animação suave
+            scrollContainer.scrollTo({
+                top: targetScroll,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Segundo nível: usar o ScrollManager global
+        if (this.scrollManager) {
+            // Configurar o ScrollManager para scroll suave
+            if (this.scrollManager.settings) {
+                this.scrollManager.settings.behavior = 'smooth';
+                this.scrollManager.settings.verticalAlignment = 0.35;
+                this.scrollManager.settings.margin = 120;
+            }
+            
+            // Definir o elemento atual e forçar o scroll
+            this.scrollManager.setCurrentElement(this.currentTextElement);
+        }
+        
+        // Remover a classe de destaque após um tempo
+        setTimeout(() => {
+            this.currentTextElement.classList.remove('pre-narration-highlight');
+        }, 1000);
     }
 }
 

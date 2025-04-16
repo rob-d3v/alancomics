@@ -154,15 +154,7 @@ class RectangularSelectionManager {
             this.scrollManager.settings.margin = 120; // Aumentar margem de segurança
             this.scrollManager.settings.scrollDelay = 50; // Reduzir atraso para resposta mais rápida
 
-            // Atualizar o ScrollManager para manter a seleção visível
-            this.scrollManager.setCurrentElement(currentSelection.element);
-
-            // Adicionar destaque visual temporário
-            currentSelection.element.classList.add('current-selection-highlight');
-            setTimeout(() => {
-                currentSelection.element.classList.remove('current-selection-highlight');
-            }, 1500);
-            
+            // Primeiro, fazer scroll suave até o elemento antes de iniciar a narração
             // Garantir que a imagem que contém a seleção esteja visível
             if (currentSelection.imageId) {
                 const img = document.getElementById(currentSelection.imageId);
@@ -172,11 +164,33 @@ class RectangularSelectionManager {
                     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                     const targetTop = rect.top + scrollTop - 100; // 100px acima da imagem
                     
+                    // Primeiro, rolar para a imagem
                     window.scrollTo({
                         top: targetTop,
                         behavior: 'smooth'
                     });
+                    
+                    // Depois de um pequeno atraso, rolar para a seleção específica
+                    setTimeout(() => {
+                        // Atualizar o ScrollManager para manter a seleção visível
+                        this.scrollManager.setCurrentElement(currentSelection.element);
+                        
+                        // Adicionar destaque visual temporário
+                        currentSelection.element.classList.add('current-selection-highlight');
+                        setTimeout(() => {
+                            currentSelection.element.classList.remove('current-selection-highlight');
+                        }, 1500);
+                    }, 300); // Pequeno atraso para garantir que o scroll para a imagem seja concluído primeiro
                 }
+            } else {
+                // Se não houver imagem, apenas rolar para a seleção
+                this.scrollManager.setCurrentElement(currentSelection.element);
+                
+                // Adicionar destaque visual temporário
+                currentSelection.element.classList.add('current-selection-highlight');
+                setTimeout(() => {
+                    currentSelection.element.classList.remove('current-selection-highlight');
+                }, 1500);
             }
         }
     }
@@ -196,6 +210,12 @@ class RectangularSelectionManager {
             this.scrollManager.deactivate();
             console.log('RectangularSelectionManager: Scroll automático desativado para narração de seleção');
         }
+        
+        // Destacar e fazer scroll para a seleção atual antes de iniciar a narração
+        this.highlightSelection(this.currentNarrationIndex);
+        
+        // Pequeno atraso para garantir que o scroll seja concluído antes de iniciar a narração
+        setTimeout(() => {
 
         // Garantir que os elementos de seleção estejam ocultos durante a narração
         this.hideSelectionElementsDuringNarration();
@@ -248,9 +268,8 @@ class RectangularSelectionManager {
         });
 
         console.log(`RectangularSelectionManager: Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
+        }, 500); // Adicionar tempo suficiente para o scroll ser concluído
     }
-
-
     /**
      * Configura os callbacks da fila de processamento
      */
@@ -302,19 +321,7 @@ class RectangularSelectionManager {
             // Adicionar mensagem de erro ao elemento visual
             this.appendExtractedText(`[Erro ao processar trecho #${index + 1}]`, index);
         });
-
-        // Quando ocorre um erro
-        this.processingQueue.setOnError((error, metadata, index) => {
-            console.error(`Erro ao processar trecho #${index + 1}:`, error);
-
-            // Mostrar notificação de erro
-            this.showNotification(`Erro ao processar trecho #${index + 1}: ${error.message}`, 'error');
-
-            // Adicionar mensagem de erro ao elemento visual
-            this.appendExtractedText(`[Erro ao processar trecho #${index + 1}]`, index);
-        });
     }
-
     /**
      * Adiciona botão de seleção de texto em imagens ao menu de narração
      */

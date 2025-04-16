@@ -409,14 +409,27 @@ class NarrationProgressBar {
     updateProgressBar() {
         if (!this.progressIndicator || this.totalItems <= 0) return;
         
+        // Garantir que o índice atual seja válido
+        if (this.currentItemIndex < 0) {
+            this.currentItemIndex = 0;
+        } else if (this.currentItemIndex >= this.totalItems) {
+            this.currentItemIndex = this.totalItems - 1;
+        }
+        
         // Calcular a porcentagem de progresso
         const progress = ((this.currentItemIndex + 1) / this.totalItems) * 100;
         
+        // Garantir que o progresso não ultrapasse 100%
+        const clampedProgress = Math.min(progress, 100);
+        
         // Atualizar a largura do indicador
-        this.progressIndicator.style.width = `${progress}%`;
+        this.progressIndicator.style.width = `${clampedProgress}%`;
         
         // Atualizar as informações de tempo
         this.updateTimeInfo();
+        
+        // Log para debug
+        console.log(`Progresso da narração: ${this.currentItemIndex + 1}/${this.totalItems} (${clampedProgress.toFixed(1)}%)`);
     }
     
     /**
@@ -464,8 +477,13 @@ class NarrationProgressBar {
         const elapsedFormatted = this.formatTime(this.elapsedTime);
         const totalFormatted = this.formatTime(this.estimatedTotalTime);
         
-        // Atualizar o texto
-        this.timeInfo.textContent = `${elapsedFormatted} / ${totalFormatted}`;
+        // Garantir que o índice atual seja válido para exibição
+        let currentItem = this.currentItemIndex + 1; // Converter para 1-based para exibição
+        if (currentItem < 1) currentItem = 1;
+        if (currentItem > this.totalItems) currentItem = this.totalItems;
+        
+        // Atualizar o texto com formato "x/y - tempo"
+        this.timeInfo.textContent = `${currentItem}/${this.totalItems} - ${elapsedFormatted}/${totalFormatted}`;
     }
     
     /**
@@ -489,10 +507,18 @@ class NarrationProgressBar {
      * @param {number} index - Índice do item
      */
     setCurrentItemIndex(index) {
-        if (index < 0 || index >= this.totalItems) return;
+        // Garantir que o índice esteja dentro dos limites válidos
+        if (index < 0) {
+            index = 0;
+        } else if (index >= this.totalItems && this.totalItems > 0) {
+            index = this.totalItems - 1;
+        }
         
         this.currentItemIndex = index;
         this.updateProgressBar();
+        
+        // Log para debug
+        console.log(`Índice atual atualizado: ${this.currentItemIndex + 1}/${this.totalItems}`);
     }
     
     /**
