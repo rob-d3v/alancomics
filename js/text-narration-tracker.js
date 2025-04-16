@@ -101,7 +101,7 @@ class TextNarrationTracker {
         this.currentTextElement = textElement;
         this.isActive = true;
         
-        console.log('TextNarrationTracker: Rastreamento de narração ativado');
+        // Rastreamento ativado
     }
     
     /**
@@ -111,7 +111,7 @@ class TextNarrationTracker {
         this.isActive = false;
         this.removeHighlight();
         
-        console.log('TextNarrationTracker: Rastreamento de narração desativado');
+        // Rastreamento desativado
     }
     
     /**
@@ -226,11 +226,8 @@ class TextNarrationTracker {
         // Forçar um reflow para garantir que as mudanças de estilo sejam aplicadas
         highlightElement.getBoundingClientRect();
         
-        // Reduzir o atraso para tornar a experiência mais responsiva
+        // Definir atraso mínimo para atualização do DOM
         const scrollDelay = Math.max(10, this.settings.updateDelay / 2);
-        
-        // Aguardar um pequeno intervalo para garantir que o DOM foi atualizado
-        // antes de configurar o scroll, isso melhora a precisão do posicionamento
         setTimeout(() => {
             // Forçar o foco no elemento para garantir que ele receba atenção
             highlightElement.focus({ preventScroll: true });
@@ -249,7 +246,7 @@ class TextNarrationTracker {
             if (scrollContainer) {
                 // Usar scroll direto no contêiner de texto
                 this.scrollToHighlightedElement(highlightElement, scrollContainer);
-                console.log('TextNarrationTracker: Usando scroll do contêiner de texto');
+
             }
             
             // Segundo nível: sempre usar o ScrollManager global também
@@ -266,7 +263,7 @@ class TextNarrationTracker {
                 
                 // Definir o elemento atual e forçar o scroll
                 this.scrollManager.setCurrentElement(highlightElement);
-                console.log('TextNarrationTracker: Usando ScrollManager global como backup');
+
             }
             
             // Remover a classe de destaque após um tempo
@@ -289,7 +286,7 @@ class TextNarrationTracker {
         // que é o contêiner principal de texto na aplicação
         const txtContent = document.querySelector('.txt-content');
         if (txtContent) {
-            console.log('TextNarrationTracker: Contêiner txt-content encontrado diretamente');
+
             return txtContent;
         }
         
@@ -318,8 +315,7 @@ class TextNarrationTracker {
             );
             
             if (hasScroll || isTextContainer) {
-                console.log('TextNarrationTracker: Contêiner de scroll encontrado:', 
-                    parent.className || parent.id || 'elemento sem classe/id');
+
                 return parent;
             }
             
@@ -327,7 +323,7 @@ class TextNarrationTracker {
         }
         
         // Se não encontrou nenhum contêiner específico, usar o body como último recurso
-        console.log('TextNarrationTracker: Nenhum contêiner específico encontrado, usando document.body');
+
         return document.body;
     }
     
@@ -379,7 +375,7 @@ class TextNarrationTracker {
             element.classList.remove('scroll-highlight');
         }, 1500);
         
-        console.log('TextNarrationTracker: Elemento centralizado no contêiner de scroll');
+
     }
     
     /**

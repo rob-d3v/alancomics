@@ -59,7 +59,7 @@ class TextHighlighter {
         // Resetar o índice da sentença atual
         this.currentSentenceIndex = -1;
         
-        console.log(`Texto processado em ${this.sentences.length} sentenças para narração com destaque`);
+        // Texto processado em sentenças para narração com destaque
     }
 
     /**
@@ -75,7 +75,7 @@ class TextHighlighter {
         
         // Verificar se ainda há sentenças para destacar
         if (this.currentSentenceIndex >= this.sentences.length) {
-            console.log('Fim do texto alcançado');
+            // Fim do texto alcançado
             return '';
         }
         
@@ -180,7 +180,7 @@ class TextHighlighter {
         
         if (scrollContainer) {
             // Caso 1: O elemento está dentro de um contêiner com scroll próprio
-            console.log('Usando scroll do contêiner para centralizar texto');
+            // Usando scroll do contêiner para centralizar texto
             
             const containerRect = scrollContainer.getBoundingClientRect();
             
@@ -207,7 +207,7 @@ class TextHighlighter {
             }
         } else {
             // Caso 2: Usar o scroll da página (fallback)
-            console.log('Usando scroll da página para centralizar texto');
+            // Usando scroll da página para centralizar texto
             
             // Verificar se o elemento está fora da área visível
             const isInViewport = (

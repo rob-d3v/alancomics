@@ -9,8 +9,7 @@ class NarrationEnhancer {
     constructor() {
         // Instanciar os componentes
         this.textHighlighter = new TextHighlighter();
-        this.autoScroll = new AutoScroll();
-        this.scrollManager = new ScrollManager(); // Adicionar ScrollManager para melhor controle de rolagem
+        this.scrollManager = new ScrollManager(); // ScrollManager para controle de rolagem
         this.textSelection = new TextSelection();
         
         // Referência ao narrador principal
@@ -48,15 +47,13 @@ class NarrationEnhancer {
         // Obter referência ao narrador principal
         if (window.comicNarrator) {
             this.narrator = window.comicNarrator;
-            console.log('NarrationEnhancer: Conectado ao narrador principal');
+            // Conectado ao narrador principal
             
             // Estender o método speakText do narrador para incluir destaque
             this.extendNarratorMethods();
             
             // Adicionar botão para seleção de texto
             this.addTextSelectionButton();
-        } else {
-            console.warn('NarrationEnhancer: Narrador principal não encontrado');
         }
     }
     
@@ -140,11 +137,8 @@ class NarrationEnhancer {
         
         this.isEnhancedNarrationActive = true;
         
-        // Iniciar rolagem automática usando ambos os sistemas para garantir compatibilidade
-        this.autoScroll.start();
+        // Iniciar rolagem automática
         this.scrollManager.activate(); // Ativar o ScrollManager para rolagem suave
-        
-        console.log('Narração aprimorada ativada com rolagem automática');
     }
     
     /**
@@ -155,9 +149,8 @@ class NarrationEnhancer {
         
         this.isEnhancedNarrationActive = false;
         
-        // Parar rolagem automática em ambos os sistemas
-        this.autoScroll.stop();
-        this.scrollManager.deactivate(); // Desativar o ScrollManager
+        // Parar rolagem automática
+        this.scrollManager.deactivate();
         
         // Remover destaques
         this.textHighlighter.reset();
@@ -167,8 +160,6 @@ class NarrationEnhancer {
             window.speechSynthesis.cancel();
             this.currentUtterance = null;
         }
-        
-        console.log('Narração aprimorada desativada');
     }
     
     /**
@@ -192,9 +183,8 @@ class NarrationEnhancer {
                 return;
             }
             
-            // Definir o elemento destacado para rolagem automática em ambos os sistemas
-            this.autoScroll.setCurrentElement(this.textHighlighter.highlightedElement);
-            this.scrollManager.setCurrentElement(this.textHighlighter.highlightedElement); // Usar o ScrollManager para rolagem mais suave
+            // Definir o elemento destacado para rolagem automática
+            this.scrollManager.setCurrentElement(this.textHighlighter.highlightedElement);
             
             // Criar utterance para a sentença
             const utterance = new SpeechSynthesisUtterance(sentence);
@@ -220,7 +210,7 @@ class NarrationEnhancer {
             };
             
             utterance.onerror = (event) => {
-                console.error('Erro na narração:', event);
+                // Tratar erro silenciosamente
                 resolve();
             };
             

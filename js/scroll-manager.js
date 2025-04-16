@@ -46,7 +46,6 @@ class ScrollManager {
      */
     activate() {
         this.isActive = true;
-        console.log('ScrollManager: Rolagem automática ativada');
     }
     
     /**
@@ -55,7 +54,6 @@ class ScrollManager {
     deactivate() {
         this.isActive = false;
         this.clearScrollTimer();
-        console.log('ScrollManager: Rolagem automática desativada');
     }
     
     /**
@@ -136,7 +134,6 @@ class ScrollManager {
             
             // Se não estiver visível na área desejada, rolar para a posição
             if (!isVisible) {
-                console.log('ScrollManager: Rolando para centralizar elemento');
                 window.scrollTo({
                     top: targetPosition,
                     behavior: this.settings.behavior
@@ -163,10 +160,3 @@ class ScrollManager {
         );
     }
 }
-
-// Exportar a classe e criar uma instância global para uso em outros componentes
-window.ScrollManager = ScrollManager;
-
-// Criar uma instância global do ScrollManager para uso em outros componentes
-window.scrollManager = new ScrollManager();
-console.log('ScrollManager: Instância global criada e disponível');
