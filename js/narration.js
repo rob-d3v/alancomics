@@ -1154,6 +1154,24 @@ class ComicNarrator {
         
         // Gerar um ID único para esta sessão de narração
         this.narrationState.currentNarrationId = Date.now();
+        
+        // Iniciar contagem regressiva antes de começar a narração
+        const countdown = document.getElementById('countdown');
+        countdown.style.display = 'block';
+        
+        for (let i = 5; i > 0; i--) {
+            countdown.textContent = i;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        countdown.style.display = 'none';
+        
+        // Ativar o ScrollManager global para rolagem automática durante a narração
+        if (window.scrollManager) {
+            window.scrollManager.activate();
+            window.scrollManagerActive = true;
+            console.log('ScrollManager global ativado para narração');
+        }
 
         // Verificar se o modo de seleção de texto em imagens está ativo
         const rectangularSelectionManager = window.rectangularSelectionManager;

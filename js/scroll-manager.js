@@ -39,6 +39,17 @@ class ScrollManager {
                 this.scrollToElement(this.currentElement);
             }
         });
+        
+        // Verificar periodicamente se o ScrollManager deve estar ativo
+        setInterval(() => {
+            if (window.scrollManagerActive === true && !this.isActive) {
+                this.activate();
+                console.log('ScrollManager: Reativado automaticamente');
+            }
+        }, 2000);
+        
+        // Variável global para controlar o estado de rolagem
+        window.scrollManagerActive = false;
     }
     
     /**
@@ -46,6 +57,8 @@ class ScrollManager {
      */
     activate() {
         this.isActive = true;
+        window.scrollManagerActive = true;
+        console.log('ScrollManager: Ativado');
     }
     
     /**
@@ -53,7 +66,33 @@ class ScrollManager {
      */
     deactivate() {
         this.isActive = false;
+        window.scrollManagerActive = false;
         this.clearScrollTimer();
+        console.log('ScrollManager: Desativado');
+    }
+    
+    /**
+     * Pausa temporariamente a rolagem (durante a narração de um trecho)
+     */
+    pauseScrolling() {
+        if (this.isActive) {
+            this.isPaused = true;
+            this.clearScrollTimer();
+            console.log('ScrollManager: Rolagem pausada durante narração');
+        }
+    }
+    
+    /**
+     * Retoma a rolagem após a narração de um trecho
+     */
+    resumeScrolling() {
+        if (this.isActive) {
+            this.isPaused = false;
+            if (this.currentElement) {
+                this.scheduleScroll();
+                console.log('ScrollManager: Rolagem retomada após narração');
+            }
+        }
     }
     
     /**
