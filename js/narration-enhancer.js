@@ -296,6 +296,11 @@ class NarrationEnhancer {
         // Configurar o highlighter para começar da posição selecionada
         this.textHighlighter.startFromPosition(element, position);
         
+        // Forçar a ativação do ScrollManager para garantir rolagem automática
+        this.scrollManager.activate();
+        window.scrollManagerActive = true;
+        console.log('ScrollManager ativado para narração com seleção de texto');
+        
         // Iniciar a narração
         this.narrator.startNarration();
     }

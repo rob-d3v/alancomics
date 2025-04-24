@@ -10,6 +10,9 @@ class NarrationProgressBar {
         // Referência ao narrador principal
         this.narrator = null;
 
+        // Referência ao ScrollManager
+        this.scrollManager = window.scrollManager || new ScrollManager();
+
         // Elementos da interface
         this.progressBarContainer = null;
         this.progressBar = null;
@@ -91,12 +94,25 @@ class NarrationProgressBar {
             // Chamar o método original
             const result = await originalStartNarration.apply(this, arguments);
 
-            // Inicializar a barra de progresso
+            // Inicializar a barra de progresso e ativar o ScrollManager
             if (window.narrationProgressBar) {
                 window.narrationProgressBar.initializeProgress();
                 window.narrationProgressBar.show();
+                
+                // Ativar o ScrollManager com configurações otimizadas
+                if (window.narrationProgressBar.scrollManager) {
+                    window.narrationProgressBar.scrollManager.settings.behavior = 'smooth';
+                    window.narrationProgressBar.scrollManager.settings.verticalAlignment = 0.35;
+                    window.narrationProgressBar.scrollManager.settings.margin = 120;
+                    window.narrationProgressBar.scrollManager.settings.scrollDelay = 50;
+                    window.narrationProgressBar.scrollManager.activate();
+                    
+                    // Definir a variável global para garantir que outros componentes saibam que o scroll está ativo
+                    window.scrollManagerActive = true;
+                    console.log('ScrollManager global ativado pela barra de progresso');
+                }
             }
-
+            
             return result;
         };
 
@@ -122,8 +138,20 @@ class NarrationProgressBar {
                 window.narrationProgressBar.setCurrentText(text);
             }
 
+            // Pausar a rolagem antes de iniciar a narração
+            if (window.narrationProgressBar && window.narrationProgressBar.scrollManager) {
+                window.narrationProgressBar.scrollManager.pauseScrolling();
+            }
+
             // Chamar o método original
-            return await originalSpeakText.apply(this, arguments);
+            const result = await originalSpeakText.apply(this, arguments);
+
+            // Retomar a rolagem após a narração
+            if (window.narrationProgressBar && window.narrationProgressBar.scrollManager) {
+                window.narrationProgressBar.scrollManager.resumeScrolling();
+            }
+
+            return result;
         };
 
         // Estender o método readNextPage
@@ -671,20 +699,31 @@ class NarrationProgressBar {
             const now = new Date();
             this.elapsedTime = Math.floor((now - this.startTime) / 1000);
             
-            // Estimar o tempo total com base no progresso atual
+            // Estimar o tempo total com base no progresso atual e tempo médio por item
             if (this.currentItemIndex >= 0 && this.totalItems > 0) {
-                const progress = (this.currentItemIndex + 1) / this.totalItems;
-                if (progress > 0) {
-                    // Limitar a estimativa para evitar valores irreais
-                    const calculatedEstimate = Math.floor(this.elapsedTime / progress);
+                const itemsCompleted = this.currentItemIndex + 1;
+                const averageTimePerItem = this.elapsedTime / itemsCompleted;
+                const estimatedTotalTime = Math.ceil(averageTimePerItem * this.totalItems);
+                
+                // Atualizar a estimativa apenas se for maior que o tempo decorrido
+                if (estimatedTotalTime > this.elapsedTime) {
                     // Usar uma média ponderada para suavizar as mudanças na estimativa
                     if (this.estimatedTotalTime === 0) {
-                        this.estimatedTotalTime = calculatedEstimate;
+                        this.estimatedTotalTime = estimatedTotalTime;
                     } else {
-                        this.estimatedTotalTime = Math.round(this.estimatedTotalTime * 0.7 + calculatedEstimate * 0.3);
+                        // Dar mais peso à estimativa atual para evitar flutuações bruscas
+                        this.estimatedTotalTime = Math.round(
+                            this.estimatedTotalTime * 0.8 + estimatedTotalTime * 0.2
+                        );
                     }
                 }
             }
+        }
+        
+        // Garantir que o tempo decorrido nunca ultrapasse o tempo estimado total
+        // Isso evita que a barra de progresso mostre valores como "30/10"
+        if (this.estimatedTotalTime > 0 && this.elapsedTime > this.estimatedTotalTime) {
+            this.elapsedTime = this.estimatedTotalTime;
         }
 
         // Formatar os tempos

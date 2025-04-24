@@ -100,6 +100,23 @@ class RectangularSelectionManager {
     }
 
     /**
+     * Verifica se há seleções ativas
+     * @returns {boolean} - Verdadeiro se houver seleções
+     */
+    hasSelection() {
+        return this.selections && this.selections.length > 0;
+    }
+
+    /**
+     * Obtém a seleção atual
+     * @returns {Object|null} - A seleção atual ou null se não houver
+     */
+    getCurrentSelection() {
+        if (!this.hasSelection()) return null;
+        return this.selections[this.currentNarrationIndex] || this.selections[0];
+    }
+
+    /**
      * Destaca visualmente a seleção atual durante a narração
      * @param {number} index - Índice da seleção a ser destacada
      */
@@ -238,6 +255,8 @@ class RectangularSelectionManager {
                 if (this.scrollManager && !this.isNarrating) {
                     console.log('RectangularSelectionManager: Reativando scroll automático após última seleção');
                     this.scrollManager.activate();
+                    // Definir a variável global para garantir que outros componentes saibam que o scroll está ativo
+                    window.scrollManagerActive = true;
                     // Restaurar configurações padrão do ScrollManager
                     this.scrollManager.settings.behavior = 'smooth';
                     this.scrollManager.settings.verticalAlignment = 0.3;
