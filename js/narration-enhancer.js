@@ -163,7 +163,7 @@ class NarrationEnhancer {
     }
     
     /**
-     * Narra o texto com destaque visual
+     * Narra o texto com destaque visual e rolagem inteligente
      * @returns {Promise} - Promessa que resolve quando a narração termina
      */
     async speakWithHighlight() {
@@ -183,8 +183,18 @@ class NarrationEnhancer {
                 return;
             }
             
-            // Definir o elemento destacado para rolagem automática
+            // Forçar a ativação do ScrollManager para garantir rolagem automática
+            if (!this.scrollManager.isActive) {
+                this.scrollManager.activate();
+                window.scrollManagerActive = true;
+                console.log('ScrollManager: Reativado para narração contínua');
+            }
+            
+            // Definir o elemento destacado para rolagem automática com efeitos visuais
             this.scrollManager.setCurrentElement(this.textHighlighter.highlightedElement);
+            
+            // Pausar brevemente a rolagem durante a narração para melhor experiência
+            this.scrollManager.pauseScrolling();
             
             // Criar utterance para a sentença
             const utterance = new SpeechSynthesisUtterance(sentence);
@@ -201,15 +211,33 @@ class NarrationEnhancer {
             this.currentUtterance = utterance;
             
             // Configurar eventos
+            utterance.onstart = () => {
+                // Garantir que o elemento está visível quando a narração começar
+                setTimeout(() => {
+                    if (this.textHighlighter.highlightedElement) {
+                        this.scrollManager.scrollToElement(this.textHighlighter.highlightedElement);
+                    }
+                }, 100);
+            };
+            
             utterance.onend = async () => {
-                // Se a narração ainda está ativa, continuar com a próxima sentença
+                // Retomar a rolagem automática após a narração da sentença
+                this.scrollManager.resumeScrolling();
+                
+                // Se a narração ainda está ativa, continuar com a próxima sentença após uma pequena pausa
                 if (this.isEnhancedNarrationActive && this.narrator.isNarrating) {
-                    await this.speakWithHighlight();
+                    // Pequena pausa entre sentenças para melhor experiência
+                    setTimeout(async () => {
+                        await this.speakWithHighlight();
+                    }, 300);
+                } else {
+                    resolve();
                 }
-                resolve();
             };
             
             utterance.onerror = (event) => {
+                // Retomar a rolagem em caso de erro
+                this.scrollManager.resumeScrolling();
                 // Tratar erro silenciosamente
                 resolve();
             };

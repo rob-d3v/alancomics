@@ -1,13 +1,16 @@
 /**
  * ScrollManager - Gerencia a rolagem automática durante a narração
  * 
- * Este módulo implementa uma rolagem automática aprimorada que mantém o texto
- * sendo narrado sempre visível na tela, com transições suaves e inteligentes.
+ * Este módulo implementa uma rolagem automática inteligente e diferenciada que mantém o texto
+ * sendo narrado sempre visível na tela, com transições suaves, efeitos visuais e comportamento adaptativo.
  */
 class ScrollManager {
     constructor() {
         // Elemento atual sendo narrado
         this.currentElement = null;
+        
+        // Elemento anterior (para animações de transição)
+        this.previousElement = null;
         
         // Configurações
         this.settings = {
@@ -16,17 +19,29 @@ class ScrollManager {
             // Comportamento da rolagem (smooth ou auto)
             behavior: 'smooth',
             // Posição vertical do elemento na tela (0 = topo, 0.5 = centro, 1 = base)
-            verticalAlignment: 0.3,
-            // Atraso antes de rolar (ms)
-            scrollDelay: 100
+            verticalAlignment: 0.35,
+            // Atraso antes de rolar (ms) - aumentado para transição mais suave
+            scrollDelay: 150,
+            // Duração do destaque visual (ms)
+            highlightDuration: 2500,
+            // Duração da animação de pulso (ms)
+            pulseDuration: 1500,
+            // Intensidade do efeito de pulso (0-1)
+            pulseIntensity: 0.3
         };
         
         // Estado
         this.isActive = false;
         this.scrollTimer = null;
+        this.highlightTimer = null;
+        this.pulseTimer = null;
+        this.isScrolling = false;
         
         // Inicializar
         this.initialize();
+        
+        // Adicionar estilos CSS necessários
+        this.addScrollStyles();
     }
     
     /**
@@ -37,6 +52,22 @@ class ScrollManager {
         window.addEventListener('resize', () => {
             if (this.isActive && this.currentElement) {
                 this.scrollToElement(this.currentElement);
+            }
+        });
+        
+        // Adicionar listener para eventos de scroll para detectar interação do usuário
+        window.addEventListener('scroll', () => {
+            if (!this.isScrolling) {
+                // Se o usuário está rolando manualmente, pausar brevemente a rolagem automática
+                this.pauseScrolling();
+                
+                // Retomar a rolagem automática após um tempo
+                clearTimeout(this.userScrollTimer);
+                this.userScrollTimer = setTimeout(() => {
+                    if (this.isActive && this.currentElement) {
+                        this.resumeScrolling();
+                    }
+                }, 1500); // Aguardar 1.5 segundos após o usuário parar de rolar
             }
         });
         
@@ -53,12 +84,35 @@ class ScrollManager {
     }
     
     /**
+     * Adiciona estilos CSS necessários para os efeitos visuais
+     */
+    addScrollStyles() {
+        // Verificar se o arquivo CSS já foi carregado
+        if (document.getElementById('auto-scroll-styles')) return;
+        
+        // Criar elemento de link para o arquivo CSS externo
+        const linkElement = document.createElement('link');
+        linkElement.id = 'auto-scroll-styles';
+        linkElement.rel = 'stylesheet';
+        linkElement.href = 'css/auto-scroll.css';
+        
+        // Adicionar ao documento
+        document.head.appendChild(linkElement);
+        
+        console.log('ScrollManager: Estilos de rolagem automática carregados');
+    }
+    
+    /**
      * Ativa a rolagem automática
      */
     activate() {
         this.isActive = true;
         window.scrollManagerActive = true;
-        console.log('ScrollManager: Ativado');
+        
+        // Adicionar classe ao body para indicar que a rolagem automática está ativa
+        document.body.classList.add('auto-scroll-active');
+        
+        console.log('ScrollManager: Ativado com efeitos visuais aprimorados');
     }
     
     /**
@@ -67,31 +121,73 @@ class ScrollManager {
     deactivate() {
         this.isActive = false;
         window.scrollManagerActive = false;
-        this.clearScrollTimer();
+        
+        // Limpar todos os timers
+        this.clearAllTimers();
+        
+        // Remover classe do body
+        document.body.classList.remove('auto-scroll-active');
+        
+        // Remover destaques visuais de qualquer elemento
+        this.removeVisualEffects();
+        
         console.log('ScrollManager: Desativado');
     }
     
     /**
-     * Pausa temporariamente a rolagem (durante a narração de um trecho)
+     * Pausa temporariamente a rolagem (durante a narração de um trecho ou interação do usuário)
      */
     pauseScrolling() {
         if (this.isActive) {
             this.isPaused = true;
             this.clearScrollTimer();
-            console.log('ScrollManager: Rolagem pausada durante narração');
+            console.log('ScrollManager: Rolagem pausada');
         }
     }
     
     /**
-     * Retoma a rolagem após a narração de um trecho
+     * Retoma a rolagem após a narração de um trecho ou interação do usuário
      */
     resumeScrolling() {
         if (this.isActive) {
             this.isPaused = false;
             if (this.currentElement) {
                 this.scheduleScroll();
-                console.log('ScrollManager: Rolagem retomada após narração');
+                console.log('ScrollManager: Rolagem retomada');
             }
+        }
+    }
+    
+    /**
+     * Remove todos os efeitos visuais dos elementos
+     */
+    removeVisualEffects() {
+        // Remover classes de destaque de todos os elementos
+        const highlightedElements = document.querySelectorAll('.scroll-highlight, .scroll-pulse, .scroll-active-element');
+        highlightedElements.forEach(element => {
+            element.classList.remove('scroll-highlight', 'scroll-pulse', 'scroll-active-element');
+        });
+    }
+    
+    /**
+     * Limpa todos os timers
+     */
+    clearAllTimers() {
+        this.clearScrollTimer();
+        
+        if (this.highlightTimer) {
+            clearTimeout(this.highlightTimer);
+            this.highlightTimer = null;
+        }
+        
+        if (this.pulseTimer) {
+            clearTimeout(this.pulseTimer);
+            this.pulseTimer = null;
+        }
+        
+        if (this.userScrollTimer) {
+            clearTimeout(this.userScrollTimer);
+            this.userScrollTimer = null;
         }
     }
     
@@ -102,7 +198,19 @@ class ScrollManager {
     setCurrentElement(element) {
         if (!element) return;
         
+        // Armazenar o elemento anterior para efeitos de transição
+        this.previousElement = this.currentElement;
+        
+        // Atualizar o elemento atual
         this.currentElement = element;
+        
+        // Remover efeitos visuais do elemento anterior
+        if (this.previousElement && this.previousElement !== this.currentElement) {
+            this.previousElement.classList.remove('scroll-highlight', 'scroll-pulse', 'scroll-active-element');
+        }
+        
+        // Adicionar classe de elemento ativo ao novo elemento
+        this.currentElement.classList.add('scroll-active-element');
         
         // Programar a rolagem com um pequeno atraso para permitir que o DOM seja atualizado
         this.scheduleScroll();
@@ -132,22 +240,33 @@ class ScrollManager {
     }
     
     /**
-     * Rola a página para manter o elemento visível e centralizado
+     * Rola a página para manter o elemento visível e centralizado com efeitos visuais
      * @param {HTMLElement} element - Elemento para manter visível
      */
     scrollToElement(element) {
         if (!element || !this.isActive) return;
         
         // Limpar qualquer timer pendente
-        this.clearScrollTimer();
+        this.clearAllTimers();
         
-        // Adicionar classe de destaque visual temporário
+        // Marcar que estamos iniciando uma rolagem programática
+        this.isScrolling = true;
+        
+        // Adicionar classe de destaque visual com animação
         element.classList.add('scroll-highlight');
         
+        // Adicionar efeito de pulso para chamar atenção
+        element.classList.add('scroll-pulse');
+        
         // Definir um timer para remover o destaque após um tempo
-        setTimeout(() => {
+        this.highlightTimer = setTimeout(() => {
             element.classList.remove('scroll-highlight');
-        }, 3000); // Aumentado para 3 segundos para melhor visibilidade
+        }, this.settings.highlightDuration);
+        
+        // Definir um timer para remover o efeito de pulso
+        this.pulseTimer = setTimeout(() => {
+            element.classList.remove('scroll-pulse');
+        }, this.settings.pulseDuration);
         
         // Definir um timer para a rolagem (para dar tempo ao usuário de perceber onde está)
         this.scrollTimer = setTimeout(() => {
@@ -173,12 +292,28 @@ class ScrollManager {
             
             // Se não estiver visível na área desejada, rolar para a posição
             if (!isVisible) {
+                // Aplicar efeito de destaque antes da rolagem para chamar atenção
+                const viewerElement = document.getElementById('viewer');
+                if (viewerElement) {
+                    viewerElement.style.scrollBehavior = this.settings.behavior;
+                }
+                
+                // Rolar para a posição desejada
                 window.scrollTo({
                     top: targetPosition,
                     behavior: this.settings.behavior
                 });
+                
+                // Marcar que a rolagem programática terminou após a animação
+                setTimeout(() => {
+                    this.isScrolling = false;
+                }, 500); // Tempo aproximado para a animação de rolagem terminar
+            } else {
+                // Se já estiver visível, apenas marcar que não estamos mais rolando
+                this.isScrolling = false;
             }
         }, this.settings.scrollDelay);
+    
     }
     
     /**

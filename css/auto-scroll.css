@@ -1,0 +1,84 @@
+/**
+ * Estilos para a rolagem automática e destaque de texto durante narração
+ */
+
+/* Estilo para o corpo quando a rolagem automática está ativa */
+body.auto-scroll-active {
+    scroll-behavior: smooth;
+}
+
+/* Animação de destaque para o texto sendo narrado */
+@keyframes textHighlight {
+    0% { background-color: rgba(52, 152, 219, 0.1); }
+    30% { background-color: rgba(52, 152, 219, 0.4); }
+    70% { background-color: rgba(52, 152, 219, 0.4); }
+    100% { background-color: rgba(52, 152, 219, 0.1); }
+}
+
+/* Animação de pulso para chamar atenção */
+@keyframes textPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+/* Elemento destacado durante a narração */
+.scroll-highlight {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    animation: textHighlight 2.5s ease-in-out;
+    transition: background-color 0.5s ease;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Efeito de pulso para chamar atenção */
+.scroll-pulse {
+    animation: textPulse 1.5s ease-in-out;
+}
+
+/* Elemento atualmente ativo na narração */
+.scroll-active-element {
+    position: relative;
+}
+
+/* Indicador visual ao lado do elemento ativo */
+.scroll-active-element::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 80%;
+    background-color: #3498db;
+    border-radius: 2px;
+    animation: textPulse 1.5s infinite ease-in-out;
+}
+
+/* Transição suave para todos os elementos de texto */
+.txt-content span {
+    transition: all 0.3s ease-out;
+}
+
+/* Estilo para o container de texto durante narração ativa */
+.txt-container {
+    transition: padding 0.5s ease;
+}
+
+body.auto-scroll-active .txt-container {
+    padding: 20px 30px;
+}
+
+/* Melhorias para visualização em dispositivos móveis */
+@media (max-width: 768px) {
+    .scroll-active-element::before {
+        left: -5px;
+        width: 3px;
+    }
+    
+    body.auto-scroll-active .txt-container {
+        padding: 15px 20px;
+    }
+}
