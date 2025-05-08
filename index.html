@@ -77,7 +77,7 @@
                 <button id="startButton" class="start-button">
                     <i class="fas fa-play"></i> Iniciar
                 </button>
-                
+
                 <!-- Add narration settings here, inside the existing settings div -->
                 <div class="settings-section narration-settings">
                     <div class="section-header">
@@ -87,32 +87,32 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    
+
                     <div id="narrationControls" class="narration-controls disabled">
                         <div class="setting-group">
                             <label for="voiceSelect">Voz:</label>
                             <select id="voiceSelect"></select>
                         </div>
-                        
+
                         <div class="setting-group">
                             <label for="pitchRange">Tom: <span id="pitchValue">1.0</span></label>
                             <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1">
                         </div>
-                        
+
                         <div class="setting-group">
                             <label for="rateRange">Velocidade: <span id="rateValue">1.0</span></label>
                             <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1">
                         </div>
-                        
+
                         <div class="setting-group">
                             <label for="pauseTime">Pausa entre trechos (segundos):</label>
                             <input type="number" id="pauseTime" min="1" max="10" value="2">
                         </div>
-                        
+
                         <button id="startNarration" class="narration-button">
                             <i class="fas fa-book-reader"></i> Iniciar Narração
                         </button>
-                        
+
                         <!-- Adicionar opção para seleção retangular de texto em imagens -->
                         <div class="setting-group ocr-settings">
                             <div class="section-header">
@@ -126,7 +126,8 @@
                                 <button id="selectRectangularTextBtn" class="select-rectangular-text">
                                     <i class="fas fa-object-group"></i> Selecionar trechos de texto
                                 </button>
-                                <p class="ocr-info">Selecione áreas específicas de texto em imagens para narração sequencial</p>
+                                <p class="ocr-info">Selecione áreas específicas de texto em imagens para narração
+                                    sequencial</p>
                             </div>
                         </div>
                     </div>
@@ -163,8 +164,9 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h2>Apoie este Projeto</h2>
-            <p>Obrigado por usar o Leitor de Quadrinhos e Livros! Se você gostou e deseja contribuir com o desenvolvimento, considere fazer uma doação.</p>
-            
+            <p>Obrigado por usar o Leitor de Quadrinhos e Livros! Se você gostou e deseja contribuir com o
+                desenvolvimento, considere fazer uma doação.</p>
+
             <div class="donation-container">
                 <div class="qr-code">
                     <img src="qrCode.png" alt="QR Code PIX">
@@ -172,11 +174,13 @@
                 <div class="donation-info">
                     <h3>PIX</h3>
                     <div class="pix-key-container">
-                        <input type="text" id="pixKey" value="0020126360014BR.GOV.BCB.PIX0114+5562920005056520400005303986540510.005802BR5925Robson Pereira da Costa J6009SAO PAULO62140510ktr10bIeyP63046E56" readonly>
+                        <input type="text" id="pixKey"
+                            value="0020126360014BR.GOV.BCB.PIX0114+5562920005056520400005303986540510.005802BR5925Robson Pereira da Costa J6009SAO PAULO62140510ktr10bIeyP63046E56"
+                            readonly>
                         <button id="copyPixKey" class="copy-button">Copiar</button>
                     </div>
                     <div class="copied-message" id="copiedMessage">Copiado!</div>
-                    
+
                     <div class="contact-info">
                         <h3>Contato</h3>
                         <p>Tem ideias ou sugestões? Entre em contato:</p>
@@ -209,6 +213,14 @@
     <script src="js/viewer.js"></script>
     <script src="js/main.js"></script>
     <script src="js/donation.js"></script>
+    <script src="js/enhanced-rectangular-selection-manager.js"></script>
+    <script src="js/enhanced-comic-narrator.js"></script>
+    <script src="js/enhanced-comics-viewer.js"></script>
+    <script src="js/advanced-narration-system.js"></script>
+    <script src="js/comic-reader-coordinator.js"></script>
+    <script src="js/enhanced-comic-reader.js"></script>
+    <script src="js/comic-reader-coordinator.js"></script>
+    <script src="js/auto-init.js"></script>
 </body>
 
 </html>
