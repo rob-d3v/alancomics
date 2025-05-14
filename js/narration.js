@@ -15,7 +15,7 @@ class ComicNarrator {
         this.textBuffer = [];
         this.isBuffering = false;
         this.bufferSize = 3; // Number of pages to buffer ahead
-        
+
         // Sistema de controle para evitar repetição de textos
         this.recentlyNarratedTexts = [];
         this.maxRecentTexts = 10; // Número máximo de textos recentes a armazenar
@@ -23,7 +23,7 @@ class ComicNarrator {
 
         // Controle para evitar múltiplas inicializações de vozes
         this.voicesInitialized = false;
-        
+
         // Controle de estado da narração
         this.narrationState = {
             lastProcessedPage: -1,
@@ -72,7 +72,7 @@ class ComicNarrator {
                     console.log('ComicNarrator: Evento onvoiceschanged ignorado, vozes já carregadas');
                     return;
                 }
-                
+
                 this.loadVoices();
                 // Registrar detalhes das vozes após carregamento
                 this.logVoiceDetails();
@@ -149,7 +149,7 @@ class ComicNarrator {
                 const currentVoices = this.synth.getVoices();
                 if (currentVoices.length > this.voices.length) {
                     this.voices = currentVoices;
-                    
+
                     // Verificar novamente por Antonio e Francisca
                     const antonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
                     const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
@@ -214,25 +214,25 @@ class ComicNarrator {
         // Verificar se já temos vozes suficientes antes de tentar forçar a detecção
         if (this.voices.length > 5) {
             // Verificar se já temos vozes do Windows ou do Narrador
-            const hasWindowsVoices = this.voices.some(voice => 
+            const hasWindowsVoices = this.voices.some(voice =>
                 voice.localService && (
                     voice.name.includes('Desktop') ||
                     voice.name.includes('SAPI') ||
                     voice.name.includes('Microsoft')
                 )
             );
-            
-            const hasNarratorVoices = this.voices.some(voice => 
+
+            const hasNarratorVoices = this.voices.some(voice =>
                 voice.name.includes('Antonio') || voice.name.includes('Francisca')
             );
-            
+
             if (hasWindowsVoices || hasNarratorVoices) {
                 console.log("✅ Já existem vozes do Windows ou do Narrador carregadas. Ignorando detecção forçada.");
                 this.readingIndicator.style.display = 'none';
                 return;
             }
         }
-        
+
         console.log("🔄 Tentando forçar detecção de vozes do Windows e do Narrador...");
 
         // Mostrar indicador de carregamento
@@ -263,9 +263,9 @@ class ComicNarrator {
                     console.log(`🛑 Ignorando tentativa ${index + 1} pois vozes já foram encontradas`);
                     return;
                 }
-                
+
                 console.log(`🔍 Tentativa ${index + 1} de detectar vozes do Windows e do Narrador...`);
-                
+
                 // Verificar se já temos vozes suficientes antes de tentar carregar novamente
                 if (this.voices.length === 0) {
                     this.loadVoices();
@@ -290,7 +290,7 @@ class ComicNarrator {
 
                     if (windowsVoices.length > 0 || antonioVoice || franciscaVoice) {
                         voicesFound = true;
-                        
+
                         if (antonioVoice || franciscaVoice) {
                             let vozesDetetadas = [];
                             if (antonioVoice) vozesDetetadas.push('Antonio');
@@ -310,7 +310,7 @@ class ComicNarrator {
                     // Verificar novamente por Antonio e Francisca no escopo correto
                     const finalAntonioVoice = this.voices.find(voice => voice.name.includes('Antonio'));
                     const finalFranciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
-                    
+
                     if (finalAntonioVoice || finalFranciscaVoice) {
                         // Destacar essas vozes no console para debug
                         if (finalAntonioVoice) console.log("🔍 Detalhes da voz Antonio:", finalAntonioVoice);
@@ -327,7 +327,7 @@ class ComicNarrator {
                                 voice.name.includes('SAPI') ||
                                 voice.name.includes('Microsoft')
                             ));
-                            
+
                         if (finalWindowsVoices.length > 0) {
                             this.readingIndicator.textContent = `✅ Detectadas ${finalWindowsVoices.length} vozes do Windows!`;
                             console.log(`✅ Detectadas ${finalWindowsVoices.length} vozes do Windows, mas Antonio e Francisca não foram encontrados.`);
@@ -979,8 +979,12 @@ class ComicNarrator {
         this.startNarrationBtn.addEventListener('click', () => {
             if (this.isNarrating) {
                 this.stopNarration();
+                // Disparar evento de parada de narração
+                document.dispatchEvent(new CustomEvent('narrationStopped'));
             } else {
                 this.startNarration();
+                // Disparar evento de início de narração
+                document.dispatchEvent(new CustomEvent('narrationStarted'));
             }
         });
     }
@@ -1027,15 +1031,15 @@ class ComicNarrator {
 
         // Coletar todos os textos extraídos de todas as imagens
         let allTexts = [];
-        
+
         // Ordenar as seleções por índice para garantir a ordem correta
         const orderedSelections = [...rectangularSelectionManager.selections].sort((a, b) => a.index - b.index);
-        
+
         // Para cada seleção, obter o texto extraído correspondente
         orderedSelections.forEach(selection => {
             const imageId = selection.imageId;
             const selectionIndex = selection.index;
-            
+
             if (imageId && rectangularSelectionManager.extractedTexts.has(imageId)) {
                 const textsForImage = rectangularSelectionManager.extractedTexts.get(imageId);
                 if (textsForImage && textsForImage[selectionIndex]) {
@@ -1048,7 +1052,7 @@ class ComicNarrator {
                 }
             }
         });
-        
+
         if (allTexts.length === 0) {
             this.readingIndicator.textContent = 'Nenhum texto extraído encontrado. Tente processar as seleções novamente.';
             this.readingIndicator.style.display = 'block';
@@ -1057,15 +1061,15 @@ class ComicNarrator {
             }, 3000);
             return;
         }
-        
+
         console.log(`Narrando ${allTexts.length} textos extraídos`);
-        
+
         // Criar um objeto com múltiplos textos para narração
         const multiText = {
             isMultiText: true,
             texts: allTexts
         };
-        
+
         // Iniciar narração dos textos
         this.speakMultipleTexts(multiText);
     }
@@ -1084,18 +1088,18 @@ class ComicNarrator {
         if (window.rectangularSelectionManager) {
             window.rectangularSelectionManager.highlightSelection(0);
         }
-        
+
         // Filtrar textos para remover duplicados ou muito similares
         const uniqueTexts = this.filterDuplicateTexts(multiText.texts);
         console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
-        
+
         // Atualizar a barra de progresso com o total de itens
         if (window.narrationProgressBar) {
             window.narrationProgressBar.totalItems = uniqueTexts.length;
             window.narrationProgressBar.updateProgressBar();
         }
         console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
-        
+
         // Atualizar a barra de progresso com o total de itens
         if (window.narrationProgressBar) {
             window.narrationProgressBar.totalItems = uniqueTexts.length;
@@ -1107,13 +1111,13 @@ class ComicNarrator {
             if (!this.isNarrating) break; // Verificar se a narração foi interrompida
 
             const text = uniqueTexts[i];
-            
+
             // Verificar se esta seleção já foi processada nesta sessão
             if (this.narrationState.isSelectionMode && this.narrationState.lastProcessedSelection === i) {
                 console.log(`Seleção ${i} já foi processada nesta sessão, avançando para a próxima`);
                 continue;
             }
-            
+
             // Registrar esta seleção como processada
             this.narrationState.lastProcessedSelection = i;
 
@@ -1121,7 +1125,7 @@ class ComicNarrator {
             if (window.rectangularSelectionManager) {
                 window.rectangularSelectionManager.highlightSelection(i);
             }
-            
+
             // Atualizar a barra de progresso
             if (window.narrationProgressBar) {
                 window.narrationProgressBar.setCurrentItemIndex(i);
@@ -1148,24 +1152,24 @@ class ComicNarrator {
 
     async startNarration() {
         if (!this.enableNarration.checked || this.isNarrating) return;
-        
+
         // Limpar textos narrados anteriormente ao iniciar uma nova narração
         this.recentlyNarratedTexts = [];
-        
+
         // Gerar um ID único para esta sessão de narração
         this.narrationState.currentNarrationId = Date.now();
-        
+
         // Iniciar contagem regressiva antes de começar a narração
         const countdown = document.getElementById('countdown');
         countdown.style.display = 'block';
-        
+
         for (let i = 5; i > 0; i--) {
             countdown.textContent = i;
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        
+
         countdown.style.display = 'none';
-        
+
         // Ativar o ScrollManager global para rolagem automática durante a narração
         if (window.scrollManager) {
             window.scrollManager.activate();
@@ -1179,26 +1183,26 @@ class ComicNarrator {
             // Se o modo de seleção estiver ativo, verificar se há seleções
             if (rectangularSelectionManager.selections && rectangularSelectionManager.selections.length > 0) {
                 console.log('Modo de seleção de texto em imagens ativo. Lendo apenas o texto das seleções OCR.');
-                
+
                 // Atualizar o estado da narração
                 this.narrationState.isSelectionMode = true;
                 this.narrationState.isPageMode = false;
                 this.narrationState.lastProcessedSelection = -1;
-                
+
                 this.isNarrating = true;
                 this.startNarrationBtn.innerHTML = '<i class="fas fa-stop"></i> Parar Narração';
                 this.startNarrationBtn.classList.add('active');
-                
+
                 // Disable other controls
                 this.disableOtherControls(true);
-                
+
                 // Verificar se já existem textos extraídos para as seleções
-                const hasExtractedTexts = rectangularSelectionManager.extractedTexts && 
-                                         rectangularSelectionManager.extractedTexts.size > 0;
-                
+                const hasExtractedTexts = rectangularSelectionManager.extractedTexts &&
+                    rectangularSelectionManager.extractedTexts.size > 0;
+
                 if (hasExtractedTexts) {
                     console.log('Textos já extraídos encontrados. Iniciando narração sem reprocessar OCR.');
-                    
+
                     // Preparar os textos extraídos para narração
                     this.prepareExtractedTextsForNarration(rectangularSelectionManager);
                 } else {
@@ -1206,7 +1210,7 @@ class ComicNarrator {
                     // Iniciar processamento das seleções apenas se não houver textos extraídos
                     rectangularSelectionManager.processSelections();
                 }
-                
+
                 return; // Não continuar com a narração normal
             } else {
                 // Se não houver seleções, mostrar mensagem
@@ -1226,7 +1230,7 @@ class ComicNarrator {
             console.error('Images container not found');
             return;
         }
-        
+
         // Atualizar o estado da narração
         this.narrationState.isPageMode = true;
         this.narrationState.isSelectionMode = false;
@@ -1296,7 +1300,7 @@ class ComicNarrator {
             window.scrollManager.deactivate();
             console.log('ScrollManager global desativado após fim da narração');
         }
-        
+
         // Resetar o estado da narração
         this.narrationState = {
             lastProcessedPage: -1,
@@ -1305,7 +1309,7 @@ class ComicNarrator {
             isSelectionMode: false,
             currentNarrationId: null
         };
-        
+
         // Limpar textos narrados recentemente
         this.recentlyNarratedTexts = [];
 
@@ -1390,7 +1394,7 @@ class ComicNarrator {
             this.stopNarration();
             return;
         }
-        
+
         // Verificar se esta página já foi processada nesta sessão de narração
         if (this.narrationState.lastProcessedPage === this.currentPage) {
             console.log(`Página ${this.currentPage} já foi processada nesta sessão, avançando para a próxima`);
@@ -1400,7 +1404,7 @@ class ComicNarrator {
                 return;
             }
         }
-        
+
         // Registrar esta página como processada
         this.narrationState.lastProcessedPage = this.currentPage;
 
@@ -1411,7 +1415,7 @@ class ComicNarrator {
 
         // Não exibir mensagem de status durante a narração normal
         this.readingIndicator.style.display = 'none';
-        
+
         // Atualizar a barra de progresso com o índice atual
         if (window.narrationProgressBar) {
             window.narrationProgressBar.setCurrentItemIndex(this.currentPage);
@@ -1465,7 +1469,7 @@ class ComicNarrator {
                     if (window.rectangularSelectionManager) {
                         window.rectangularSelectionManager.highlightSelection(i);
                     }
-                    
+
                     // Atualizar a barra de progresso com o texto atual
                     if (window.narrationProgressBar) {
                         window.narrationProgressBar.setCurrentText(text);
@@ -1500,7 +1504,7 @@ class ComicNarrator {
                     this.readNextPage();
                     return;
                 }
-                
+
                 // Atualizar a barra de progresso com o texto atual
                 if (window.narrationProgressBar) {
                     window.narrationProgressBar.setCurrentText(text);
@@ -1717,17 +1721,17 @@ class ComicNarrator {
                 resolve();
                 return;
             }
-            
+
             // Processar o texto para melhorar a qualidade da narração
             const processedText = this.processTextForNarration(text);
-            
+
             // Verificar se este texto já foi narrado recentemente (evitar repetições)
             if (this.hasTextBeenNarratedRecently(processedText)) {
                 console.log('Texto já narrado recentemente, pulando para evitar repetição:', processedText.substring(0, 30) + '...');
                 resolve();
                 return;
             }
-            
+
             // Registrar este texto como narrado recentemente
             this.addToNarratedTexts(processedText);
 
@@ -1867,7 +1871,7 @@ class ComicNarrator {
 
         return voicesByLanguage;
     }
-    
+
     /**
      * Processa o texto para melhorar a qualidade da narração
      * @param {string} text - Texto original a ser processado
@@ -1875,26 +1879,26 @@ class ComicNarrator {
      */
     processTextForNarration(text) {
         if (!text || typeof text !== 'string') return text;
-        
+
         // Remover espaços extras e quebras de linha desnecessárias
         let processed = text.replace(/\s+/g, ' ').trim();
-        
+
         // Remover caracteres especiais que podem atrapalhar a narração
         processed = processed.replace(/[\*\|\~\`\#\_\{\}\<\>]/g, '');
-        
+
         // Normalizar pontuação para melhorar as pausas na narração
         processed = processed.replace(/\.{2,}/g, '.'); // Substituir múltiplos pontos por um único
         processed = processed.replace(/\,{2,}/g, ','); // Substituir múltiplas vírgulas por uma única
-        
+
         // Adicionar espaço após pontuação se não houver
         processed = processed.replace(/([.!?;:,])([^\s])/g, '$1 $2');
-        
+
         // Remover caracteres não imprimíveis
         processed = processed.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-        
+
         return processed;
     }
-    
+
     /**
      * Verifica se um texto já foi narrado recentemente
      * @param {string} text - Texto a verificar
@@ -1902,38 +1906,38 @@ class ComicNarrator {
      */
     hasTextBeenNarratedRecently(text) {
         if (!text || text.trim().length < 10) return false;
-        
+
         // Verificar se o texto exato já existe na lista
         if (this.recentlyNarratedTexts.includes(text)) {
             return true;
         }
-        
+
         // Verificar similaridade com textos recentes
         for (const recentText of this.recentlyNarratedTexts) {
             if (this.calculateTextSimilarity(text, recentText) > this.textSimilarityThreshold) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Adiciona um texto à lista de textos narrados recentemente
      * @param {string} text - Texto a adicionar
      */
     addToNarratedTexts(text) {
         if (!text || text.trim().length < 10) return;
-        
+
         // Adicionar o texto à lista
         this.recentlyNarratedTexts.push(text);
-        
+
         // Limitar o tamanho da lista
         if (this.recentlyNarratedTexts.length > this.maxRecentTexts) {
             this.recentlyNarratedTexts.shift(); // Remover o texto mais antigo
         }
     }
-    
+
     /**
      * Calcula a similaridade entre dois textos (0-1)
      * @param {string} text1 - Primeiro texto
@@ -1942,25 +1946,25 @@ class ComicNarrator {
      */
     calculateTextSimilarity(text1, text2) {
         if (!text1 || !text2) return 0;
-        
+
         // Normalizar os textos para comparação
         const normalizedText1 = text1.toLowerCase().trim();
         const normalizedText2 = text2.toLowerCase().trim();
-        
+
         // Se os textos são idênticos após normalização
         if (normalizedText1 === normalizedText2) return 1;
-        
+
         // Se um texto está contido no outro
         if (normalizedText1.includes(normalizedText2) || normalizedText2.includes(normalizedText1)) {
-            const ratio = Math.min(normalizedText1.length, normalizedText2.length) / 
-                         Math.max(normalizedText1.length, normalizedText2.length);
+            const ratio = Math.min(normalizedText1.length, normalizedText2.length) /
+                Math.max(normalizedText1.length, normalizedText2.length);
             return 0.8 + (ratio * 0.2); // Valor entre 0.8 e 1.0 dependendo da proporção de tamanho
         }
-        
+
         // Método simples de similaridade baseado em palavras comuns
         const words1 = normalizedText1.split(/\s+/);
         const words2 = normalizedText2.split(/\s+/);
-        
+
         // Contar palavras comuns
         let commonWords = 0;
         for (const word of words1) {
@@ -1968,12 +1972,12 @@ class ComicNarrator {
                 commonWords++;
             }
         }
-        
+
         // Calcular similaridade baseada em palavras comuns
         const totalUniqueWords = new Set([...words1, ...words2]).size;
         return totalUniqueWords > 0 ? commonWords / totalUniqueWords : 0;
     }
-    
+
     /**
      * Filtra textos duplicados ou muito similares de um array
      * @param {Array<string>} texts - Array de textos a filtrar
@@ -1981,16 +1985,16 @@ class ComicNarrator {
      */
     filterDuplicateTexts(texts) {
         if (!texts || !Array.isArray(texts)) return texts;
-        
+
         const uniqueTexts = [];
-        
+
         for (const text of texts) {
             // Processar o texto para melhorar a qualidade
             const processedText = this.processTextForNarration(text);
-            
+
             // Verificar se é um texto válido
             if (!processedText || processedText.trim().length < 5) continue;
-            
+
             // Verificar se já temos um texto similar
             let isDuplicate = false;
             for (const uniqueText of uniqueTexts) {
@@ -1999,16 +2003,16 @@ class ComicNarrator {
                     break;
                 }
             }
-            
+
             // Adicionar apenas se não for duplicado
             if (!isDuplicate) {
                 uniqueTexts.push(processedText);
             }
         }
-        
+
         return uniqueTexts;
     }
-    
+
 
     /**
      * Verifica se o conteúdo atual é um arquivo de texto

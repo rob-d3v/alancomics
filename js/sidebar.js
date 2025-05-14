@@ -6,12 +6,12 @@ class Sidebar {
         this.dropZone = document.getElementById('dropZone');
         this.thumbnailsContainer = document.getElementById('thumbnailsContainer');
         this.isRunning = false;
-        
+
         // Add auto-scroll complete listener
         document.addEventListener('autoScrollComplete', () => {
             this.stopViewer();
         });
-        
+
         this.initializeEventListeners();
     }
 
@@ -21,6 +21,21 @@ class Sidebar {
         this.initializeSidebarToggle();
         this.initializeClearAll();
         this.loadExistingImages(); // Keep this name consistent
+
+        // Adicionar listeners para os eventos de narração
+        document.addEventListener('narrationStarted', () => {
+            // Iniciar o viewer automaticamente quando a narração começar
+            if (!this.isRunning) {
+                this.startViewer();
+            }
+        });
+
+        document.addEventListener('narrationStopped', () => {
+            // Parar o viewer automaticamente quando a narração parar
+            if (this.isRunning) {
+                this.stopViewer();
+            }
+        });
     }
 
     initializeDropZone() {
@@ -29,10 +44,10 @@ class Sidebar {
             input.type = 'file';
             input.multiple = true;
             input.accept = 'image/*,application/pdf,application/epub+zip,text/plain,.txt';
-            
+
             input.addEventListener('change', async (e) => {
                 const files = Array.from(e.target.files);
-                
+
                 // Process files in sequence to maintain order
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
@@ -40,7 +55,7 @@ class Sidebar {
                 }
                 await this.loadExistingImages(); // Change to match the method name
             });
-            
+
             input.click();
         });
 
@@ -48,9 +63,9 @@ class Sidebar {
         this.dropZone.addEventListener('drop', async (e) => {
             e.preventDefault();
             this.dropZone.classList.remove('drag-over');
-            
+
             const files = Array.from(e.dataTransfer.files);
-            
+
             // Process files in sequence to maintain order
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -73,11 +88,11 @@ class Sidebar {
     async processFile(file) {
         const fileType = file.type;
         const fileName = file.name;
-        
+
         if (fileType.startsWith('image/')) {
             const imageData = await this.readFileAsDataURL(file);
             await this.db.addContent(imageData, 'image', fileName);
-        } 
+        }
         else if (fileType === 'application/pdf') {
             const pdfData = await this.readFileAsDataURL(file);
             await this.db.addContent(pdfData, 'pdf', fileName);
@@ -104,19 +119,19 @@ class Sidebar {
         // Melhorar o controle de velocidade de rolagem
         const speedSlider = document.getElementById('scrollSpeed');
         const speedValue = document.getElementById('speedValue');
-        
+
         // Configurar o slider para valores menores
         speedSlider.min = "0.1";  // Velocidade mínima muito mais lenta
         speedSlider.max = "10";
         speedSlider.step = "0.1";  // Permitir incrementos menores
         speedSlider.value = "1";   // Valor padrão moderado
-        
+
         // Atualizar o valor exibido quando o slider mudar
         speedSlider.addEventListener('input', (e) => {
             const value = parseFloat(e.target.value);
             speedValue.textContent = value.toFixed(1);
         });
-        
+
         // Inicializar o valor exibido
         speedValue.textContent = parseFloat(speedSlider.value).toFixed(1);
 
@@ -135,23 +150,23 @@ class Sidebar {
 
         const countdown = document.getElementById('countdown');
         countdown.style.display = 'block';
-        
+
         for (let i = 5; i > 0; i--) {
             countdown.textContent = i;
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        
+
         countdown.style.display = 'none';
         this.isRunning = true;
-        
+
         const startButton = document.getElementById('startButton');
         startButton.innerHTML = '<i class="fas fa-stop"></i> Parar';
         startButton.classList.add('active');
-        
+
         // Usar o valor exato do slider para a velocidade
         const speed = parseFloat(document.getElementById('scrollSpeed').value);
         this.viewer.startAutoScroll(speed);
-        
+
         this.disableControls(true);
     }
 
@@ -160,7 +175,7 @@ class Sidebar {
         const startButton = document.getElementById('startButton');
         startButton.innerHTML = '<i class="fas fa-play"></i> Iniciar';
         startButton.classList.remove('active');
-        
+
         this.viewer.stopAutoScroll();
         this.disableControls(false);
     }
@@ -172,7 +187,7 @@ class Sidebar {
             'scrollSpeed',
             'dropZone'
         ];
-        
+
         controls.forEach(id => {
             document.getElementById(id).disabled = disabled;
         });
@@ -185,7 +200,7 @@ class Sidebar {
         const viewer = document.getElementById('viewer');
         let mouseTimeout = null;
         let isAutoHideEnabled = false;
-        
+
         // Função para ocultar elementos após 2 segundos
         const setupAutoHide = () => {
             if (isAutoHideEnabled) {
@@ -193,13 +208,13 @@ class Sidebar {
                 if (mouseTimeout) {
                     clearTimeout(mouseTimeout);
                 }
-                
+
                 // Mostrar elementos
                 sidebarToggle.classList.add('visible');
                 floatingControls.classList.add('visible');
                 header.classList.add('visible');
                 viewer.classList.remove('header-hidden');
-                
+
                 // Configurar timeout para ocultar após 2 segundos
                 mouseTimeout = setTimeout(() => {
                     sidebarToggle.classList.remove('visible');
@@ -209,15 +224,15 @@ class Sidebar {
                 }, 2000);
             }
         };
-        
+
         // Alternar entre sidebar colapsada e expandida
         sidebarToggle.addEventListener('click', () => {
             this.sidebar.classList.toggle('collapsed');
             this.viewer.viewer.classList.toggle('full-width');
-            
+
             // Ativar/desativar auto-hide quando a sidebar estiver colapsada
             isAutoHideEnabled = this.sidebar.classList.contains('collapsed');
-            
+
             if (isAutoHideEnabled) {
                 // Adicionar listener de movimento do mouse
                 document.addEventListener('mousemove', setupAutoHide);
@@ -264,9 +279,9 @@ class Sidebar {
     createThumbnail(image) {
         const div = document.createElement('div');
         div.className = 'thumbnail';
-        
+
         const img = document.createElement('img');
-        
+
         // Aqui está o erro - você está usando 'item' em vez de 'image'
         if (image.type === 'image') {
             img.src = image.data;
@@ -278,10 +293,10 @@ class Sidebar {
             // Default icon for unknown types
             img.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzODQgNTEyIj48cGF0aCBmaWxsPSIjOWU5ZTllIiBkPSJNMzY5LjkgOTcuOUwyODYgMTRDMjc3IDUgMjY0LjggLS4xIDI1Mi4xLS4xSDQ4QzIxLjUgMCA0IDIxLjUgNCA0OHY0MTZjMCAyNi41IDIxLjUgNDggNDggNDhoMjg4YzI2LjUgMCA0OC0yMS41IDQ4LTQ4VjEzMS45YzAtMTIuNy01LjEtMjUtMTQuMS0zNHpNMzMyLjEgMTI4SDI1NlY1MS45bDc2LjEgNzYuMXpNNDggNDY0VjQ4aDE2MHY5NmMwIDEzLjMgMTAuNyAyNCAyNCAyNGg5NnYyOTZINDh6Ii8+PC9zdmc+';
         }
-        
+
         // Add file name as title
         div.title = image.name || '';
-        
+
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove';
         removeBtn.innerHTML = '×';
@@ -289,7 +304,7 @@ class Sidebar {
             await this.db.removeContent(image.id);
             await this.loadExistingImages();
         };
-        
+
         div.appendChild(img);
         div.appendChild(removeBtn);
         return div;
@@ -301,7 +316,7 @@ class Sidebar {
             const reader = new FileReader();
             reader.onload = (e) => resolve(e.target.result);
             reader.onerror = (e) => reject(e.error);
-            
+
             // Verificar se é um arquivo de texto para usar a codificação UTF-8
             if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
                 // Para arquivos de texto, primeiro lemos como texto com UTF-8
