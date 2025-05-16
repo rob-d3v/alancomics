@@ -9,9 +9,24 @@ class ComicsViewer {
         this.currentEpubBook = null;
         this.initControls();
         this.loadRequiredLibraries();
-        
+
         // Adicionar estilos CSS para PDFs
         this.addPdfStyles();
+
+        // Adicionar listeners para os eventos de narração
+        document.addEventListener('narrationStarted', () => {
+            // Iniciar o viewer automaticamente quando a narração começar
+            // if (!this.isRunning) {
+                this.scrollToTop();
+            // }
+        });
+
+        // document.addEventListener('narrationStopped', () => {
+        //     // Parar o viewer automaticamente quando a narração parar
+        //     if (this.isRunning) {
+        //         this.scrollToTop();
+        //     }
+        // });
     }
 
     async loadRequiredLibraries() {
@@ -21,11 +36,11 @@ class ComicsViewer {
             pdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
             document.head.appendChild(pdfScript);
             await new Promise(resolve => pdfScript.onload = resolve);
-            
+
             // Set worker source
             window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         }
-        
+
         // Load ePub.js library
         if (!window.ePub) {
             const epubScript = document.createElement('script');
@@ -40,11 +55,11 @@ class ComicsViewer {
         document.getElementById('zoomOut').addEventListener('click', () => this.zoom(-0.1));
         document.getElementById('backToTop').addEventListener('click', () => this.scrollToTop());
         document.getElementById('fullscreen').addEventListener('click', () => this.toggleFullscreen());
-        
+
         // Adicionar botão de pausa da narração aos controles flutuantes
         this.addPauseNarrationButton();
     }
-    
+
     /**
      * Adiciona o botão de pausa da narração aos controles flutuantes
      */
@@ -57,17 +72,17 @@ class ComicsViewer {
             newControls.className = 'floating-controls';
             this.viewer.appendChild(newControls);
         }
-        
+
         // Obter referência aos controles flutuantes
         const controls = document.querySelector('#viewer .floating-controls');
-        
+
         // Criar botão de pausa da narração
         const pauseButton = document.createElement('button');
         pauseButton.id = 'pauseNarration';
         pauseButton.className = 'floating-button pause-narration';
         pauseButton.innerHTML = '<i class="fas fa-pause"></i>';
         pauseButton.title = 'Pausar/Retomar narração';
-        
+
         // Adicionar evento de clique para pausar/retomar a narração
         pauseButton.addEventListener('click', () => {
             if (window.speechSynthesis) {
@@ -80,18 +95,18 @@ class ComicsViewer {
                 }
             }
         });
-        
+
         // Adicionar o botão aos controles flutuantes
         controls.appendChild(pauseButton);
-        
+
         // Inicialmente oculto, será mostrado quando a narração estiver ativa
         pauseButton.style.display = 'none';
-        
+
         // Verificar periodicamente o estado da narração para mostrar/ocultar o botão
         setInterval(() => {
             if (window.comicNarrator && window.comicNarrator.isNarrating) {
                 pauseButton.style.display = 'flex';
-                
+
                 // Atualizar o ícone com base no estado atual da narração
                 if (window.speechSynthesis && window.speechSynthesis.paused) {
                     pauseButton.innerHTML = '<i class="fas fa-play"></i>';
@@ -107,43 +122,43 @@ class ComicsViewer {
     // Make sure this method exists and is properly renamed
     async displayContent(contentItems) {
         this.container.innerHTML = '';
-        
+
         if (!contentItems || contentItems.length === 0) {
             return;
         }
-    
+
         // Group content by type for better rendering
         const images = contentItems.filter(item => item.type === 'image');
         const pdfs = contentItems.filter(item => item.type === 'pdf');
         const epubs = contentItems.filter(item => item.type === 'epub');
         const txts = contentItems.filter(item => item.type === 'txt');
-    
+
         // Display images first
         for (const image of images) {
             await this.displayImage(image);
         }
-    
+
         // Then display PDFs
         for (const pdf of pdfs) {
             await this.displayPdf(pdf);
         }
-    
+
         // Then display EPUBs
         for (const epub of epubs) {
             await this.displayEpub(epub);
         }
-        
+
         // Finally display TXT files
         for (const txt of txts) {
             await this.displayTxt(txt);
         }
-    
+
         // Force layout recalculation
         this.container.style.display = 'none';
         this.container.offsetHeight; // Force reflow
         this.container.style.display = '';
     }
-    
+
     async displayImage(image) {
         const imgElement = document.createElement('img');
         imgElement.src = image.data;
@@ -158,7 +173,7 @@ class ComicsViewer {
         };
         this.container.appendChild(imgElement);
     }
-    
+
     async displayPdf(pdfItem) {
         try {
             // Create container for this PDF
@@ -167,42 +182,42 @@ class ComicsViewer {
             pdfContainer.dataset.id = pdfItem.id;
             pdfContainer.dataset.type = 'pdf';
             pdfContainer.style.width = `${100 * this.zoomLevel}%`;
-            
+
             // Armazenar a URL do PDF para recarregamento posterior
             pdfContainer.dataset.pdfUrl = pdfItem.data;
-            
+
             // Load the PDF document
             const loadingTask = pdfjsLib.getDocument(pdfItem.data);
             const pdfDoc = await loadingTask.promise;
-            
+
             // Armazenar o número de páginas
             pdfContainer.dataset.numPages = pdfDoc.numPages;
-            
+
             // Create canvas elements for each page
             const numPages = pdfDoc.numPages;
             for (let i = 1; i <= numPages; i++) {
                 const page = await pdfDoc.getPage(i);
                 const viewport = page.getViewport({ scale: this.zoomLevel });
-                
+
                 const canvasContainer = document.createElement('div');
                 canvasContainer.className = 'pdf-page';
                 canvasContainer.dataset.pageNum = i;
-                
+
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
-                
+
                 const renderContext = {
                     canvasContext: context,
                     viewport: viewport
                 };
-                
+
                 await page.render(renderContext).promise;
                 canvasContainer.appendChild(canvas);
                 pdfContainer.appendChild(canvasContainer);
             }
-            
+
             this.container.appendChild(pdfContainer);
         } catch (error) {
             console.error('Error rendering PDF:', error);
@@ -212,7 +227,7 @@ class ComicsViewer {
             this.container.appendChild(errorDiv);
         }
     }
-    
+
     async displayEpub(epubItem) {
         try {
             // Create container for this EPUB
@@ -221,18 +236,18 @@ class ComicsViewer {
             epubContainer.dataset.id = epubItem.id;
             epubContainer.dataset.type = 'epub';
             epubContainer.style.width = `${100 * this.zoomLevel}%`;
-            
+
             // Remove the title div that was here
-            
+
             // Create a unique ID for this EPUB viewer
             const epubViewerId = `epub-viewer-${epubItem.id}`;
             const epubViewer = document.createElement('div');
             epubViewer.id = epubViewerId;
             epubViewer.className = 'epub-viewer';
             epubContainer.appendChild(epubViewer);
-            
+
             this.container.appendChild(epubContainer);
-            
+
             // Initialize EPUB.js book
             const book = ePub(epubItem.data);
             const rendition = book.renderTo(epubViewerId, {
@@ -240,27 +255,27 @@ class ComicsViewer {
                 height: '600px',
                 spread: 'none'
             });
-            
+
             // Display the book
             await book.ready;
             rendition.display();
-            
+
             // Add navigation controls
             const navDiv = document.createElement('div');
             navDiv.className = 'epub-navigation';
-            
+
             const prevBtn = document.createElement('button');
             prevBtn.textContent = '← Previous';
             prevBtn.onclick = () => rendition.prev();
-            
+
             const nextBtn = document.createElement('button');
             nextBtn.textContent = 'Next →';
             nextBtn.onclick = () => rendition.next();
-            
+
             navDiv.appendChild(prevBtn);
             navDiv.appendChild(nextBtn);
             epubContainer.appendChild(navDiv);
-            
+
         } catch (error) {
             console.error('Error rendering EPUB:', error);
             const errorDiv = document.createElement('div');
@@ -269,7 +284,7 @@ class ComicsViewer {
             this.container.appendChild(errorDiv);
         }
     }
-    
+
     async displayTxt(txtItem) {
         try {
             // Create container for this TXT file
@@ -278,7 +293,7 @@ class ComicsViewer {
             txtContainer.dataset.id = txtItem.id;
             txtContainer.dataset.type = 'txt';
             txtContainer.style.width = `${100 * this.zoomLevel}%`;
-            
+
             // Create content element with proper styling
             const txtContent = document.createElement('div');
             txtContent.className = 'txt-content';
@@ -293,7 +308,7 @@ class ComicsViewer {
             txtContent.style.border = '1px solid #ddd';
             txtContent.style.borderRadius = '5px';
             txtContent.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
-            
+
             // Decode the base64 content if needed
             let textContent = '';
             if (txtItem.data.startsWith('data:')) {
@@ -305,19 +320,19 @@ class ComicsViewer {
                 // Handle plain text
                 textContent = txtItem.data;
             }
-            
+
             // Set the text content
             txtContent.textContent = textContent;
-            
+
             // Add data attributes for narration
             txtContent.dataset.narrationText = textContent;
-            
+
             // Append content to container
             txtContainer.appendChild(txtContent);
-            
+
             // Append container to main container
             this.container.appendChild(txtContainer);
-            
+
         } catch (error) {
             console.error('Error rendering TXT:', error);
             const errorDiv = document.createElement('div');
@@ -326,7 +341,7 @@ class ComicsViewer {
             this.container.appendChild(errorDiv);
         }
     }
-    
+
     // Método para decodificar base64 com suporte a UTF-8
     decodeBase64UTF8(base64) {
         try {
@@ -349,18 +364,18 @@ class ComicsViewer {
     zoom(delta) {
         const oldZoomLevel = this.zoomLevel;
         this.zoomLevel = Math.max(0.5, Math.min(3, this.zoomLevel + delta));
-        
+
         // Se o zoom não mudou, não faça nada
         if (oldZoomLevel === this.zoomLevel) return;
-        
+
         // Save current scroll position relative to content
         let relativeScrollPosition;
-        
+
         if (this.container.classList.contains('horizontal')) {
             // For horizontal mode, calculate relative position based on scrollLeft
             const totalWidth = this.viewer.scrollWidth;
             relativeScrollPosition = this.viewer.scrollLeft / totalWidth;
-            
+
             // Modo horizontal - tratamento específico
             this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
                 img.style.maxHeight = `${80 * this.zoomLevel}vh`;
@@ -368,18 +383,18 @@ class ComicsViewer {
                 img.style.width = 'auto';
                 img.style.alignSelf = 'center'; // Keep images centered vertically
             });
-            
+
             this.container.querySelectorAll('.epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
                 container.style.width = 'auto';
                 container.style.alignSelf = 'center'; // Keep containers centered vertically
             });
-            
+
             // Ensure container is properly set for vertical centering
             this.container.style.alignItems = 'center';
             this.container.style.minHeight = '100%';
-            
+
             // Recarregar PDFs com novo zoom
             this.container.querySelectorAll('.pdf-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
@@ -392,23 +407,23 @@ class ComicsViewer {
             // For vertical mode, calculate relative position based on scrollTop
             const totalHeight = this.viewer.scrollHeight;
             relativeScrollPosition = this.viewer.scrollTop / totalHeight;
-            
+
             // Modo vertical - mantém o comportamento original
             this.container.querySelectorAll('img[data-type="image"]').forEach(img => {
                 img.style.width = `${100 * this.zoomLevel}%`;
                 img.style.maxWidth = `${100 * this.zoomLevel}%`;
             });
-            
+
             this.container.querySelectorAll('.epub-container, .txt-container').forEach(container => {
                 container.style.width = `${100 * this.zoomLevel}%`;
             });
-            
+
             // Recarregar PDFs com novo zoom
             this.container.querySelectorAll('.pdf-container').forEach(container => {
                 this.reloadPdfWithZoom(container, this.zoomLevel);
             });
         }
-        
+
         // After DOM updates, restore the relative scroll position
         setTimeout(() => {
             if (this.container.classList.contains('horizontal')) {
@@ -427,14 +442,14 @@ class ComicsViewer {
             // Obter a URL do PDF e o número da página atual
             const pdfUrl = pdfContainer.dataset.pdfUrl;
             if (!pdfUrl) return;
-            
+
             // Salvar a posição de rolagem atual
             const scrollTop = this.viewer.scrollTop;
             const scrollLeft = this.viewer.scrollLeft;
-            
+
             // Limpar o container
             pdfContainer.innerHTML = '';
-            
+
             // Atualizar a largura do container
             if (this.container.classList.contains('horizontal')) {
                 pdfContainer.style.maxHeight = `${80 * zoomLevel}vh`;
@@ -443,42 +458,42 @@ class ComicsViewer {
             } else {
                 pdfContainer.style.width = `${100 * zoomLevel}%`;
             }
-            
+
             // Carregar o PDF
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
             const pdfDoc = await loadingTask.promise;
-            
+
             // Renderizar cada página com o novo zoom
             const numPages = parseInt(pdfContainer.dataset.numPages) || pdfDoc.numPages;
             for (let i = 1; i <= numPages; i++) {
                 const page = await pdfDoc.getPage(i);
                 const viewport = page.getViewport({ scale: zoomLevel });
-                
+
                 const canvasContainer = document.createElement('div');
                 canvasContainer.className = 'pdf-page';
                 canvasContainer.dataset.pageNum = i;
-                
+
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
-                
+
                 const renderContext = {
                     canvasContext: context,
                     viewport: viewport
                 };
-                
+
                 await page.render(renderContext).promise;
                 canvasContainer.appendChild(canvas);
                 pdfContainer.appendChild(canvasContainer);
             }
-            
+
             // Restaurar a posição de rolagem
             setTimeout(() => {
                 this.viewer.scrollTop = scrollTop;
                 this.viewer.scrollLeft = scrollLeft;
             }, 50);
-            
+
         } catch (error) {
             console.error('Error reloading PDF with zoom:', error);
         }
@@ -519,26 +534,26 @@ class ComicsViewer {
         this.header = document.querySelector('header');
         this.floatingControls = document.querySelector('.floating-controls');
         this.viewer = document.getElementById('viewer');
-        
+
         // Add visible class initially
         if (this.header) this.header.classList.add('visible');
         if (this.floatingControls) this.floatingControls.classList.add('visible');
-        
+
         // Set up mouse movement tracking
         this.mouseTimeout = null;
-        
+
         // Define the mousemove handler
         this.mouseMoveHandler = () => {
             // Show controls
             if (this.header) this.header.classList.add('visible');
             if (this.floatingControls) this.floatingControls.classList.add('visible');
             if (this.viewer) this.viewer.classList.remove('expanded');
-            
+
             // Clear any existing timeout
             if (this.mouseTimeout) {
                 clearTimeout(this.mouseTimeout);
             }
-            
+
             // Set timeout to hide controls after 2 seconds
             this.mouseTimeout = setTimeout(() => {
                 if (this.header) this.header.classList.remove('visible');
@@ -546,10 +561,10 @@ class ComicsViewer {
                 if (this.viewer) this.viewer.classList.add('expanded');
             }, 2000);
         };
-        
+
         // Add event listener
         document.addEventListener('mousemove', this.mouseMoveHandler);
-        
+
         // Initial timeout to hide controls
         this.mouseTimeout = setTimeout(() => {
             if (this.header) this.header.classList.remove('visible');
@@ -563,13 +578,13 @@ class ComicsViewer {
         if (this.mouseMoveHandler) {
             document.removeEventListener('mousemove', this.mouseMoveHandler);
         }
-        
+
         // Clear any existing timeout
         if (this.mouseTimeout) {
             clearTimeout(this.mouseTimeout);
             this.mouseTimeout = null;
         }
-        
+
         // Ensure controls are visible
         if (this.header) {
             this.header.classList.add('visible');
@@ -584,7 +599,7 @@ class ComicsViewer {
 
     setScrollDirection(direction) {
         this.container.className = `images-container ${direction}`;
-        
+
         // Aplicar estilos específicos para o modo horizontal
         if (direction === 'horizontal') {
             this.container.style.alignItems = 'center';
@@ -593,7 +608,7 @@ class ComicsViewer {
                 img.style.height = 'auto';
                 img.style.width = 'auto';
             });
-            
+
             this.container.querySelectorAll('.pdf-container, .epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = `${80 * this.zoomLevel}vh`;
                 container.style.height = 'auto';
@@ -607,7 +622,7 @@ class ComicsViewer {
                 img.style.width = `${100 * this.zoomLevel}%`;
                 img.style.maxWidth = `${100 * this.zoomLevel}%`;
             });
-            
+
             this.container.querySelectorAll('.pdf-container, .epub-container, .txt-container').forEach(container => {
                 container.style.maxHeight = '';
                 container.style.height = '';
@@ -622,27 +637,27 @@ class ComicsViewer {
 
     startAutoScroll(speed) {
         if (this.isScrolling) return;
-        
+
         this.isScrolling = true;
-        
+
         // New approach for handling all speeds
         // We'll use a fixed interval and accumulate fractional pixels
         const interval = 50; // Fixed interval (ms)
         let pixelAccumulator = 0;
-        
+
         console.log(`Starting auto-scroll with speed: ${speed}`);
-        
+
         this.scrollInterval = setInterval(() => {
             // Add the speed to our accumulator
             pixelAccumulator += speed;
-            
+
             // Only scroll when we have at least 1 pixel to move
             if (pixelAccumulator >= 1) {
                 // Get the integer part of pixels to move
                 const pixelsToMove = Math.floor(pixelAccumulator);
                 // Keep the fractional part for next time
                 pixelAccumulator -= pixelsToMove;
-                
+
                 if (this.container.classList.contains('horizontal')) {
                     if (this.viewer.scrollLeft >= this.viewer.scrollWidth - this.viewer.clientWidth) {
                         this.stopAutoScroll();
