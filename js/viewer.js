@@ -16,9 +16,9 @@ class ComicsViewer {
         // Adicionar listeners para os eventos de narração
         document.addEventListener('narrationStarted', () => {
             // Iniciar o viewer automaticamente quando a narração começar
-            // if (!this.isRunning) {
+            if (!this.isRunning) {
                 this.scrollToTop();
-            // }
+            }
         });
 
         // document.addEventListener('narrationStopped', () => {
