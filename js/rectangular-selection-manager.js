@@ -216,11 +216,24 @@ class RectangularSelectionManager {
      * Inicia a narração de um texto extraído
      * @param {string} text - Texto a ser narrado
      */
-    startNarrationWithText(text) {
+    async startNarrationWithText(text) {
         if (!this.narrator || !text.trim()) return;
 
         this.isNarrating = true;
         this.currentNarrationIndex++;
+
+        // Obter a seleção atual
+        const currentSelection = this.selections[this.currentNarrationIndex];
+        if (!currentSelection || !currentSelection.element) {
+            console.warn(`RectangularSelectionManager: Seleção #${this.currentNarrationIndex + 1} não encontrada ou sem elemento`);
+            return;
+        }
+
+        // Registrar timestamp e coordenadas do início da narração
+        const timestamp = new Date().toISOString();
+        const rect = currentSelection.element.getBoundingClientRect();
+        console.log(`⏱️ [${timestamp}] Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
+        console.log(`📍 Coordenadas: (${Math.round(rect.left)}, ${Math.round(rect.top)}) - (${Math.round(rect.right)}, ${Math.round(rect.bottom)})`);
 
         // Garantir que o scroll automático esteja desativado antes de iniciar a narração
         if (this.scrollManager) {
@@ -231,8 +244,17 @@ class RectangularSelectionManager {
         // Destacar e fazer scroll para a seleção atual antes de iniciar a narração
         this.highlightSelection(this.currentNarrationIndex);
         
+        // Verificar se o sistema de pausa inteligente está disponível
+        const smartPause = window.smartPauseSystem;
+        
+        // Se o sistema de pausa inteligente estiver disponível, processar o elemento antes da narração
+        if (smartPause) {
+            smartPause.activate();
+            await smartPause.processElementBeforeNarration(currentSelection.element, this.currentNarrationIndex);
+        }
+        
         // Pequeno atraso para garantir que o scroll seja concluído antes de iniciar a narração
-        setTimeout(() => {
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Garantir que os elementos de seleção estejam ocultos durante a narração
         this.hideSelectionElementsDuringNarration();
@@ -243,13 +265,29 @@ class RectangularSelectionManager {
         // Processar o texto para melhorar a narração
         const processedText = this.processTextForNarration(text);
 
+        // Se o sistema de pausa inteligente estiver disponível, iniciar verificação de visibilidade
+        if (smartPause) {
+            smartPause.startVisibilityCheck(currentSelection.element);
+        }
+
         // Iniciar a narração
-        this.narrator.speak(processedText, () => {
+        this.narrator.speak(processedText, async () => {
             // Callback chamado quando a narração deste trecho terminar
+            
+            // Se o sistema de pausa inteligente estiver disponível, parar verificação de visibilidade
+            if (smartPause) {
+                smartPause.stopVisibilityCheck();
+            }
+            
             if (this.currentNarrationIndex >= this.selections.length - 1) {
                 // Se era o último trecho, resetar o estado
                 this.isNarrating = false;
                 this.currentNarrationIndex = -1;
+
+                // Desativar o sistema de pausa inteligente
+                if (smartPause) {
+                    smartPause.deactivate();
+                }
 
                 // Reativar scroll automático apenas se não houver mais narrações
                 if (this.scrollManager && !this.isNarrating) {
@@ -278,16 +316,25 @@ class RectangularSelectionManager {
                 }, 1500);
             } else {
                 // Preparar para a próxima seleção
-                setTimeout(() => {
-                    if (this.isNarrating) {
-                        this.updateScrollForCurrentSelection(this.currentNarrationIndex + 1);
+                const nextIndex = this.currentNarrationIndex + 1;
+                if (nextIndex < this.selections.length) {
+                    const nextSelection = this.selections[nextIndex];
+                    
+                    // Se o sistema de pausa inteligente estiver disponível, aguardar visibilidade do próximo elemento
+                    if (smartPause && nextSelection && nextSelection.element) {
+                        console.log(`⏳ Aguardando visibilidade da próxima seleção #${nextIndex + 1} antes de continuar...`);
+                        await smartPause.waitForNextElementVisibility(nextSelection.element);
                     }
-                }, 800); // Aumentar o atraso para uma transição mais suave
+                    
+                    // Atualizar o scroll para a próxima seleção
+                    if (this.isNarrating) {
+                        this.updateScrollForCurrentSelection(nextIndex);
+                    }
+                }
             }
         });
 
         console.log(`RectangularSelectionManager: Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
-        }, 500); // Adicionar tempo suficiente para o scroll ser concluído
     }
     /**
      * Configura os callbacks da fila de processamento
@@ -1435,6 +1482,31 @@ class RectangularSelectionManager {
         // Isso evita que o sistema tente reutilizar os mesmos quadros para a próxima imagem
         this.currentNarrationIndex = -1;
 
+        // Verificar se o sistema de pausa inteligente está disponível
+        const smartPauseSystem = window.smartPauseSystem;
+        const currentSelection = this.currentSelection;
+
+        // Função para iniciar a narração com verificação de visibilidade
+        const startNarrationWithVisibilityCheck = async () => {
+            // Se o sistema de pausa inteligente estiver disponível e ativo
+            if (smartPauseSystem && currentSelection) {
+                // Ativar o sistema de pausa inteligente
+                smartPauseSystem.activate();
+                
+                // Processar o elemento antes da narração (verifica visibilidade e rola se necessário)
+                await smartPauseSystem.processElementBeforeNarration(currentSelection, this.currentSelectionIndex || 0);
+                
+                // Iniciar verificação contínua de visibilidade durante a narração
+                smartPauseSystem.startVisibilityCheck(currentSelection);
+                
+                // Agora podemos iniciar a narração com segurança
+                this.narrator.speakText(processedText);
+            } else {
+                // Se o sistema de pausa inteligente não estiver disponível, iniciar narração normalmente
+                this.narrator.speakText(processedText);
+            }
+        };
+
         // Verificar se há uma narração em andamento
         if (this.narrator.synth.speaking) {
             console.log('Narração em andamento detectada. Adicionando pausa de 1,5 segundos entre seleções de texto...');
@@ -1449,7 +1521,7 @@ class RectangularSelectionManager {
                     console.log('Narração anterior concluída, aguardando 1,5 segundos antes da próxima seleção...');
                     setTimeout(() => {
                         console.log('Iniciando próxima narração após pausa...');
-                        this.narrator.speakText(processedText);
+                        startNarrationWithVisibilityCheck();
                     }, 1500); // 1,5 segundos em milissegundos
                 }
             };
@@ -1462,7 +1534,7 @@ class RectangularSelectionManager {
             // Garantir que a pausa seja aplicada mesmo na primeira narração
             // para dar tempo ao usuário de se preparar
             setTimeout(() => {
-                this.narrator.speakText(processedText);
+                startNarrationWithVisibilityCheck();
             }, 500); // Pausa menor para a primeira narração (0,5 segundos)
         }
     }
@@ -1679,6 +1751,18 @@ class RectangularSelectionManager {
             // Atualizar o índice atual
             this.currentNarrationIndex = index;
         }
+    }
+
+    /**
+     * Obtém o elemento DOM de uma seleção específica
+     * @param {number} index - Índice da seleção
+     * @returns {HTMLElement|null} - Elemento DOM da seleção ou null se não existir
+     */
+    getSelectionElement(index) {
+        // Encontrar a seleção pelo número (índice + 1)
+        const selectionNumber = index + 1;
+        const selectionElement = document.querySelector(`.rectangular-selection:nth-child(${selectionNumber})`);
+        return selectionElement || null;
     }
 
     /**

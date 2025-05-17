@@ -10,6 +10,7 @@ class ComicNarrator {
         this.currentPage = 0;
         this.pages = [];
         this.isProcessing = false;
+        this.currentUtterance = null; // Referência para o utterance atual
 
         // Add text buffer properties
         this.textBuffer = [];
@@ -30,7 +31,9 @@ class ComicNarrator {
             lastProcessedSelection: -1,
             isPageMode: false,
             isSelectionMode: false,
-            currentNarrationId: null
+            currentNarrationId: null,
+            narrationStartTime: null, // Timestamp de início da narração
+            narrationPaused: false // Indica se a narração está pausada
         };
 
         // DOM elements
@@ -1135,6 +1138,28 @@ class ComicNarrator {
 
             console.log(`Narrando texto ${i + 1} de ${uniqueTexts.length}: ${text.substring(0, 30)}...`);
 
+            // Verificar se o sistema de pausa inteligente está disponível
+            const smartPauseSystem = window.smartPauseSystem;
+            const currentSelection = window.rectangularSelectionManager?.getSelectionElement(i);
+            
+            // Se o sistema de pausa inteligente estiver disponível e houver uma seleção atual
+            if (smartPauseSystem && currentSelection) {
+                // Ativar o sistema de pausa inteligente
+                smartPauseSystem.activate();
+                
+                // Processar o elemento antes da narração (verifica visibilidade e rola se necessário)
+                await smartPauseSystem.processElementBeforeNarration(currentSelection, i);
+                
+                // Iniciar verificação contínua de visibilidade durante a narração
+                smartPauseSystem.startVisibilityCheck(currentSelection);
+                
+                // Registrar timestamp e coordenadas do elemento antes da narração
+                const visibility = smartPauseSystem.checkElementVisibility(currentSelection);
+                console.log(`⏱️ [${new Date().toISOString()}] Preparando narração do texto ${i+1}/${uniqueTexts.length}`);
+                console.log(`📍 Coordenadas: (${visibility.coordinates?.left}, ${visibility.coordinates?.top}) - (${visibility.coordinates?.right}, ${visibility.coordinates?.bottom})`);
+                console.log(`👁️ Visibilidade: ${Math.round((visibility.visiblePercentage || 0) * 100)}% - ${visibility.position || 'desconhecida'}`);
+            }
+            
             // Narrar o texto atual
             await this.speakText(text);
 
@@ -1737,6 +1762,7 @@ class ComicNarrator {
 
             // Create a new utterance
             const utterance = new SpeechSynthesisUtterance(processedText);
+            this.currentUtterance = utterance; // Armazenar referência ao utterance atual
 
             // Set voice and other properties
             if (this.currentVoice) {
@@ -1747,14 +1773,22 @@ class ComicNarrator {
             utterance.rate = this.rate;
             utterance.lang = this.currentVoice ? this.currentVoice.lang : 'pt-BR';
 
+            // Registrar o timestamp de início da narração
+            this.narrationState.narrationStartTime = Date.now();
+            console.log(`⏱️ [${new Date().toISOString()}] Narração iniciada`);
+
             // Set up event handlers
             utterance.onend = () => {
-                console.log('Speech ended');
+                console.log(`⏱️ [${new Date().toISOString()}] Narração concluída:`, processedText.substring(0, 30) + '...');
+                this.currentUtterance = null;
+                this.narrationState.narrationPaused = false;
                 resolve();
             };
 
             utterance.onerror = (event) => {
-                console.error('Speech error:', event);
+                console.error(`⚠️ [${new Date().toISOString()}] Erro na narração:`, event);
+                this.currentUtterance = null;
+                this.narrationState.narrationPaused = false;
                 reject(new Error('Speech synthesis error'));
             };
 
@@ -1804,6 +1838,74 @@ class ComicNarrator {
             // Keep the speech synthesis active (prevent it from stopping after a while)
             this.keepSpeechSynthesisActive();
         });
+    }
+
+    /**
+     * Pausa a narração atual
+     * @returns {boolean} - Verdadeiro se a narração foi pausada com sucesso
+     */
+    pauseSpeech() {
+        if (!this.synth || !this.synth.speaking) return false;
+        
+        try {
+            this.narrationState.narrationPaused = true;
+            this.synth.pause();
+            console.log(`⏸️ [${new Date().toISOString()}] Narração pausada`);
+            return true;
+        } catch (error) {
+            console.error('Erro ao pausar narração:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Retoma a narração pausada
+     * @returns {boolean} - Verdadeiro se a narração foi retomada com sucesso
+     */
+    resumeSpeech() {
+        if (!this.synth || !this.synth.paused) return false;
+        
+        try {
+            this.narrationState.narrationPaused = false;
+            this.synth.resume();
+            console.log(`▶️ [${new Date().toISOString()}] Narração retomada`);
+            return true;
+        } catch (error) {
+            console.error('Erro ao retomar narração:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Verifica se um elemento está visível na tela
+     * @param {HTMLElement} element - Elemento a ser verificado
+     * @returns {boolean} - Verdadeiro se o elemento estiver visível
+     */
+    isElementVisible(element) {
+        if (!element) return false;
+        
+        const rect = element.getBoundingClientRect();
+        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+        const windowWidth = window.innerWidth || document.documentElement.clientWidth;
+        
+        // Verificar se o elemento está completamente fora da tela
+        if (
+            rect.bottom < 0 ||
+            rect.top > windowHeight ||
+            rect.right < 0 ||
+            rect.left > windowWidth
+        ) {
+            return false;
+        }
+        
+        // Calcular a porcentagem visível (pelo menos 50% deve estar visível)
+        const visibleHeight = Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0);
+        const visibleWidth = Math.min(rect.right, windowWidth) - Math.max(rect.left, 0);
+        
+        const visibleArea = visibleHeight * visibleWidth;
+        const totalArea = rect.height * rect.width;
+        
+        return visibleArea > 0 && (visibleArea / totalArea) >= 0.5;
     }
 
     // Keep speech synthesis active to prevent it from stopping
