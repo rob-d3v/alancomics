@@ -5,6 +5,8 @@ class ComicsViewer {
         this.zoomLevel = 1;
         this.isScrolling = false;
         this.scrollInterval = null;
+        this.isPaused = false;
+        this.lastScrollSpeed = 0;  // Para armazenar a velocidade quando pausamos
         this.currentPdfDoc = null;
         this.currentEpubBook = null;
         this.initControls();
@@ -49,7 +51,29 @@ class ComicsViewer {
             await new Promise(resolve => epubScript.onload = resolve);
         }
     }
+    // Adicione estes novos métodos à classe ComicsViewer
+    pauseAutoScroll() {
+        if (!this.isScrolling || this.isPaused) return;
 
+        this.isPaused = true;
+        clearInterval(this.scrollInterval);
+        this.scrollInterval = null;
+        console.log('Auto-scroll paused');
+
+        // Dispare um evento para notificar outras classes
+        document.dispatchEvent(new CustomEvent('autoScrollPaused'));
+    }
+    resumeAutoScroll() {
+        if (!this.isPaused) return;
+
+        // Retoma o autoscroll com a última velocidade usada
+        this.isPaused = false;
+        this.startAutoScroll(this.lastScrollSpeed);
+        console.log('Auto-scroll resumed');
+
+        // Dispare um evento para notificar outras classes
+        document.dispatchEvent(new CustomEvent('autoScrollResumed'));
+    }
     initControls() {
         document.getElementById('zoomIn').addEventListener('click', () => this.zoom(0.1));
         document.getElementById('zoomOut').addEventListener('click', () => this.zoom(-0.1));
@@ -58,6 +82,9 @@ class ComicsViewer {
 
         // Adicionar botão de pausa da narração aos controles flutuantes
         this.addPauseNarrationButton();
+
+        // Adicionar botão de pausa do autoscroll
+        this.addAutoScrollPauseButton();
     }
 
     /**
@@ -636,9 +663,19 @@ class ComicsViewer {
     }
 
     startAutoScroll(speed) {
+        if (this.isPaused) {
+            this.resumeAutoScroll();
+            return;
+        }
+        // Se já estiver rolando, pare primeiro
+        if (this.isScrolling) {
+            this.stopAutoScroll();
+        }
         if (this.isScrolling) return;
 
         this.isScrolling = true;
+        this.lastScrollSpeed = speed; // Armazene a velocidade para poder retomar depois
+
 
         // New approach for handling all speeds
         // We'll use a fixed interval and accumulate fractional pixels
@@ -679,10 +716,72 @@ class ComicsViewer {
 
     stopAutoScroll() {
         this.isScrolling = false;
+        this.isPaused = false; // Reinicie o estado de pausa
         clearInterval(this.scrollInterval);
+        this.scrollInterval = null;
         console.log('Auto-scroll stopped');
+
+        // Dispare o evento existente
+        document.dispatchEvent(new CustomEvent('autoScrollComplete'));
+    }
+    addAutoScrollPauseButton() {
+        // Verificar se os controles flutuantes existem
+        const floatingControls = document.querySelector('#viewer .floating-controls');
+        if (!floatingControls) {
+            // Criar o container de controles flutuantes se não existir
+            const newControls = document.createElement('div');
+            newControls.className = 'floating-controls';
+            this.viewer.appendChild(newControls);
+        }
+
+        // Obter referência aos controles flutuantes
+        const controls = document.querySelector('#viewer .floating-controls');
+
+        // Criar botão de pausa do autoscroll
+        const pauseScrollButton = document.createElement('button');
+        pauseScrollButton.id = 'pauseAutoScroll';
+        pauseScrollButton.className = 'floating-button pause-scroll';
+        pauseScrollButton.innerHTML = '<i class="fas fa-pause"></i>';
+        pauseScrollButton.title = 'Pausar/Retomar auto-rolagem';
+
+        // Adicionar evento de clique para pausar/retomar o autoscroll
+        pauseScrollButton.addEventListener('click', () => {
+            const isScrolling = this.toggleAutoScroll();
+            pauseScrollButton.innerHTML = isScrolling ?
+                '<i class="fas fa-pause"></i>' :
+                '<i class="fas fa-play"></i>';
+        });
+
+        // Adicionar o botão aos controles flutuantes
+        controls.appendChild(pauseScrollButton);
+
+        // Inicialmente oculto, será mostrado apenas quando o autoscroll estiver ativo
+        pauseScrollButton.style.display = 'none';
+
+        // Atualizar a visualização do botão com base no estado do autoscroll
+        setInterval(() => {
+            if (this.isScrolling) {
+                pauseScrollButton.style.display = 'flex';
+                pauseScrollButton.innerHTML = this.isPaused ?
+                    '<i class="fas fa-play"></i>' :
+                    '<i class="fas fa-pause"></i>';
+            } else {
+                pauseScrollButton.style.display = 'none';
+            }
+        }, 500); // Verificar a cada meio segundo
     }
 
+    toggleAutoScroll() {
+        if (this.isPaused) {
+            this.resumeAutoScroll();
+        } else if (this.isScrolling) {
+            this.pauseAutoScroll();
+        } else {
+            // Se não estiver rolando nem pausado, inicie com uma velocidade padrão
+            this.startAutoScroll(1.0); // Ajuste a velocidade padrão conforme necessário
+        }
+        return this.isScrolling && !this.isPaused; // Retorna true se estiver rolando e não pausado
+    }
     addPdfStyles() {
         const style = document.createElement('style');
         style.textContent = `

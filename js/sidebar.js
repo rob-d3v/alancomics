@@ -36,8 +36,47 @@ class Sidebar {
                 this.stopViewer();
             }
         });
+        document.addEventListener('autoScrollPaused', this.handleAutoScrollPaused.bind(this));
+        document.addEventListener('autoScrollResumed', this.handleAutoScrollResumed.bind(this));
+        document.addEventListener('autoScrollComplete', this.handleAutoScrollComplete.bind(this));
     }
 
+    // Métodos para controlar o autoscroll a partir desta classe
+    iniciarRolagem(velocidade) {
+        this.comicsViewer.startAutoScroll(velocidade);
+    }
+
+    pausarRolagem() {
+        this.comicsViewer.pauseAutoScroll();
+    }
+
+    retornarRolagem() {
+        this.comicsViewer.resumeAutoScroll();
+    }
+
+    pararRolagem() {
+        this.comicsViewer.stopAutoScroll();
+    }
+
+    alternarRolagem() {
+        return this.comicsViewer.toggleAutoScroll();
+    }
+
+    // Handlers para os eventos
+    handleAutoScrollPaused() {
+        console.log('Rolagem automática foi pausada');
+        // Faça algo quando o autoscroll pausar
+    }
+
+    handleAutoScrollResumed() {
+        console.log('Rolagem automática foi retomada');
+        // Faça algo quando o autoscroll retomar
+    }
+
+    handleAutoScrollComplete() {
+        console.log('Rolagem automática foi concluída');
+        // Faça algo quando o autoscroll terminar
+    }
     initializeDropZone() {
         this.dropZone.addEventListener('click', () => {
             const input = document.createElement('input');
