@@ -1,5 +1,19 @@
 class ComicNarrator {
     constructor() {
+        if (!window.speechSynthesis) {
+            console.error("SpeechSynthesis não disponível neste navegador!");
+            alert("Seu navegador não suporta síntese de voz. Por favor, tente usar um navegador mais recente como Chrome, Firefox ou Edge.");
+            return;
+        }
+
+        console.log("Inicializando ComicNarrator");
+        this.synth = window.speechSynthesis;
+
+        // Verificar o estado atual do sintetizador
+        console.log("Estado inicial do sintetizador - falando:", this.synth.speaking, "- pendente:", this.synth.pending, "- pausado:", this.synth.paused);
+
+        // Forçar um reset no sintetizador para limpar qualquer estado inconsistente
+        this.synth.cancel();
         this.synth = window.speechSynthesis;
         this.voices = [];
         this.currentVoice = null;
@@ -48,10 +62,24 @@ class ComicNarrator {
         this.readingIndicator = document.createElement('div');
         this.readingIndicator.className = 'reading-indicator';
         this.readingIndicator.textContent = 'Processando texto...';
+        this.keydownHandler = (event) => {
+            // Verificar se a tecla pressionada é espaço
+            if (event.code === 'Space' && this.isNarrating) {
+                // Evitar o comportamento padrão do navegador (rolar página)
+                event.preventDefault();
+
+                // Alternar entre pausar e retomar narração
+                this.togglePauseNarration();
+            } else if (event.key === 'Escape' && this.isNarrating) {
+                this.stopNarration();
+            }
+        };
+
         document.body.appendChild(this.readingIndicator);
 
         this.initVoices();
         this.initEventListeners();
+        this.keydownHandler = null;
     }
 
     initVoices() {
@@ -940,55 +968,242 @@ class ComicNarrator {
 
         return languageNames[langCode] || `${langCode}`;
     }
-
     initEventListeners() {
+        console.log("Inicializando event listeners");
+
         // Toggle narration controls
-        this.enableNarration.addEventListener('change', () => {
-            if (this.enableNarration.checked) {
-                this.narrationControls.classList.remove('disabled');
-            } else {
-                this.narrationControls.classList.add('disabled');
-                this.stopNarration();
-            }
-        });
+        if (this.enableNarration) {
+            this.enableNarration.addEventListener('change', () => {
+                if (this.enableNarration.checked) {
+                    this.narrationControls.classList.remove('disabled');
+                } else {
+                    this.narrationControls.classList.add('disabled');
+                    this.stopNarration();
+                }
+            });
+        } else {
+            console.warn("Elemento enableNarration não encontrado");
+        }
 
         // Voice selection
-        this.voiceSelect.addEventListener('change', () => {
-            const selectedIndex = this.voiceSelect.value;
-            this.currentVoice = this.voices[selectedIndex];
-        });
+        if (this.voiceSelect) {
+            this.voiceSelect.addEventListener('change', () => {
+                const selectedIndex = this.voiceSelect.value;
+                this.currentVoice = this.voices[selectedIndex];
+                console.log("Voz alterada para:", this.currentVoice.name);
+            });
+        } else {
+            console.warn("Elemento voiceSelect não encontrado");
+        }
 
         // Pitch control
-        this.pitchRange.addEventListener('input', () => {
-            this.pitch = parseFloat(this.pitchRange.value);
-            this.pitchValue.textContent = this.pitch.toFixed(1);
-        });
+        if (this.pitchRange && this.pitchValue) {
+            this.pitchRange.addEventListener('input', () => {
+                this.pitch = parseFloat(this.pitchRange.value);
+                this.pitchValue.textContent = this.pitch.toFixed(1);
+            });
+        } else {
+            console.warn("Elementos de controle de pitch não encontrados");
+        }
 
         // Rate control
-        this.rateRange.addEventListener('input', () => {
-            this.rate = parseFloat(this.rateRange.value);
-            this.rateValue.textContent = this.rate.toFixed(1);
-        });
+        if (this.rateRange && this.rateValue) {
+            this.rateRange.addEventListener('input', () => {
+                this.rate = parseFloat(this.rateRange.value);
+                this.rateValue.textContent = this.rate.toFixed(1);
+            });
+        } else {
+            console.warn("Elementos de controle de rate não encontrados");
+        }
 
         // Pause time
-        this.pauseTimeInput.addEventListener('change', () => {
-            this.pauseTime = parseInt(this.pauseTimeInput.value, 10);
-        });
+        if (this.pauseTimeInput) {
+            this.pauseTimeInput.addEventListener('change', () => {
+                this.pauseTime = parseInt(this.pauseTimeInput.value, 10);
+            });
+        } else {
+            console.warn("Elemento pauseTimeInput não encontrado");
+        }
 
         // Start/Stop narration
-        this.startNarrationBtn.addEventListener('click', () => {
-            if (this.isNarrating) {
-                this.stopNarration();
-                // Disparar evento de parada de narração
-                document.dispatchEvent(new CustomEvent('narrationStopped'));
-            } else {
-                this.startNarration();
-                // Disparar evento de início de narração
-                document.dispatchEvent(new CustomEvent('narrationStarted'));
+        if (this.startNarrationBtn) {
+            this.startNarrationBtn.addEventListener('click', () => {
+                if (this.isNarrating) {
+                    console.log("Botão pressionado: Parar narração");
+                    this.stopNarration();
+                    document.dispatchEvent(new CustomEvent('narrationStopped'));
+                } else {
+                    console.log("Botão pressionado: Iniciar narração");
+                    this.startNarration();
+                    document.dispatchEvent(new CustomEvent('narrationStarted'));
+                }
+            });
+        } else {
+            console.warn("Elemento startNarrationBtn não encontrado");
+        }
+
+        // Verificar existência do botão pauseNarration e registrar listener
+        const pauseNarrationBtn = document.getElementById('pauseNarration');
+        if (pauseNarrationBtn) {
+            console.log("Botão pauseNarration encontrado, registrando listener");
+            pauseNarrationBtn.addEventListener('click', () => {
+                this.togglePauseNarration();
+            });
+        }
+
+        console.log("Event listeners inicializados com sucesso");
+    }
+    pauseNarration() {
+        console.log("Tentando pausar narração...");
+
+        // Verificar se a narração está em andamento e não está pausada
+        if (this.isNarrating && this.synth) {
+            if (this.synth.paused) {
+                console.log("A narração já está pausada");
+                return;
             }
-        });
+
+            console.log("Pausando síntese de voz");
+
+            // Pausar a síntese de voz
+            try {
+                this.synth.pause();
+                console.log("Síntese de voz pausada com sucesso");
+
+                // Atualizar o estado
+                this.narrationState.isPaused = true;
+
+                // Atualizar o botão de início/pausa de narração
+                if (this.startNarrationBtn) {
+                    this.startNarrationBtn.innerHTML = '<i class="fas fa-play"></i> Continuar Narração';
+                    this.startNarrationBtn.classList.add('paused');
+                }
+
+                // Atualizar controles flutuantes
+                const pausePlayBtn = document.querySelector('.narration-play-pause');
+                if (pausePlayBtn) {
+                    pausePlayBtn.classList.add('paused');
+                    const icon = pausePlayBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-pause');
+                        icon.classList.add('fa-play');
+                    }
+                }
+
+                // Atualizar indicador de leitura
+                this.readingIndicator.textContent = 'Narração pausada';
+                this.readingIndicator.style.display = 'block';
+
+                // Pausar a barra de progresso, se existir
+                if (window.narrationProgressBar) {
+                    window.narrationProgressBar.pause();
+                }
+
+                // Pausar rastreador de narração de texto, se estiver ativo
+                if (this.narrationTracker && this.narrationTracker.isActive) {
+                    this.narrationTracker.pause();
+                }
+
+                // Disparar evento personalizado de narração pausada
+                document.dispatchEvent(new CustomEvent('narrationPaused', {
+                    detail: {
+                        timestamp: Date.now(),
+                        narrationId: this.narrationState.currentNarrationId
+                    }
+                }));
+
+                console.log('Narração pausada com sucesso');
+            } catch (e) {
+                console.error("Erro ao pausar narração:", e);
+            }
+        } else {
+            console.log("Não é possível pausar: narração não está ativa ou sintetizador não está disponível");
+        }
     }
 
+
+    resumeNarration() {
+        console.log("Tentando retomar narração...");
+
+        // Verificar se a narração está pausada
+        if (this.isNarrating && this.synth) {
+            if (!this.synth.paused) {
+                console.log("A narração não está pausada");
+                return;
+            }
+
+            console.log("Retomando síntese de voz");
+
+            // Retomar a síntese de voz
+            try {
+                this.synth.resume();
+                console.log("Síntese de voz retomada com sucesso");
+
+                // Atualizar o estado
+                this.narrationState.isPaused = false;
+
+                // Atualizar o botão de início/pausa de narração
+                if (this.startNarrationBtn) {
+                    this.startNarrationBtn.innerHTML = '<i class="fas fa-stop"></i> Parar Narração';
+                    this.startNarrationBtn.classList.remove('paused');
+                }
+
+                // Atualizar controles flutuantes
+                const pausePlayBtn = document.querySelector('.narration-play-pause');
+                if (pausePlayBtn) {
+                    pausePlayBtn.classList.remove('paused');
+                    const icon = pausePlayBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-play');
+                        icon.classList.add('fa-pause');
+                    }
+                }
+
+                // Ocultar o indicador de leitura
+                this.readingIndicator.style.display = 'none';
+
+                // Retomar a barra de progresso, se existir
+                if (window.narrationProgressBar) {
+                    window.narrationProgressBar.resume();
+                }
+
+                // Retomar rastreador de narração de texto, se estiver ativo
+                if (this.narrationTracker && this.narrationTracker.isActive) {
+                    this.narrationTracker.resume();
+                }
+
+                // Disparar evento personalizado de narração retomada
+                document.dispatchEvent(new CustomEvent('narrationResumed', {
+                    detail: {
+                        timestamp: Date.now(),
+                        narrationId: this.narrationState.currentNarrationId
+                    }
+                }));
+
+                console.log('Narração retomada com sucesso');
+            } catch (e) {
+                console.error("Erro ao retomar narração:", e);
+            }
+        } else {
+            console.log("Não é possível retomar: narração não está ativa ou sintetizador não está disponível");
+        }
+    }
+
+    togglePauseNarration() {
+        console.log("Alternando estado de pausa da narração");
+
+        if (this.synth && this.isNarrating) {
+            if (this.synth.paused) {
+                console.log("Narração está pausada, retomando...");
+                this.resumeNarration();
+            } else {
+                console.log("Narração está ativa, pausando...");
+                this.pauseNarration();
+            }
+        } else {
+            console.log("Não é possível alternar estado: narração não está ativa ou sintetizador não está disponível");
+        }
+    }
     // Find which page is currently most visible in the viewport
     findVisiblePageIndex() {
         if (!this.pages.length) return 0;
@@ -1269,16 +1484,25 @@ class ComicNarrator {
     }
 
     stopNarration() {
+        console.log("Parando narração...");
+
+        if (!this.isNarrating) {
+            console.log("Não há narração ativa para parar");
+            return;
+        }
+
         this.isNarrating = false;
         this.isBuffering = false;
 
         // Cancel any ongoing speech
         if (this.synth) {
+            console.log("Cancelando síntese de voz");
             this.synth.cancel();
         }
 
         // Clear any active intervals
         if (this.keepAliveInterval) {
+            console.log("Limpando intervalos de verificação");
             clearInterval(this.keepAliveInterval);
             this.keepAliveInterval = null;
         }
@@ -1291,7 +1515,8 @@ class ComicNarrator {
         }
 
         // Desativar o rastreador de narração se estiver ativo
-        if (this.narrationTracker) {
+        if (this.narrationTracker && this.narrationTracker.isActive) {
+            console.log("Desativando rastreador de narração");
             this.narrationTracker.deactivate();
         }
 
@@ -1301,13 +1526,18 @@ class ComicNarrator {
             console.log('ScrollManager global desativado após fim da narração');
         }
 
+        // Remover manipulador de teclas
+        console.log("Removendo manipulador de teclas");
+        document.removeEventListener('keydown', this.keydownHandler);
+
         // Resetar o estado da narração
         this.narrationState = {
             lastProcessedPage: -1,
             lastProcessedSelection: -1,
             isPageMode: false,
             isSelectionMode: false,
-            currentNarrationId: null
+            currentNarrationId: null,
+            isPaused: false
         };
 
         // Limpar textos narrados recentemente
@@ -1324,9 +1554,124 @@ class ComicNarrator {
         // Re-enable other controls
         this.disableOtherControls(false);
 
-        console.log('Narration stopped completely');
-    }
+        // Remover controles flutuantes se existirem
+        const floatingControls = document.querySelector('.floating-narration-controls');
+        if (floatingControls) {
+            floatingControls.remove();
+        }
 
+        // Disparar evento de parada de narração
+        document.dispatchEvent(new CustomEvent('narrationStopped'));
+
+        console.log('Narração completamente parada');
+    }
+    // Adicione este novo método à classe ComicNarrator
+    createFloatingNarrationControls() {
+        // Remover controles existentes para evitar duplicação
+        const existingControls = document.querySelector('.floating-narration-controls');
+        if (existingControls) {
+            existingControls.remove();
+        }
+
+        // Criar container para controles flutuantes
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'floating-narration-controls';
+
+        // Botão de pausa/play
+        const pausePlayBtn = document.createElement('button');
+        pausePlayBtn.className = 'narration-play-pause';
+        pausePlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        pausePlayBtn.title = 'Pausar/Retomar narração (Espaço)';
+
+        // Botão para parar narração
+        const stopBtn = document.createElement('button');
+        stopBtn.className = 'narration-stop';
+        stopBtn.innerHTML = '<i class="fas fa-stop"></i>';
+        stopBtn.title = 'Parar narração (Esc)';
+
+        // Adicionar eventos aos botões
+        pausePlayBtn.addEventListener('click', () => {
+            this.togglePauseNarration();
+            pausePlayBtn.classList.toggle('paused');
+
+            // Atualizar ícone
+            const icon = pausePlayBtn.querySelector('i');
+            if (icon.classList.contains('fa-pause')) {
+                icon.classList.remove('fa-pause');
+                icon.classList.add('fa-play');
+            } else {
+                icon.classList.remove('fa-play');
+                icon.classList.add('fa-pause');
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            this.stopNarration();
+        });
+
+        // Adicionar tecla de atalho para parar narração (Esc)
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.isNarrating) {
+                this.stopNarration();
+            }
+        });
+
+        // Adicionar botões ao container
+        controlsContainer.appendChild(pausePlayBtn);
+        controlsContainer.appendChild(stopBtn);
+
+        // Adicionar estilos para os controles flutuantes
+        const style = document.createElement('style');
+        style.textContent = `
+        .floating-narration-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(30, 30, 30, 0.9);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+        }
+        
+        .floating-narration-controls button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-color, #3498db);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-narration-controls button:hover {
+            transform: scale(1.1);
+            background: #2980b9;
+        }
+        
+        .narration-play-pause.paused {
+            background: #27ae60 !important;
+        }
+        
+        .narration-stop {
+            background: #e74c3c !important;
+        }
+        
+        .narration-stop:hover {
+            background: #c0392b !important;
+        }
+    `;
+
+        document.head.appendChild(style);
+        document.body.appendChild(controlsContainer);
+    }
     // Disable other controls during narration
     disableOtherControls(disable) {
         this.voiceSelect.disabled = disable;
@@ -1713,17 +2058,20 @@ class ComicNarrator {
     async speakText(text) {
         return new Promise((resolve, reject) => {
             if (!this.isNarrating) {
+                console.log("Narração não está ativa, abortando speakText");
                 resolve();
                 return;
             }
 
             if (!text || text.trim() === '') {
+                console.log("Texto vazio, abortando speakText");
                 resolve();
                 return;
             }
 
             // Processar o texto para melhorar a qualidade da narração
             const processedText = this.processTextForNarration(text);
+            console.log("Iniciando narração com texto processado:", processedText.substring(0, 50) + "...");
 
             // Verificar se este texto já foi narrado recentemente (evitar repetições)
             if (this.hasTextBeenNarratedRecently(processedText)) {
@@ -1737,25 +2085,34 @@ class ComicNarrator {
 
             // Create a new utterance
             const utterance = new SpeechSynthesisUtterance(processedText);
+            console.log("Utterance criado com sucesso");
 
             // Set voice and other properties
             if (this.currentVoice) {
                 utterance.voice = this.currentVoice;
+                console.log("Usando voz:", this.currentVoice.name);
+            } else {
+                console.warn("Nenhuma voz atual definida!");
             }
 
             utterance.pitch = this.pitch;
             utterance.rate = this.rate;
             utterance.lang = this.currentVoice ? this.currentVoice.lang : 'pt-BR';
+            utterance.volume = 1; // Garantir volume máximo
 
             // Set up event handlers
+            utterance.onstart = () => {
+                console.log('Narração iniciada');
+            };
+
             utterance.onend = () => {
-                console.log('Speech ended');
+                console.log('Narração finalizada');
                 resolve();
             };
 
             utterance.onerror = (event) => {
-                console.error('Speech error:', event);
-                reject(new Error('Speech synthesis error'));
+                console.error('Erro na síntese de voz:', event);
+                reject(new Error(`Erro na síntese de voz: ${event.error}`));
             };
 
             // Verificar se estamos em um arquivo de texto para ativar o destaque
@@ -1782,29 +2139,56 @@ class ComicNarrator {
                     }
 
                     // Configurar evento onboundary ANTES de iniciar a narração com destaque
-                    // Isso garante que o evento seja registrado antes de passar o utterance para o TextNarrationTracker
                     utterance.onboundary = (event) => {
                         if (event.name === 'word') {
                             // Atualizar o ScrollManager global para manter o texto visível
                             if (window.scrollManager && this.narrationTracker.highlightedElement) {
                                 window.scrollManager.setCurrentElement(this.narrationTracker.highlightedElement);
-                                console.log('ScrollManager: Atualizando elemento destacado durante narração');
                             }
                         }
                     };
 
-                    // Iniciar narração com destaque APÓS configurar o evento onboundary
+                    // Iniciar narração com destaque
                     this.narrationTracker.startNarration(text, utterance);
                 }
             }
 
-            // Start speaking
-            this.synth.speak(utterance);
+            // Verificar se a síntese de voz está disponível
+            if (!this.synth) {
+                console.error("O objeto de síntese de voz não está disponível!");
+                reject(new Error("Síntese de voz não disponível"));
+                return;
+            }
 
-            // Keep the speech synthesis active (prevent it from stopping after a while)
-            this.keepSpeechSynthesisActive();
+            // Garantir que o sintetizador esteja ativo
+            if (this.synth.paused) {
+                console.log("Sintetizador estava pausado, retomando...");
+                this.synth.resume();
+            }
+
+            // Iniciar a narração
+            console.log("Inciando narração via speechSynthesis.speak");
+            try {
+                this.synth.speak(utterance);
+
+                // Verificação para garantir que a narração começou
+                setTimeout(() => {
+                    if (!this.synth.speaking && !this.synth.pending) {
+                        console.warn("A narração não iniciou corretamente, tentando novamente...");
+                        this.synth.cancel(); // Limpar qualquer estado inconsistente
+                        this.synth.speak(utterance);
+                    }
+                }, 250);
+
+                // Keep the speech synthesis active
+                this.keepSpeechSynthesisActive();
+            } catch (e) {
+                console.error("Erro ao iniciar narração:", e);
+                reject(e);
+            }
         });
     }
+
 
     // Keep speech synthesis active to prevent it from stopping
     keepSpeechSynthesisActive() {
