@@ -2103,15 +2103,21 @@ class ComicNarrator {
             // Set up event handlers
             utterance.onstart = () => {
                 console.log('Narração iniciada');
+                // Disparar evento para pausar a rolagem automática quando a narração começar
+                document.dispatchEvent(new CustomEvent('textNarrationStarted'));
             };
 
             utterance.onend = () => {
                 console.log('Narração finalizada');
+                // Disparar evento para retomar a rolagem automática quando a narração terminar
+                document.dispatchEvent(new CustomEvent('textNarrationEnded'));
                 resolve();
             };
 
             utterance.onerror = (event) => {
                 console.error('Erro na síntese de voz:', event);
+                // Garantir que a rolagem seja retomada mesmo em caso de erro
+                document.dispatchEvent(new CustomEvent('textNarrationEnded'));
                 reject(new Error(`Erro na síntese de voz: ${event.error}`));
             };
 
