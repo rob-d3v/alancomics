@@ -2055,6 +2055,64 @@ class ComicNarrator {
         }
     }
 
+    isElementInViewport(element) {
+        if (!element) return false;
+        
+        const rect = element.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        
+        // Definir limites da área "segura" da viewport (20% a 80% da altura)
+        const minVisibleY = viewportHeight * 0.2;
+        const maxVisibleY = viewportHeight * 0.8;
+        
+        // Verificar se o elemento está dentro da área "segura"
+        const elementCenter = rect.top + (rect.height / 2);
+        const isInSafeArea = elementCenter >= minVisibleY && elementCenter <= maxVisibleY;
+        
+        console.log(">>> 2: Verificando visibilidade do elemento:", {
+            elementCenter,
+            minVisibleY,
+            maxVisibleY,
+            isInSafeArea
+        });
+        
+        return isInSafeArea;
+    }
+
+    async scrollToElement(element) {
+        return new Promise((resolve) => {
+            if (!element) {
+                resolve();
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const targetY = window.pageYOffset + rect.top - (viewportHeight * 0.4); // Posicionar em 40% da viewport
+
+            console.log(">>> 3: Iniciando rolagem para o elemento");
+
+            window.scrollTo({
+                top: targetY,
+                behavior: 'smooth'
+            });
+
+            // Aguardar a rolagem terminar
+            const checkScroll = setInterval(() => {
+                if (this.isElementInViewport(element)) {
+                    clearInterval(checkScroll);
+                    resolve();
+                }
+            }, 100);
+
+            // Timeout de segurança após 2 segundos
+            setTimeout(() => {
+                clearInterval(checkScroll);
+                resolve();
+            }, 2000);
+        });
+    }
+
     async speakText(text) {
         return new Promise((resolve, reject) => {
             if (!this.isNarrating) {
@@ -2069,11 +2127,31 @@ class ComicNarrator {
                 return;
             }
 
-            // Processar o texto para melhorar a qualidade da narração
-            const processedText = this.processTextForNarration(text);
-            console.log("Iniciando narração com texto processado:", processedText.substring(0, 50) + "...");
+            // Verificar se o elemento atual está visível na viewport
+            if (this.currentElement && !this.isElementInViewport(this.currentElement)) {
+                console.log(">>> 1: Elemento não está visível na viewport, ativando auto-scroll");
+                // Aguardar a rolagem terminar antes de continuar com a narração
+                this.scrollToElement(this.currentElement).then(() => {
+                    // Aumentar a pausa entre trechos para dar tempo de ler
+                    setTimeout(() => {
+                        this.continueWithNarration(text, resolve, reject);
+                    }, this.pauseTime * 1000);
+                });
+                return;
+            }
 
-            // Verificar se este texto já foi narrado recentemente (evitar repetições)
+            // Se o elemento já estiver visível, continuar com a narração normalmente
+            this.continueWithNarration(text, resolve, reject);
+        });
+    }
+
+    // Método para continuar com a narração após verificar a visibilidade
+    continueWithNarration(text, resolve, reject) {
+        // Processar o texto para melhorar a qualidade da narração
+        const processedText = this.processTextForNarration(text);
+        console.log(">>> 4: Iniciando narração com texto processado:", processedText.substring(0, 50) + "...");
+
+        // Verificar se este texto já foi narrado recentemente (evitar repetições)
             if (this.hasTextBeenNarratedRecently(processedText)) {
                 console.log('Texto já narrado recentemente, pulando para evitar repetição:', processedText.substring(0, 30) + '...');
                 resolve();
@@ -2192,9 +2270,57 @@ class ComicNarrator {
                 console.error("Erro ao iniciar narração:", e);
                 reject(e);
             }
-        });
+        };
+    
+
+
+    // Verifica se um elemento está visível na viewport
+    isElementInViewport(element) {
+        if (!element) return false;
+
+        const rect = element.getBoundingClientRect();
+        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+        // Elemento está parcialmente visível na viewport
+        return (
+            rect.top <= windowHeight * 0.8 && // 80% da altura da viewport
+            rect.bottom >= windowHeight * 0.2  // 20% da altura da viewport
+        );
     }
 
+    // Rola a página até que o elemento esteja no centro da viewport
+    scrollToElement(element) {
+        if (!element) return;
+
+        const rect = element.getBoundingClientRect();
+        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+        const targetScroll = window.scrollY + rect.top - (windowHeight / 2);
+
+        console.log(">>> 2: Rolando para posicionar elemento no centro da viewport");
+
+        window.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+        });
+
+        // Aguarda a rolagem terminar antes de continuar
+        return new Promise(resolve => {
+            const checkScroll = setInterval(() => {
+                const currentRect = element.getBoundingClientRect();
+                if (this.isElementInViewport(element)) {
+                    console.log(">>> 3: Elemento agora está visível na viewport");
+                    clearInterval(checkScroll);
+                    resolve();
+                }
+            }, 100);
+
+            // Timeout de segurança após 5 segundos
+            setTimeout(() => {
+                clearInterval(checkScroll);
+                resolve();
+            }, 5000);
+        });
+    }
 
     // Keep speech synthesis active to prevent it from stopping
     keepSpeechSynthesisActive() {

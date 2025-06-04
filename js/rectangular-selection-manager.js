@@ -160,8 +160,17 @@ class RectangularSelectionManager {
             return;
         }
 
+        // Log das coordenadas da seleção atual
         const currentSelection = this.selections[index];
         if (currentSelection && currentSelection.element) {
+            const rect = currentSelection.element.getBoundingClientRect();
+            console.log(">>> 5: Coordenadas da seleção atual:", {
+                top: rect.top,
+                bottom: rect.bottom,
+                height: rect.height,
+                center: rect.top + (rect.height / 2),
+                viewportHeight: window.innerHeight
+            });
             // Forçar desativação do scroll automático durante a narração das seleções
             this.scrollManager.deactivate();
 

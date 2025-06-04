@@ -7,11 +7,6 @@ class Sidebar {
         this.thumbnailsContainer = document.getElementById('thumbnailsContainer');
         this.isRunning = false;
 
-        // Add auto-scroll complete listener
-        document.addEventListener('autoScrollComplete', () => {
-            this.stopViewer();
-        });
-
         this.initializeEventListeners();
     }
 
@@ -75,7 +70,13 @@ class Sidebar {
 
     handleAutoScrollComplete() {
         console.log('Rolagem automática foi concluída');
-        // Faça algo quando o autoscroll terminar
+        if (this.isRunning) {
+            this.isRunning = false;
+            const startButton = document.getElementById('startButton');
+            startButton.innerHTML = '<i class="fas fa-play"></i> Iniciar';
+            startButton.classList.remove('active');
+            this.disableControls(false);
+        }
     }
     initializeDropZone() {
         this.dropZone.addEventListener('click', () => {

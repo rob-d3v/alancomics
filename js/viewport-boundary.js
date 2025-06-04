@@ -119,6 +119,8 @@ class ViewportBoundary {
         if (!this.isEnabled || !this.boundaryElement || !this.viewer) {
             return;
         }
+
+        console.log(">>> 6: Atualizando posição do viewport boundary");
         
         // Obter as dimensões do viewport
         const viewportWidth = window.innerWidth;
@@ -126,6 +128,19 @@ class ViewportBoundary {
         
         // Obter a posição do visualizador em relação à janela
         const viewerRect = this.viewer.getBoundingClientRect();
+
+        console.log(">>> 7: Dimensões do viewport e visualizador:", {
+            viewport: {
+                width: viewportWidth,
+                height: viewportHeight,
+                scrollY: window.scrollY
+            },
+            viewer: {
+                top: viewerRect.top,
+                bottom: viewerRect.bottom,
+                height: viewerRect.height
+            }
+        });
         
         // Calcular a interseção entre o viewport e o visualizador
         const top = Math.max(0, viewerRect.top);
