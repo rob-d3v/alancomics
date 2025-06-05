@@ -303,7 +303,7 @@ class TextHighlighter {
             
             // Verificar se a posição está dentro desta sentença
             if (startPosition >= sentenceIndex && startPosition < sentenceEnd) {
-                console.log(`Iniciando narração a partir da sentença ${i}: "${sentence.substring(0, 30)}..."`);
+                // console.log(`Iniciando narração a partir da sentença ${i}: "${sentence.substring(0, 30)}..."`);
                 this.currentSentenceIndex = i - 1; // Definir para a sentença anterior
                 return;
             }
@@ -329,7 +329,7 @@ class TextHighlighter {
             currentPosition = sentenceIndex + sentence.length;
         }
         
-        console.log(`Iniciando narração a partir da sentença mais próxima (${closestIndex}): "${this.sentences[closestIndex].substring(0, 30)}..."`);
+        // console.log(`Iniciando narração a partir da sentença mais próxima (${closestIndex}): "${this.sentences[closestIndex].substring(0, 30)}..."`);
         this.currentSentenceIndex = closestIndex - 1;
     }
 

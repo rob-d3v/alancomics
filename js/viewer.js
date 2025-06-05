@@ -35,7 +35,7 @@ class ComicsViewer {
             // Pausar a rolagem automática quando a narração de um texto começar
             if (this.isScrolling && !this.isPaused) {
                 this.pauseAutoScroll();
-                console.log('Rolagem automática pausada durante narração de texto');
+                // console.log('Rolagem automática pausada durante narração de texto');
             }
         });
 
@@ -43,7 +43,7 @@ class ComicsViewer {
             // Retomar a rolagem automática quando a narração de um texto terminar
             if (this.isPaused) {
                 this.resumeAutoScroll();
-                console.log('Rolagem automática retomada após narração de texto');
+                // console.log('Rolagem automática retomada após narração de texto');
             }
         });
     }
@@ -75,7 +75,7 @@ class ComicsViewer {
         this.isPaused = true;
         clearInterval(this.scrollInterval);
         this.scrollInterval = null;
-        console.log('Auto-scroll paused');
+        // console.log('Auto-scroll paused');
 
         // Dispare um evento para notificar outras classes
         document.dispatchEvent(new CustomEvent('autoScrollPaused'));
@@ -86,7 +86,7 @@ class ComicsViewer {
         // Retoma o autoscroll com a última velocidade usada
         this.isPaused = false;
         this.startAutoScroll(this.lastScrollSpeed);
-        console.log('Auto-scroll resumed');
+        // console.log('Auto-scroll resumed');
 
         // Dispare um evento para notificar outras classes
         document.dispatchEvent(new CustomEvent('autoScrollResumed'));
@@ -131,7 +131,7 @@ class ComicsViewer {
             }
         }, 16); // Aproximadamente 60 FPS
         
-        console.log(`Auto-scroll iniciado com velocidade ${speed}`);
+        // console.log(`Auto-scroll iniciado com velocidade ${speed}`);
     }
     
     stopAutoScroll() {
@@ -141,7 +141,7 @@ class ComicsViewer {
         this.scrollInterval = null;
         this.isScrolling = false;
         this.isPaused = false;
-        console.log('Auto-scroll parado');
+        // console.log('Auto-scroll parado');
     }
     initControls() {
         document.getElementById('zoomIn').addEventListener('click', () => this.zoom(0.1));
@@ -810,7 +810,7 @@ class ComicsViewer {
         const interval = 50; // Fixed interval (ms)
         let pixelAccumulator = 0;
 
-        console.log(`Starting auto-scroll with speed: ${speed}`);
+        // console.log(`Starting auto-scroll with speed: ${speed}`);
 
         this.scrollInterval = setInterval(() => {
             // Add the speed to our accumulator
@@ -847,7 +847,7 @@ class ComicsViewer {
         this.isPaused = false; // Reinicie o estado de pausa
         clearInterval(this.scrollInterval);
         this.scrollInterval = null;
-        console.log('Auto-scroll stopped');
+        // console.log('Auto-scroll stopped');
 
         // Dispare o evento existente
         document.dispatchEvent(new CustomEvent('autoScrollComplete'));

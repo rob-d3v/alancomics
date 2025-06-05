@@ -51,7 +51,7 @@ class NarrationViewportSync {
         this.scrollManager = window.scrollManager;
 
         if (!this.viewportBoundary || !this.narrator || !this.scrollManager) {
-            console.warn('>>> 1 NarrationViewportSync: Módulos necessários não encontrados, tentando novamente em 1s...');
+            // console.warn('>>> 1 NarrationViewportSync: Módulos necessários não encontrados, tentando novamente em 1s...');
             setTimeout(() => this.setup(), 1000);
             return;
         }
@@ -59,7 +59,7 @@ class NarrationViewportSync {
         // Configurar observadores de eventos
         this.setupEventListeners();
 
-        console.log('>>> 2 NarrationViewportSync: Inicializado com sucesso');
+        // console.log('>>> 2 NarrationViewportSync: Inicializado com sucesso');
     }
 
     /**
@@ -68,12 +68,12 @@ class NarrationViewportSync {
     setupEventListeners() {
         // Monitorar eventos de narração
         document.addEventListener('narrationStarted', () => {
-            console.log('>>> 3 NarrationViewportSync: Narração iniciada');
+            // console.log('>>> 3 NarrationViewportSync: Narração iniciada');
             this.startViewportChecking();
         });
 
         document.addEventListener('narrationStopped', () => {
-            console.log('>>> 4 NarrationViewportSync: Narração interrompida');
+            // console.log('>>> 4 NarrationViewportSync: Narração interrompida');
             this.stopViewportChecking();
         });
 
@@ -99,7 +99,7 @@ class NarrationViewportSync {
             this.checkCurrentNarrationVisibility();
         }, this.scrollCheckInterval);
 
-        console.log('>>> 5 NarrationViewportSync: Iniciando verificação de viewport');
+        // console.log('>>> 5 NarrationViewportSync: Iniciando verificação de viewport');
     }
 
     /**
@@ -109,7 +109,7 @@ class NarrationViewportSync {
         if (this.checkInterval) {
             clearInterval(this.checkInterval);
             this.checkInterval = null;
-            console.log('>>> 6 NarrationViewportSync: Verificação de viewport interrompida');
+            // console.log('>>> 6 NarrationViewportSync: Verificação de viewport interrompida');
         }
     }
 
@@ -122,16 +122,16 @@ class NarrationViewportSync {
         const element = this.narrator.currentElement;
         const visibility = this.calculateElementVisibility(element);
 
-        console.log(`>>> 7 NarrationViewportSync: Verificando visibilidade do elemento atual: ${visibility.toFixed(2)}`);
+        // console.log(`>>> 7 NarrationViewportSync: Verificando visibilidade do elemento atual: ${visibility.toFixed(2)}`);
 
         if (visibility >= this.minVisibilityRatio) {
             if (this.pendingNarration) {
-                console.log('>>> 8 NarrationViewportSync: Elemento visível, retomando narração');
+                // console.log('>>> 8 NarrationViewportSync: Elemento visível, retomando narração');
                 this.resumeNarration();
             }
         } else {
             if (!this.pendingNarration && this.narrator.isNarrating) {
-                console.log('>>> 9 NarrationViewportSync: Elemento não visível, pausando narração');
+                // console.log('>>> 9 NarrationViewportSync: Elemento não visível, pausando narração');
                 this.pauseNarration();
                 this.scrollToElement(element);
             }
@@ -172,7 +172,7 @@ class NarrationViewportSync {
 
         this.pendingNarration = true;
         this.narrator.pause();
-        console.log('>>> 10 NarrationViewportSync: Narração pausada');
+        // console.log('>>> 10 NarrationViewportSync: Narração pausada');
     }
 
     /**
@@ -185,7 +185,7 @@ class NarrationViewportSync {
         setTimeout(() => {
             this.pendingNarration = false;
             this.narrator.resume();
-            console.log('>>> 11 NarrationViewportSync: Narração retomada após pausa extra');
+            // console.log('>>> 11 NarrationViewportSync: Narração retomada após pausa extra');
         }, this.extraPauseTime);
     }
 
@@ -204,10 +204,10 @@ class NarrationViewportSync {
             behavior: 'smooth'
         });
 
-        console.log('>>> 12 NarrationViewportSync: Rolando para elemento:', {
-            elementTop: elementRect.top,
-            targetScroll: targetScroll
-        });
+        // console.log('>>> 12 NarrationViewportSync: Rolando para elemento:', {
+            // elementTop: elementRect.top,
+            // targetScroll: targetScroll
+        // });
     }
 }
 

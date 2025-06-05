@@ -33,13 +33,13 @@ class OCRProcessor {
             // Carregar a biblioteca Tesseract.js dinamicamente
             this.loadTesseractLibrary()
                 .then(() => {
-                    console.log('OCRProcessor: Tesseract.js carregado com sucesso');
+                    // console.log('OCRProcessor: Tesseract.js carregado com sucesso');
                 })
                 .catch(error => {
                     console.error('OCRProcessor: Erro ao carregar Tesseract.js', error);
                 });
         } else {
-            console.log('OCRProcessor: Tesseract.js já está disponível');
+            // console.log('OCRProcessor: Tesseract.js já está disponível');
         }
     }
     
@@ -51,7 +51,7 @@ class OCRProcessor {
         return new Promise((resolve, reject) => {
             // Verificar se já existe um script para Tesseract
             if (document.querySelector('script[src*="tesseract.min.js"]')) {
-                console.log('OCRProcessor: Script do Tesseract.js já existe no documento');
+                // console.log('OCRProcessor: Script do Tesseract.js já existe no documento');
                 // Verificar periodicamente se o objeto Tesseract está disponível
                 const checkTesseract = setInterval(() => {
                     if (typeof Tesseract !== 'undefined') {
@@ -69,7 +69,7 @@ class OCRProcessor {
             
             // Configurar eventos
             script.onload = () => {
-                console.log('OCRProcessor: Script do Tesseract.js carregado');
+                // console.log('OCRProcessor: Script do Tesseract.js carregado');
                 // Verificar periodicamente se o objeto Tesseract está disponível
                 const checkTesseract = setInterval(() => {
                     if (typeof Tesseract !== 'undefined') {
@@ -111,7 +111,7 @@ class OCRProcessor {
             this.isProcessing = true;
             this.progress = 0;
             
-            console.log('Iniciando processamento OCR...');
+            // console.log('Iniciando processamento OCR...');
             
             // Processar a imagem com Tesseract.js
             const result = await Tesseract.recognize(
@@ -125,7 +125,7 @@ class OCRProcessor {
             // Extrair o texto
             const text = result.data.text;
             
-            console.log('Processamento OCR concluído');
+            // console.log('Processamento OCR concluído');
             
             return text;
         } catch (error) {

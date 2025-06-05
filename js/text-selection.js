@@ -48,7 +48,7 @@ class TextSelection {
         // Alterar o cursor para indicar que o texto é clicável
         textElement.style.cursor = 'pointer';
         
-        console.log('Modo de seleção de texto ativado' + (permanent ? ' (modo permanente)' : ''));
+        // console.log('Modo de seleção de texto ativado' + (permanent ? ' (modo permanente)' : ''));
     }
 
     /**
@@ -76,7 +76,7 @@ class TextSelection {
         // Remover instruções
         this.hideInstructions();
         
-        console.log('Modo de seleção de texto desativado');
+        // console.log('Modo de seleção de texto desativado');
     }
 
     /**
@@ -91,7 +91,7 @@ class TextSelection {
         
         // Se encontrou uma posição válida
         if (clickPosition !== -1) {
-            console.log(`Ponto de texto selecionado na posição: ${clickPosition}`);
+            // console.log(`Ponto de texto selecionado na posição: ${clickPosition}`);
             
             // Chamar o callback com a posição selecionada
             if (typeof this.onSelectionCallback === 'function') {
@@ -227,7 +227,7 @@ class TextSelection {
             const estimatedPosition = Math.floor(relativeX * textLength);
             return Math.max(0, Math.min(estimatedPosition, textLength));
         }
-    }
+    
     }
 
     /**
@@ -267,8 +267,6 @@ class TextSelection {
         if (this.instructionElement && this.instructionElement.parentNode) {
             this.instructionElement.parentNode.removeChild(this.instructionElement);
         }
+    
     }
 }
-
-// Exportar a classe para uso global
-window.TextSelection = TextSelection;

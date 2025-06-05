@@ -59,17 +59,17 @@ class Sidebar {
 
     // Handlers para os eventos
     handleAutoScrollPaused() {
-        console.log('Rolagem automática foi pausada');
+        // console.log('Rolagem automática foi pausada');
         // Faça algo quando o autoscroll pausar
     }
 
     handleAutoScrollResumed() {
-        console.log('Rolagem automática foi retomada');
+        // console.log('Rolagem automática foi retomada');
         // Faça algo quando o autoscroll retomar
     }
 
     handleAutoScrollComplete() {
-        console.log('Rolagem automática foi concluída');
+        // console.log('Rolagem automática foi concluída');
         if (this.isRunning) {
             this.isRunning = false;
             const startButton = document.getElementById('startButton');
@@ -303,7 +303,7 @@ class Sidebar {
 
     async loadExistingImages() {
         const images = await this.db.getAllContent(); // Change to use the new method name
-        console.log('Loading content:', images.length); // Debug log
+        // console.log('Loading content:', images.length); // Debug log
         await this.viewer.displayContent(images); // Change to use the new method name
         this.updateThumbnails(images);
     }

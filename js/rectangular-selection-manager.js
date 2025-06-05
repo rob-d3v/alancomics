@@ -62,14 +62,14 @@ class RectangularSelectionManager {
         // Obter referência ao narrador principal
         if (window.comicNarrator) {
             this.narrator = window.comicNarrator;
-            console.log('RectangularSelectionManager: Conectado ao narrador principal');
+            // console.log('RectangularSelectionManager: Conectado ao narrador principal');
         } else {
             console.warn('RectangularSelectionManager: Narrador principal não encontrado');
             // Tentar novamente após um curto período
             setTimeout(() => {
                 if (window.comicNarrator) {
                     this.narrator = window.comicNarrator;
-                    console.log('RectangularSelectionManager: Conectado ao narrador principal (tentativa 2)');
+                    // console.log('RectangularSelectionManager: Conectado ao narrador principal (tentativa 2)');
                 }
             }, 1000);
         }
@@ -164,13 +164,13 @@ class RectangularSelectionManager {
         const currentSelection = this.selections[index];
         if (currentSelection && currentSelection.element) {
             const rect = currentSelection.element.getBoundingClientRect();
-            console.log(">>> 5: Coordenadas da seleção atual:", {
-                top: rect.top,
-                bottom: rect.bottom,
-                height: rect.height,
-                center: rect.top + (rect.height / 2),
-                viewportHeight: window.innerHeight
-            });
+            // console.log(">>> 5: Coordenadas da seleção atual:", {
+            //     top: rect.top,
+            //     bottom: rect.bottom,
+            //     height: rect.height,
+            //     center: rect.top + (rect.height / 2),
+            //     viewportHeight: window.innerHeight
+            // });
             // Forçar desativação do scroll automático durante a narração das seleções
             this.scrollManager.deactivate();
 
@@ -234,7 +234,7 @@ class RectangularSelectionManager {
         // Garantir que o scroll automático esteja desativado antes de iniciar a narração
         if (this.scrollManager) {
             this.scrollManager.deactivate();
-            console.log('RectangularSelectionManager: Scroll automático desativado para narração de seleção');
+            // console.log('RectangularSelectionManager: Scroll automático desativado para narração de seleção');
         }
         
         // Destacar e fazer scroll para a seleção atual antes de iniciar a narração
@@ -262,7 +262,7 @@ class RectangularSelectionManager {
 
                 // Reativar scroll automático apenas se não houver mais narrações
                 if (this.scrollManager && !this.isNarrating) {
-                    console.log('RectangularSelectionManager: Reativando scroll automático após última seleção');
+                    // console.log('RectangularSelectionManager: Reativando scroll automático após última seleção');
                     this.scrollManager.activate();
                     // Definir a variável global para garantir que outros componentes saibam que o scroll está ativo
                     window.scrollManagerActive = true;
@@ -295,7 +295,7 @@ class RectangularSelectionManager {
             }
         });
 
-        console.log(`RectangularSelectionManager: Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
+        // console.log(`RectangularSelectionManager: Iniciando narração da seleção #${this.currentNarrationIndex + 1}`);
         }, 500); // Adicionar tempo suficiente para o scroll ser concluído
     }
     /**
@@ -304,7 +304,7 @@ class RectangularSelectionManager {
     setupQueueCallbacks() {
         // Quando um item é processado (um trecho de texto é extraído)
         this.processingQueue.setOnItemProcessed((result, metadata, index) => {
-            console.log(`Trecho #${index + 1} processado:`, result.substring(0, 50) + '...');
+            // console.log(`Trecho #${index + 1} processado:`, result.substring(0, 50) + '...');
 
             // Iniciar narração para todos os itens, não apenas o primeiro
             // A pausa de 1,5 segundos será aplicada automaticamente pelo método startNarrationWithText
@@ -324,7 +324,7 @@ class RectangularSelectionManager {
 
         // Quando a fila é concluída
         this.processingQueue.setOnQueueCompleted((stats) => {
-            console.log('Processamento de todos os trechos concluído:', stats);
+            // console.log('Processamento de todos os trechos concluído:', stats);
 
             // Ocultar indicador de progresso
             this.hideProgressIndicator();
@@ -335,7 +335,7 @@ class RectangularSelectionManager {
             // NÃO interromper a narração aqui para permitir que todas as seleções sejam narradas
             // Apenas verificar se a narração está em andamento
             if (this.narrator && this.narrator.synth && this.narrator.synth.speaking) {
-                console.log('Narração em andamento após processamento de todas as seleções. Permitindo que continue...');
+                // console.log('Narração em andamento após processamento de todas as seleções. Permitindo que continue...');
             }
         });
 
@@ -530,12 +530,12 @@ class RectangularSelectionManager {
         
         // Restaurar tamanho original das imagens que foram modificadas
         const selectionContainers = document.querySelectorAll('.rectangular-selection-container');
-        console.log(`Restaurando ${selectionContainers.length} containers de seleção`);
+        // console.log(`Restaurando ${selectionContainers.length} containers de seleção`);
         
         selectionContainers.forEach((container, index) => {
             const img = container.querySelector('img');
             if (img) {
-                console.log(`Restaurando imagem #${index + 1}: ${img.id || 'sem ID'}`);
+                // console.log(`Restaurando imagem #${index + 1}: ${img.id || 'sem ID'}`);
                 
                 // Remover estilos aplicados à imagem
                 img.style.width = '';
@@ -555,7 +555,7 @@ class RectangularSelectionManager {
         const debugContainer = document.getElementById('ocr-debug-container');
         if (debugContainer) {
             debugContainer.remove();
-            console.log('Container de depuração OCR removido');
+            // console.log('Container de depuração OCR removido');
         }
         
         // Limpar todas as seleções
@@ -661,7 +661,7 @@ class RectangularSelectionManager {
         // Criar elemento de seleção
         this.createSelectionElement(img, this.startX, this.startY, 0, 0);
         
-        console.log(`Iniciando seleção na imagem: ${img.id}`);
+        // console.log(`Iniciando seleção na imagem: ${img.id}`);
     }
 
     /**
@@ -905,7 +905,7 @@ class RectangularSelectionManager {
         // Garantir que a imagem tenha um ID para referência futura
         if (!this.currentImage.id) {
             this.currentImage.id = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-            console.log(`ID gerado para a imagem: ${this.currentImage.id}`);
+            // console.log(`ID gerado para a imagem: ${this.currentImage.id}`);
         }
 
         // Calcular posição relativa à imagem
@@ -927,7 +927,7 @@ class RectangularSelectionManager {
             }
         };
 
-        console.log('Seleção confirmada com dimensões:', selection);
+        // console.log('Seleção confirmada com dimensões:', selection);
 
         // Adicionar à lista de seleções
         this.selections.push(selection);
@@ -1145,7 +1145,7 @@ class RectangularSelectionManager {
             return;
         }
         
-        console.log(`Narrando ${allTexts.length} textos já extraídos sem reprocessar OCR`);
+        // console.log(`Narrando ${allTexts.length} textos já extraídos sem reprocessar OCR`);
         
         // Criar um objeto com múltiplos textos para narração
         const multiText = {
@@ -1265,7 +1265,7 @@ class RectangularSelectionManager {
                     throw new Error('Objeto de seleção não fornecido');
                 }
 
-                console.log('Processando seleção:', JSON.stringify(selection));
+                // console.log('Processando seleção:', JSON.stringify(selection));
 
                 // Obter a imagem usando várias estratégias de recuperação
                 let imageElement = null;
@@ -1273,7 +1273,7 @@ class RectangularSelectionManager {
                 // Estratégia 1: Buscar pelo ID (se existir)
                 if (selection.imageId && typeof selection.imageId === 'string') {
                     imageElement = document.getElementById(selection.imageId);
-                    console.log('Estratégia 1 (ID):', imageElement ? 'Imagem encontrada' : 'Imagem não encontrada');
+                    // console.log('Estratégia 1 (ID):', imageElement ? 'Imagem encontrada' : 'Imagem não encontrada');
                 }
 
                 // Estratégia 2: Buscar por seletor de classe e ID
@@ -1282,7 +1282,7 @@ class RectangularSelectionManager {
                     for (const img of images) {
                         if (img.id === selection.imageId) {
                             imageElement = img;
-                            console.log('Estratégia 2 (Classe+ID): Imagem encontrada');
+                            // console.log('Estratégia 2 (Classe+ID): Imagem encontrada');
                             break;
                         }
                     }
@@ -1294,7 +1294,7 @@ class RectangularSelectionManager {
                     for (const img of images) {
                         if (img.src === selection.imageSrc) {
                             imageElement = img;
-                            console.log('Estratégia 3 (URL): Imagem encontrada');
+                            // console.log('Estratégia 3 (URL): Imagem encontrada');
                             break;
                         }
                     }
@@ -1325,16 +1325,16 @@ class RectangularSelectionManager {
                 }
 
                 // Log detalhado das coordenadas para depuração
-                console.log('Coordenadas de extração:', {
-                    left: left,
-                    top: top,
-                    width: width,
-                    height: height,
-                    imageWidth: imageElement.width,
-                    imageHeight: imageElement.height,
-                    naturalWidth: imageElement.naturalWidth,
-                    naturalHeight: imageElement.naturalHeight
-                });
+                // console.log('Coordenadas de extração:', {
+                //     left: left,
+                //     top: top,
+                //     width: width,
+                //     height: height,
+                //     imageWidth: imageElement.width,
+                //     imageHeight: imageElement.height,
+                //     naturalWidth: imageElement.naturalWidth,
+                //     naturalHeight: imageElement.naturalHeight
+                // });
 
                 // Criar canvas
                 const canvas = document.createElement('canvas');
@@ -1351,12 +1351,12 @@ class RectangularSelectionManager {
                 if (selection.imageRect) {
                     scaleX = selection.imageRect.naturalWidth / selection.imageRect.width;
                     scaleY = selection.imageRect.naturalHeight / selection.imageRect.height;
-                    console.log('Usando escala armazenada na seleção');
+                    // console.log('Usando escala armazenada na seleção');
                 } else {
                     // Caso contrário, calcule a partir da imagem atual
                     scaleX = imageElement.naturalWidth / imageElement.width;
                     scaleY = imageElement.naturalHeight / imageElement.height;
-                    console.log('Calculando escala a partir da imagem atual');
+                    // console.log('Calculando escala a partir da imagem atual');
                 }
 
                 // Ajustar coordenadas para a escala real da imagem
@@ -1366,14 +1366,14 @@ class RectangularSelectionManager {
                 const scaledHeight = height * scaleY;
 
                 // Log das coordenadas ajustadas
-                console.log('Coordenadas ajustadas para escala real:', {
-                    scaledLeft,
-                    scaledTop,
-                    scaledWidth,
-                    scaledHeight,
-                    scaleX,
-                    scaleY
-                });
+                // console.log('Coordenadas ajustadas para escala real:', {
+                //     scaledLeft,
+                //     scaledTop,
+                //     scaledWidth,
+                //     scaledHeight,
+                //     scaleX,
+                //     scaleY
+                // });
 
                 // Desenhar região da imagem no canvas usando as coordenadas ajustadas
                 ctx.drawImage(
@@ -1425,7 +1425,7 @@ class RectangularSelectionManager {
         if (!this.narrator || !text || !text.trim()) {
             return;
         }
-        console.log("Texto: " + text)
+        // console.log("Texto: " + text)
         // Processar o texto para remover quebras de linha desnecessárias
         const processedText = this.processTextForNarration(text);
 
@@ -1438,7 +1438,7 @@ class RectangularSelectionManager {
             }
         }
 
-        console.log('Iniciando narração com texto processado:', processedText.substring(0, 50) + '...');
+        // console.log('Iniciando narração com texto processado:', processedText.substring(0, 50) + '...');
 
         // Manter o índice de narração como -1 até que a narração atual termine
         // Isso evita que o sistema tente reutilizar os mesmos quadros para a próxima imagem
@@ -1446,7 +1446,7 @@ class RectangularSelectionManager {
 
         // Verificar se há uma narração em andamento
         if (this.narrator.synth.speaking) {
-            console.log('Narração em andamento detectada. Adicionando pausa de 1,5 segundos entre seleções de texto...');
+            // console.log('Narração em andamento detectada. Adicionando pausa de 1,5 segundos entre seleções de texto...');
 
             // Criar uma função para verificar periodicamente se a narração terminou
             const checkAndSpeak = () => {
@@ -1455,9 +1455,9 @@ class RectangularSelectionManager {
                     setTimeout(checkAndSpeak, 100);
                 } else {
                     // Narração anterior terminou, adicionar pausa e então falar
-                    console.log('Narração anterior concluída, aguardando 1,5 segundos antes da próxima seleção...');
+                    // console.log('Narração anterior concluída, aguardando 1,5 segundos antes da próxima seleção...');
                     setTimeout(() => {
-                        console.log('Iniciando próxima narração após pausa...');
+                        // console.log('Iniciando próxima narração após pausa...');
                         this.narrator.speakText(processedText);
                     }, 1500); // 1,5 segundos em milissegundos
                 }
@@ -1467,7 +1467,7 @@ class RectangularSelectionManager {
             checkAndSpeak();
         } else {
             // Se não houver narração em andamento, iniciar imediatamente
-            console.log('Nenhuma narração em andamento, iniciando imediatamente...');
+            // console.log('Nenhuma narração em andamento, iniciando imediatamente...');
             // Garantir que a pausa seja aplicada mesmo na primeira narração
             // para dar tempo ao usuário de se preparar
             setTimeout(() => {
@@ -1767,7 +1767,7 @@ class RectangularSelectionManager {
             element.style.display = 'none';
         });
         
-        console.log('Elementos de seleção e depuração ocultados durante a narração');
+        // console.log('Elementos de seleção e depuração ocultados durante a narração');
     }
     
     /**
@@ -1828,6 +1828,6 @@ class RectangularSelectionManager {
         });
         
         this._selectionElementsVisible = true;
-        console.log('Visibilidade dos elementos de seleção restaurada');
+        // console.log('Visibilidade dos elementos de seleção restaurada');
     }
 }

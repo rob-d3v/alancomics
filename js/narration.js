@@ -6,11 +6,11 @@ class ComicNarrator {
             return;
         }
 
-        console.log("Inicializando ComicNarrator");
+        // console.log("Inicializando ComicNarrator");
         this.synth = window.speechSynthesis;
 
         // Verificar o estado atual do sintetizador
-        console.log("Estado inicial do sintetizador - falando:", this.synth.speaking, "- pendente:", this.synth.pending, "- pausado:", this.synth.paused);
+        // console.log("Estado inicial do sintetizador - falando:", this.synth.speaking, "- pendente:", this.synth.pending, "- pausado:", this.synth.paused);
 
         // Forçar um reset no sintetizador para limpar qualquer estado inconsistente
         this.synth.cancel();
@@ -85,11 +85,11 @@ class ComicNarrator {
     initVoices() {
         // Verificar se as vozes já foram inicializadas para evitar múltiplas inicializações
         if (this.voicesInitialized) {
-            console.log('ComicNarrator: Lista de vozes já foi inicializada anteriormente');
+            // console.log('ComicNarrator: Lista de vozes já foi inicializada anteriormente');
             return;
         }
 
-        console.log('ComicNarrator: Inicializando lista de vozes (primeira vez)');
+        // console.log('ComicNarrator: Inicializando lista de vozes (primeira vez)');
         this.voicesInitialized = true;
 
         // Populate voices when available
@@ -97,7 +97,7 @@ class ComicNarrator {
             this.synth.onvoiceschanged = () => {
                 // Verificar novamente para evitar múltiplas chamadas do evento onvoiceschanged
                 if (this.voices.length > 0) {
-                    console.log('ComicNarrator: Evento onvoiceschanged ignorado, vozes já carregadas');
+                    // console.log('ComicNarrator: Evento onvoiceschanged ignorado, vozes já carregadas');
                     return;
                 }
 
@@ -123,9 +123,9 @@ class ComicNarrator {
     tryAccessNarratorVoices() {
         // Verificar se já temos vozes suficientes carregadas
         if (this.voices.length > 5) {
-            console.log("🔍 Verificando vozes do Narrador entre as", this.voices.length, "vozes já carregadas");
+            // console.log("🔍 Verificando vozes do Narrador entre as", this.voices.length, "vozes já carregadas");
         } else {
-            console.log("🔍 Tentando acessar especificamente as vozes do Narrador do Windows (Antonio e Francisca)...");
+            // console.log("🔍 Tentando acessar especificamente as vozes do Narrador do Windows (Antonio e Francisca)...");
         }
 
         // Verificar se já temos as vozes do narrador
@@ -133,19 +133,19 @@ class ComicNarrator {
         const hasFranciscaVoice = this.voices.some(voice => voice.name.includes('Francisca'));
 
         if (hasAntonioVoice && hasFranciscaVoice) {
-            console.log("✅ Vozes Antonio e Francisca já estão disponíveis!");
+            // console.log("✅ Vozes Antonio e Francisca já estão disponíveis!");
             return;
         }
 
         // Se já temos muitas vozes mas não as do narrador, provavelmente não estão disponíveis
         if (this.voices.length > 10 && !hasAntonioVoice && !hasFranciscaVoice) {
-            console.log("⚠️ Muitas vozes disponíveis, mas Antonio e Francisca não foram encontradas. Provavelmente não estão instaladas no sistema.");
+            // console.log("⚠️ Muitas vozes disponíveis, mas Antonio e Francisca não foram encontradas. Provavelmente não estão instaladas no sistema.");
             return;
         }
 
         // Tentar forçar a inicialização do serviço de voz com uma fala vazia
         try {
-            console.log("🔄 Tentando inicializar o serviço de voz para detectar vozes do Narrador...");
+            // console.log("🔄 Tentando inicializar o serviço de voz para detectar vozes do Narrador...");
 
             // Criar um utterance vazio e falar para inicializar o serviço
             const initUtterance = new SpeechSynthesisUtterance('');
@@ -166,9 +166,9 @@ class ComicNarrator {
                     const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
                     if (antonioVoice || franciscaVoice) {
-                        console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
-                        if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
-                        if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
+                        // console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
+                        // if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
+                        // if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
                         return;
                     }
                 }
@@ -183,16 +183,16 @@ class ComicNarrator {
                     const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
                     if (antonioVoice || franciscaVoice) {
-                        console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
-                        if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
-                        if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
+                        // console.log("🎉 SUCESSO! Vozes do Narrador detectadas após inicialização forçada!");
+                        // if (antonioVoice) console.log("   - Antonio detectado!", antonioVoice.name);
+                        // if (franciscaVoice) console.log("   - Francisca detectada!", franciscaVoice.name);
 
                         // Recarregar a interface com as novas vozes apenas se necessário
                         if (this.voiceSelect && this.voiceSelect.options.length === 0) {
                             this.loadVoices();
                         }
                     } else {
-                        console.log("⚠️ Vozes do Narrador ainda não detectadas após inicialização forçada.");
+                        // console.log("⚠️ Vozes do Narrador ainda não detectadas após inicialização forçada.");
                     }
                 }
             }, 500);
@@ -204,8 +204,8 @@ class ComicNarrator {
 
     // Método para registrar detalhes completos de todas as vozes disponíveis
     logVoiceDetails() {
-        console.log("📊 DETALHES COMPLETOS DE TODAS AS VOZES DISPONÍVEIS:");
-        console.log("==================================================");
+        // console.log("📊 DETALHES COMPLETOS DE TODAS AS VOZES DISPONÍVEIS:");
+        // console.log("==================================================");
 
         if (this.voices.length === 0) {
             console.warn("⚠️ Nenhuma voz detectada! Verifique as permissões do navegador.");
@@ -216,25 +216,25 @@ class ComicNarrator {
         const systemVoices = this.voices.filter(v => v.localService);
         const browserVoices = this.voices.filter(v => !v.localService);
 
-        console.log(`🪟 VOZES DO SISTEMA (${systemVoices.length}):`);
+        // console.log(`🪟 VOZES DO SISTEMA (${systemVoices.length}):`);
         systemVoices.forEach((voice, i) => {
-            console.log(`${i + 1}. ${voice.name}`);
-            console.log(`   - Idioma: ${voice.lang}`);
-            console.log(`   - Local: ${voice.localService ? 'Sim ✓' : 'Não ✗'}`);
-            console.log(`   - Default: ${voice.default ? 'Sim ✓' : 'Não ✗'}`);
-            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
+            // console.log(`${i + 1}. ${voice.name}`);
+            // console.log(`   - Idioma: ${voice.lang}`);
+            // console.log(`   - Local: ${voice.localService ? 'Sim ✓' : 'Não ✗'}`);
+            // console.log(`   - Default: ${voice.default ? 'Sim ✓' : 'Não ✗'}`);
+            // console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
             // Listar todas as propriedades disponíveis
-            console.log(`   - Todas as propriedades:`, Object.getOwnPropertyNames(voice));
+            // console.log(`   - Todas as propriedades:`, Object.getOwnPropertyNames(voice));
         });
 
-        console.log(`🌐 VOZES DO NAVEGADOR (${browserVoices.length}):`);
+        // console.log(`🌐 VOZES DO NAVEGADOR (${browserVoices.length}):`);
         browserVoices.forEach((voice, i) => {
-            console.log(`${i + 1}. ${voice.name}`);
-            console.log(`   - Idioma: ${voice.lang}`);
-            console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
+            // console.log(`${i + 1}. ${voice.name}`);
+            // console.log(`   - Idioma: ${voice.lang}`);
+            // console.log(`   - URI: ${voice.voiceURI || 'N/A'}`);
         });
 
-        console.log("==================================================");
+        // console.log("==================================================");
     }
 
     // Método para forçar a detecção de vozes SAPI do Windows e do Narrador
@@ -255,13 +255,13 @@ class ComicNarrator {
             );
 
             if (hasWindowsVoices || hasNarratorVoices) {
-                console.log("✅ Já existem vozes do Windows ou do Narrador carregadas. Ignorando detecção forçada.");
+                // console.log("✅ Já existem vozes do Windows ou do Narrador carregadas. Ignorando detecção forçada.");
                 this.readingIndicator.style.display = 'none';
                 return;
             }
         }
 
-        console.log("🔄 Tentando forçar detecção de vozes do Windows e do Narrador...");
+        // console.log("🔄 Tentando forçar detecção de vozes do Windows e do Narrador...");
 
         // Mostrar indicador de carregamento
         this.readingIndicator.textContent = 'Detectando vozes do Windows e do Narrador...';
@@ -276,7 +276,7 @@ class ComicNarrator {
             const initUtterance = new SpeechSynthesisUtterance('');
             window.speechSynthesis.speak(initUtterance);
             window.speechSynthesis.cancel(); // Cancelar imediatamente
-            console.log("🔄 Inicialização do serviço de voz realizada");
+            // console.log("🔄 Inicialização do serviço de voz realizada");
         } catch (e) {
             console.warn("⚠️ Não foi possível inicializar o serviço de voz:", e);
         }
@@ -288,11 +288,11 @@ class ComicNarrator {
             setTimeout(() => {
                 // Verificar se já encontramos vozes em tentativas anteriores
                 if (voicesFound) {
-                    console.log(`🛑 Ignorando tentativa ${index + 1} pois vozes já foram encontradas`);
+                    // console.log(`🛑 Ignorando tentativa ${index + 1} pois vozes já foram encontradas`);
                     return;
                 }
 
-                console.log(`🔍 Tentativa ${index + 1} de detectar vozes do Windows e do Narrador...`);
+                // console.log(`🔍 Tentativa ${index + 1} de detectar vozes do Windows e do Narrador...`);
 
                 // Verificar se já temos vozes suficientes antes de tentar carregar novamente
                 if (this.voices.length === 0) {
@@ -325,10 +325,10 @@ class ComicNarrator {
                             if (franciscaVoice) vozesDetetadas.push('Francisca');
 
                             this.readingIndicator.textContent = `✅ Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}!`;
-                            console.log(`🎉 SUCESSO! Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}`);
+                            // console.log(`🎉 SUCESSO! Vozes do Narrador detectadas: ${vozesDetetadas.join(', ')}`);
                         } else {
                             this.readingIndicator.textContent = `✅ ${windowsVoices.length} vozes do Windows detectadas!`;
-                            console.log(`✅ ${windowsVoices.length} vozes do Windows detectadas!`);
+                            // console.log(`✅ ${windowsVoices.length} vozes do Windows detectadas!`);
                         }
                     }
                 }
@@ -341,8 +341,8 @@ class ComicNarrator {
 
                     if (finalAntonioVoice || finalFranciscaVoice) {
                         // Destacar essas vozes no console para debug
-                        if (finalAntonioVoice) console.log("🔍 Detalhes da voz Antonio:", finalAntonioVoice);
-                        if (finalFranciscaVoice) console.log("🔍 Detalhes da voz Francisca:", finalFranciscaVoice);
+                        // if (finalAntonioVoice) console.log("🔍 Detalhes da voz Antonio:", finalAntonioVoice);
+                        // if (finalFranciscaVoice) console.log("🔍 Detalhes da voz Francisca:", finalFranciscaVoice);
 
                         setTimeout(() => {
                             this.readingIndicator.style.display = 'none';
@@ -358,7 +358,7 @@ class ComicNarrator {
 
                         if (finalWindowsVoices.length > 0) {
                             this.readingIndicator.textContent = `✅ Detectadas ${finalWindowsVoices.length} vozes do Windows!`;
-                            console.log(`✅ Detectadas ${finalWindowsVoices.length} vozes do Windows, mas Antonio e Francisca não foram encontrados.`);
+                            // console.log(`✅ Detectadas ${finalWindowsVoices.length} vozes do Windows, mas Antonio e Francisca não foram encontrados.`);
                             setTimeout(() => {
                                 this.readingIndicator.style.display = 'none';
                             }, 3000);
@@ -379,12 +379,12 @@ class ComicNarrator {
     async requestAudioPermissions() {
         try {
             // Não solicitar mais acesso ao microfone, apenas tentar carregar as vozes
-            console.log("Carregando vozes do sistema sem solicitar permissões de microfone");
+            // console.log("Carregando vozes do sistema sem solicitar permissões de microfone");
 
             // Tentar carregar as vozes diretamente
             setTimeout(() => {
                 this.loadVoices();
-                console.log("Tentativa adicional de carregar vozes do sistema");
+                // console.log("Tentativa adicional de carregar vozes do sistema");
             }, 1000);
 
             return true;
@@ -397,12 +397,12 @@ class ComicNarrator {
     loadVoices() {
         // Verificar se já temos vozes carregadas e se o seletor já foi preenchido
         if (this.voices.length > 0 && this.voiceSelect && this.voiceSelect.options.length > 0) {
-            console.log("🔄 Ignorando carregamento de vozes, já existem", this.voices.length, "vozes carregadas");
+            // console.log("🔄 Ignorando carregamento de vozes, já existem", this.voices.length, "vozes carregadas");
             return;
         }
 
         this.voices = this.synth.getVoices();
-        console.log("🎭 Descobrindo vozes disponíveis:", this.voices.length);
+        // console.log("🎭 Descobrindo vozes disponíveis:", this.voices.length);
 
         // Verificar se o seletor de vozes existe antes de tentar limpar
         if (!this.voiceSelect) {
@@ -418,9 +418,9 @@ class ComicNarrator {
         const franciscaVoice = this.voices.find(voice => voice.name.includes('Francisca'));
 
         if (antonioVoice || franciscaVoice) {
-            console.log("🎉 VOZES DO NARRADOR ENCONTRADAS!");
-            if (antonioVoice) console.log("   - Antonio: ", antonioVoice.name, "(", antonioVoice.lang, ")");
-            if (franciscaVoice) console.log("   - Francisca: ", franciscaVoice.name, "(", franciscaVoice.lang, ")");
+            // console.log("🎉 VOZES DO NARRADOR ENCONTRADAS!");
+            // if (antonioVoice) console.log("   - Antonio: ", antonioVoice.name, "(", antonioVoice.lang, ")");
+            // if (franciscaVoice) console.log("   - Francisca: ", franciscaVoice.name, "(", franciscaVoice.lang, ")");
         }
 
         // Identificar vozes premium do Windows (incluindo mais vozes brasileiras)
@@ -437,7 +437,7 @@ class ComicNarrator {
         );
 
         // Forçar detecção de vozes SAPI do Windows e do Narrador
-        console.log("🔍 Procurando por vozes SAPI do Windows, Microsoft e do Narrador...");
+        // console.log("🔍 Procurando por vozes SAPI do Windows, Microsoft e do Narrador...");
         const windowsVoices = this.voices.filter(voice =>
             // Vozes do sistema Windows
             (voice.localService === true &&
@@ -447,8 +447,8 @@ class ComicNarrator {
         );
 
         if (windowsVoices.length > 0) {
-            console.log(`✅ Encontradas ${windowsVoices.length} vozes do sistema Windows/Narrador:`);
-            windowsVoices.forEach(voice => console.log(`   - ${voice.name} (${voice.lang}) - Local: ${voice.localService ? 'Sim' : 'Não'}`));
+            // console.log(`✅ Encontradas ${windowsVoices.length} vozes do sistema Windows/Narrador:`);
+            // windowsVoices.forEach(voice => console.log(`   - ${voice.name} (${voice.lang}) - Local: ${voice.localService ? 'Sim' : 'Não'}`));
 
             // Adicionar vozes do Windows à lista de premium se ainda não estiverem lá
             windowsVoices.forEach(voice => {
@@ -457,12 +457,12 @@ class ComicNarrator {
                 }
             });
         } else {
-            console.log("⚠️ Nenhuma voz SAPI do Windows ou do Narrador encontrada");
+            // console.log("⚠️ Nenhuma voz SAPI do Windows ou do Narrador encontrada");
         }
 
         // Log de todas as vozes para debug
         this.voices.forEach((voice, index) => {
-            console.log(`🎤 ${index}: ${voice.name} (${voice.lang}) - Local: ${voice.localService ? '✓' : '✗'}`);
+            // console.log(`🎤 ${index}: ${voice.name} (${voice.lang}) - Local: ${voice.localService ? '✓' : '✗'}`);
         });
 
         // Separar vozes premium em categorias
@@ -487,7 +487,7 @@ class ComicNarrator {
                 if (!this.currentVoice) {
                     option.selected = true;
                     this.currentVoice = voice;
-                    console.log("🪟 Voz do Windows selecionada:", voice.name);
+                    // console.log("🪟 Voz do Windows selecionada:", voice.name);
                 }
             });
 
@@ -509,7 +509,7 @@ class ComicNarrator {
                 if (!this.currentVoice) {
                     option.selected = true;
                     this.currentVoice = voice;
-                    console.log("🏆 Voz premium selecionada:", voice.name);
+                    // console.log("🏆 Voz premium selecionada:", voice.name);
                 }
             });
 
@@ -581,7 +581,7 @@ class ComicNarrator {
                 if (!this.currentVoice && (lang === 'pt-BR' || lang === 'pt-PT') && voiceInfo.quality >= 3) {
                     option.selected = true;
                     this.currentVoice = voiceInfo.voice;
-                    console.log("🇧🇷 Voz em português selecionada:", voiceInfo.voice.name);
+                    // console.log("🇧🇷 Voz em português selecionada:", voiceInfo.voice.name);
                 }
 
                 optgroup.appendChild(option);
@@ -593,7 +593,7 @@ class ComicNarrator {
         // Se ainda não temos uma voz, selecionar a primeira disponível
         if (!this.currentVoice && this.voices.length > 0) {
             this.currentVoice = this.voices[0];
-            console.log("⚠️ Fallback para primeira voz:", this.currentVoice.name);
+            // console.log("⚠️ Fallback para primeira voz:", this.currentVoice.name);
         }
 
         // Adicionar informações sobre vozes e botão de atualização
@@ -969,7 +969,7 @@ class ComicNarrator {
         return languageNames[langCode] || `${langCode}`;
     }
     initEventListeners() {
-        console.log("Inicializando event listeners");
+        // console.log("Inicializando event listeners");
 
         // Toggle narration controls
         if (this.enableNarration) {
@@ -990,7 +990,7 @@ class ComicNarrator {
             this.voiceSelect.addEventListener('change', () => {
                 const selectedIndex = this.voiceSelect.value;
                 this.currentVoice = this.voices[selectedIndex];
-                console.log("Voz alterada para:", this.currentVoice.name);
+                // console.log("Voz alterada para:", this.currentVoice.name);
             });
         } else {
             console.warn("Elemento voiceSelect não encontrado");
@@ -1029,11 +1029,11 @@ class ComicNarrator {
         if (this.startNarrationBtn) {
             this.startNarrationBtn.addEventListener('click', () => {
                 if (this.isNarrating) {
-                    console.log("Botão pressionado: Parar narração");
+                    // console.log("Botão pressionado: Parar narração");
                     this.stopNarration();
                     document.dispatchEvent(new CustomEvent('narrationStopped'));
                 } else {
-                    console.log("Botão pressionado: Iniciar narração");
+                    // console.log("Botão pressionado: Iniciar narração");
                     this.startNarration();
                     document.dispatchEvent(new CustomEvent('narrationStarted'));
                 }
@@ -1045,30 +1045,30 @@ class ComicNarrator {
         // Verificar existência do botão pauseNarration e registrar listener
         const pauseNarrationBtn = document.getElementById('pauseNarration');
         if (pauseNarrationBtn) {
-            console.log("Botão pauseNarration encontrado, registrando listener");
+            // console.log("Botão pauseNarration encontrado, registrando listener");
             pauseNarrationBtn.addEventListener('click', () => {
                 this.togglePauseNarration();
             });
         }
 
-        console.log("Event listeners inicializados com sucesso");
+        // console.log("Event listeners inicializados com sucesso");
     }
     pauseNarration() {
-        console.log("Tentando pausar narração...");
+        // console.log("Tentando pausar narração...");
 
         // Verificar se a narração está em andamento e não está pausada
         if (this.isNarrating && this.synth) {
             if (this.synth.paused) {
-                console.log("A narração já está pausada");
+                // console.log("A narração já está pausada");
                 return;
             }
 
-            console.log("Pausando síntese de voz");
+            // console.log("Pausando síntese de voz");
 
             // Pausar a síntese de voz
             try {
                 this.synth.pause();
-                console.log("Síntese de voz pausada com sucesso");
+                // console.log("Síntese de voz pausada com sucesso");
 
                 // Atualizar o estado
                 this.narrationState.isPaused = true;
@@ -1112,32 +1112,32 @@ class ComicNarrator {
                     }
                 }));
 
-                console.log('Narração pausada com sucesso');
+                // console.log('Narração pausada com sucesso');
             } catch (e) {
                 console.error("Erro ao pausar narração:", e);
             }
         } else {
-            console.log("Não é possível pausar: narração não está ativa ou sintetizador não está disponível");
+            // console.log("Não é possível pausar: narração não está ativa ou sintetizador não está disponível");
         }
     }
 
 
     resumeNarration() {
-        console.log("Tentando retomar narração...");
+        // console.log("Tentando retomar narração...");
 
         // Verificar se a narração está pausada
         if (this.isNarrating && this.synth) {
             if (!this.synth.paused) {
-                console.log("A narração não está pausada");
+                // console.log("A narração não está pausada");
                 return;
             }
 
-            console.log("Retomando síntese de voz");
+            // console.log("Retomando síntese de voz");
 
             // Retomar a síntese de voz
             try {
                 this.synth.resume();
-                console.log("Síntese de voz retomada com sucesso");
+                // console.log("Síntese de voz retomada com sucesso");
 
                 // Atualizar o estado
                 this.narrationState.isPaused = false;
@@ -1180,28 +1180,28 @@ class ComicNarrator {
                     }
                 }));
 
-                console.log('Narração retomada com sucesso');
+                // console.log('Narração retomada com sucesso');
             } catch (e) {
                 console.error("Erro ao retomar narração:", e);
             }
         } else {
-            console.log("Não é possível retomar: narração não está ativa ou sintetizador não está disponível");
+            // console.log("Não é possível retomar: narração não está ativa ou sintetizador não está disponível");
         }
     }
 
     togglePauseNarration() {
-        console.log("Alternando estado de pausa da narração");
+        // console.log("Alternando estado de pausa da narração");
 
         if (this.synth && this.isNarrating) {
             if (this.synth.paused) {
-                console.log("Narração está pausada, retomando...");
+                // console.log("Narração está pausada, retomando...");
                 this.resumeNarration();
             } else {
-                console.log("Narração está ativa, pausando...");
+                // console.log("Narração está ativa, pausando...");
                 this.pauseNarration();
             }
         } else {
-            console.log("Não é possível alternar estado: narração não está ativa ou sintetizador não está disponível");
+            // console.log("Não é possível alternar estado: narração não está ativa ou sintetizador não está disponível");
         }
     }
     // Find which page is currently most visible in the viewport
@@ -1277,7 +1277,7 @@ class ComicNarrator {
             return;
         }
 
-        console.log(`Narrando ${allTexts.length} textos extraídos`);
+        // console.log(`Narrando ${allTexts.length} textos extraídos`);
 
         // Criar um objeto com múltiplos textos para narração
         const multiText = {
@@ -1306,14 +1306,14 @@ class ComicNarrator {
 
         // Filtrar textos para remover duplicados ou muito similares
         const uniqueTexts = this.filterDuplicateTexts(multiText.texts);
-        console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
+        // console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
 
         // Atualizar a barra de progresso com o total de itens
         if (window.narrationProgressBar) {
             window.narrationProgressBar.totalItems = uniqueTexts.length;
             window.narrationProgressBar.updateProgressBar();
         }
-        console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
+        // console.log(`Filtrados ${multiText.texts.length - uniqueTexts.length} textos duplicados ou similares`);
 
         // Atualizar a barra de progresso com o total de itens
         if (window.narrationProgressBar) {
@@ -1329,7 +1329,7 @@ class ComicNarrator {
 
             // Verificar se esta seleção já foi processada nesta sessão
             if (this.narrationState.isSelectionMode && this.narrationState.lastProcessedSelection === i) {
-                console.log(`Seleção ${i} já foi processada nesta sessão, avançando para a próxima`);
+                // console.log(`Seleção ${i} já foi processada nesta sessão, avançando para a próxima`);
                 continue;
             }
 
@@ -1348,7 +1348,7 @@ class ComicNarrator {
                 window.narrationProgressBar.updateProgressBar();
             }
 
-            console.log(`Narrando texto ${i + 1} de ${uniqueTexts.length}: ${text.substring(0, 30)}...`);
+            // console.log(`Narrando texto ${i + 1} de ${uniqueTexts.length}: ${text.substring(0, 30)}...`);
 
             // Narrar o texto atual
             await this.speakText(text);
@@ -1389,7 +1389,7 @@ class ComicNarrator {
         if (window.scrollManager) {
             window.scrollManager.activate();
             window.scrollManagerActive = true;
-            console.log('ScrollManager global ativado para narração');
+            // console.log('ScrollManager global ativado para narração');
         }
 
         // Verificar se o modo de seleção de texto em imagens está ativo
@@ -1397,7 +1397,7 @@ class ComicNarrator {
         if (rectangularSelectionManager && rectangularSelectionManager.isSelectionModeActive) {
             // Se o modo de seleção estiver ativo, verificar se há seleções
             if (rectangularSelectionManager.selections && rectangularSelectionManager.selections.length > 0) {
-                console.log('Modo de seleção de texto em imagens ativo. Lendo apenas o texto das seleções OCR.');
+                // console.log('Modo de seleção de texto em imagens ativo. Lendo apenas o texto das seleções OCR.');
 
                 // Atualizar o estado da narração
                 this.narrationState.isSelectionMode = true;
@@ -1416,12 +1416,12 @@ class ComicNarrator {
                     rectangularSelectionManager.extractedTexts.size > 0;
 
                 if (hasExtractedTexts) {
-                    console.log('Textos já extraídos encontrados. Iniciando narração sem reprocessar OCR.');
+                    // console.log('Textos já extraídos encontrados. Iniciando narração sem reprocessar OCR.');
 
                     // Preparar os textos extraídos para narração
                     this.prepareExtractedTextsForNarration(rectangularSelectionManager);
                 } else {
-                    console.log('Nenhum texto extraído encontrado. Processando seleções OCR primeiro.');
+                    // console.log('Nenhum texto extraído encontrado. Processando seleções OCR primeiro.');
                     // Iniciar processamento das seleções apenas se não houver textos extraídos
                     rectangularSelectionManager.processSelections();
                 }
@@ -1484,10 +1484,10 @@ class ComicNarrator {
     }
 
     stopNarration() {
-        console.log("Parando narração...");
+        // console.log("Parando narração...");
 
         if (!this.isNarrating) {
-            console.log("Não há narração ativa para parar");
+            // console.log("Não há narração ativa para parar");
             return;
         }
 
@@ -1496,13 +1496,13 @@ class ComicNarrator {
 
         // Cancel any ongoing speech
         if (this.synth) {
-            console.log("Cancelando síntese de voz");
+            // console.log("Cancelando síntese de voz");
             this.synth.cancel();
         }
 
         // Clear any active intervals
         if (this.keepAliveInterval) {
-            console.log("Limpando intervalos de verificação");
+            // console.log("Limpando intervalos de verificação");
             clearInterval(this.keepAliveInterval);
             this.keepAliveInterval = null;
         }
@@ -1516,18 +1516,18 @@ class ComicNarrator {
 
         // Desativar o rastreador de narração se estiver ativo
         if (this.narrationTracker && this.narrationTracker.isActive) {
-            console.log("Desativando rastreador de narração");
+            // console.log("Desativando rastreador de narração");
             this.narrationTracker.deactivate();
         }
 
         // Desativar o ScrollManager global se estiver disponível
         if (window.scrollManager) {
             window.scrollManager.deactivate();
-            console.log('ScrollManager global desativado após fim da narração');
+            // console.log('ScrollManager global desativado após fim da narração');
         }
 
         // Remover manipulador de teclas
-        console.log("Removendo manipulador de teclas");
+        // console.log("Removendo manipulador de teclas");
         document.removeEventListener('keydown', this.keydownHandler);
 
         // Resetar o estado da narração
@@ -1563,7 +1563,7 @@ class ComicNarrator {
         // Disparar evento de parada de narração
         document.dispatchEvent(new CustomEvent('narrationStopped'));
 
-        console.log('Narração completamente parada');
+        // console.log('Narração completamente parada');
     }
     // Adicione este novo método à classe ComicNarrator
     createFloatingNarrationControls() {
@@ -1742,7 +1742,7 @@ class ComicNarrator {
 
         // Verificar se esta página já foi processada nesta sessão de narração
         if (this.narrationState.lastProcessedPage === this.currentPage) {
-            console.log(`Página ${this.currentPage} já foi processada nesta sessão, avançando para a próxima`);
+            // console.log(`Página ${this.currentPage} já foi processada nesta sessão, avançando para a próxima`);
             this.currentPage++;
             if (this.currentPage >= this.pages.length) {
                 this.stopNarration();
@@ -1820,7 +1820,7 @@ class ComicNarrator {
                         window.narrationProgressBar.setCurrentText(text);
                     }
 
-                    console.log(`Narrando texto ${i + 1} de ${textContent.texts.length}: ${text.substring(0, 30)}...`);
+                    // console.log(`Narrando texto ${i + 1} de ${textContent.texts.length}: ${text.substring(0, 30)}...`);
 
                     // Narrar o texto atual
                     await this.speakText(text);
@@ -1844,7 +1844,7 @@ class ComicNarrator {
 
                 // Verificar se há texto para narrar
                 if (!text || text.trim() === '') {
-                    console.log('Texto vazio, pulando para próxima página');
+                    // console.log('Texto vazio, pulando para próxima página');
                     this.currentPage++;
                     this.readNextPage();
                     return;
@@ -1905,7 +1905,7 @@ class ComicNarrator {
                 const extractedTexts = window.rectangularSelectionManager.getExtractedTextsForImage(imgElement);
 
                 if (extractedTexts && extractedTexts.length > 0) {
-                    console.log(`Encontrados ${extractedTexts.length} textos extraídos para narração.`);
+                    // console.log(`Encontrados ${extractedTexts.length} textos extraídos para narração.`);
 
                     // Retornar os textos separados para processamento individual
                     this.isProcessing = false;
@@ -2069,12 +2069,12 @@ class ComicNarrator {
         const elementCenter = rect.top + (rect.height / 2);
         const isInSafeArea = elementCenter >= minVisibleY && elementCenter <= maxVisibleY;
         
-        console.log(">>> 2: Verificando visibilidade do elemento:", {
-            elementCenter,
-            minVisibleY,
-            maxVisibleY,
-            isInSafeArea
-        });
+        // console.log(">>> 2: Verificando visibilidade do elemento:", {
+        //     elementCenter,
+        //     minVisibleY,
+        //     maxVisibleY,
+        //     isInSafeArea
+        // });
         
         return isInSafeArea;
     }
@@ -2090,7 +2090,7 @@ class ComicNarrator {
             const viewportHeight = window.innerHeight;
             const targetY = window.pageYOffset + rect.top - (viewportHeight * 0.4); // Posicionar em 40% da viewport
 
-            console.log(">>> 3: Iniciando rolagem para o elemento");
+            // console.log(">>> 3: Iniciando rolagem para o elemento");
 
             window.scrollTo({
                 top: targetY,
@@ -2116,20 +2116,20 @@ class ComicNarrator {
     async speakText(text) {
         return new Promise((resolve, reject) => {
             if (!this.isNarrating) {
-                console.log("Narração não está ativa, abortando speakText");
+                // console.log("Narração não está ativa, abortando speakText");
                 resolve();
                 return;
             }
 
             if (!text || text.trim() === '') {
-                console.log("Texto vazio, abortando speakText");
+                // console.log("Texto vazio, abortando speakText");
                 resolve();
                 return;
             }
 
             // Verificar se o elemento atual está visível na viewport
             if (this.currentElement && !this.isElementInViewport(this.currentElement)) {
-                console.log(">>> 1: Elemento não está visível na viewport, ativando auto-scroll");
+                // console.log(">>> 1: Elemento não está visível na viewport, ativando auto-scroll");
                 // Aguardar a rolagem terminar antes de continuar com a narração
                 this.scrollToElement(this.currentElement).then(() => {
                     // Aumentar a pausa entre trechos para dar tempo de ler
@@ -2149,11 +2149,11 @@ class ComicNarrator {
     continueWithNarration(text, resolve, reject) {
         // Processar o texto para melhorar a qualidade da narração
         const processedText = this.processTextForNarration(text);
-        console.log(">>> 4: Iniciando narração com texto processado:", processedText.substring(0, 50) + "...");
+        // console.log(">>> 4: Iniciando narração com texto processado:", processedText.substring(0, 50) + "...");
 
         // Verificar se este texto já foi narrado recentemente (evitar repetições)
             if (this.hasTextBeenNarratedRecently(processedText)) {
-                console.log('Texto já narrado recentemente, pulando para evitar repetição:', processedText.substring(0, 30) + '...');
+                // console.log('Texto já narrado recentemente, pulando para evitar repetição:', processedText.substring(0, 30) + '...');
                 resolve();
                 return;
             }
@@ -2163,12 +2163,12 @@ class ComicNarrator {
 
             // Create a new utterance
             const utterance = new SpeechSynthesisUtterance(processedText);
-            console.log("Utterance criado com sucesso");
+            // console.log("Utterance criado com sucesso");
 
             // Set voice and other properties
             if (this.currentVoice) {
                 utterance.voice = this.currentVoice;
-                console.log("Usando voz:", this.currentVoice.name);
+                // console.log("Usando voz:", this.currentVoice.name);
             } else {
                 console.warn("Nenhuma voz atual definida!");
             }
@@ -2180,13 +2180,13 @@ class ComicNarrator {
 
             // Set up event handlers
             utterance.onstart = () => {
-                console.log('Narração iniciada');
+                // console.log('Narração iniciada');
                 // Disparar evento para pausar a rolagem automática quando a narração começar
                 document.dispatchEvent(new CustomEvent('textNarrationStarted'));
             };
 
             utterance.onend = () => {
-                console.log('Narração finalizada');
+                // console.log('Narração finalizada');
                 // Disparar evento para retomar a rolagem automática quando a narração terminar
                 document.dispatchEvent(new CustomEvent('textNarrationEnded'));
                 resolve();
@@ -2219,7 +2219,7 @@ class ComicNarrator {
                     // Garantir que o ScrollManager global também esteja ativado
                     if (window.scrollManager) {
                         window.scrollManager.activate();
-                        console.log('ScrollManager global ativado para acompanhar a narração');
+                        // console.log('ScrollManager global ativado para acompanhar a narração');
                     }
 
                     // Configurar evento onboundary ANTES de iniciar a narração com destaque
@@ -2246,12 +2246,12 @@ class ComicNarrator {
 
             // Garantir que o sintetizador esteja ativo
             if (this.synth.paused) {
-                console.log("Sintetizador estava pausado, retomando...");
+                // console.log("Sintetizador estava pausado, retomando...");
                 this.synth.resume();
             }
 
             // Iniciar a narração
-            console.log("Inciando narração via speechSynthesis.speak");
+            // console.log("Inciando narração via speechSynthesis.speak");
             try {
                 this.synth.speak(utterance);
 
@@ -2296,7 +2296,7 @@ class ComicNarrator {
         const windowHeight = window.innerHeight || document.documentElement.clientHeight;
         const targetScroll = window.scrollY + rect.top - (windowHeight / 2);
 
-        console.log(">>> 2: Rolando para posicionar elemento no centro da viewport");
+        // console.log(">>> 2: Rolando para posicionar elemento no centro da viewport");
 
         window.scrollTo({
             top: targetScroll,
@@ -2308,7 +2308,7 @@ class ComicNarrator {
             const checkScroll = setInterval(() => {
                 const currentRect = element.getBoundingClientRect();
                 if (this.isElementInViewport(element)) {
-                    console.log(">>> 3: Elemento agora está visível na viewport");
+                    // console.log(">>> 3: Elemento agora está visível na viewport");
                     clearInterval(checkScroll);
                     resolve();
                 }
@@ -2352,7 +2352,7 @@ class ComicNarrator {
 
             // Se estiver pausado mas NÃO foi pausado manualmente, então retoma
             if (this.synth.paused && !manuallyPaused) {
-                console.log('Speech synthesis paused unexpectedly, resuming...');
+                // console.log('Speech synthesis paused unexpectedly, resuming...');
                 this.synth.resume();
             }
         }, 5000); // Check every 5 seconds

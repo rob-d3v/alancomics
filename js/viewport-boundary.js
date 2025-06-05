@@ -57,7 +57,7 @@ class ViewportBoundary {
         // Adicionar estilos CSS
         this.addStyles();
         
-        console.log('ViewportBoundary: Inicializado com sucesso');
+        // console.log('ViewportBoundary: Inicializado com sucesso');
     }
     
     /**
@@ -120,7 +120,7 @@ class ViewportBoundary {
             return;
         }
 
-        console.log(">>> 6: Atualizando posição do viewport boundary");
+        // console.log(">>> 6: Atualizando posição do viewport boundary");
         
         // Obter as dimensões do viewport
         const viewportWidth = window.innerWidth;
@@ -129,7 +129,7 @@ class ViewportBoundary {
         // Obter a posição do visualizador em relação à janela
         const viewerRect = this.viewer.getBoundingClientRect();
 
-        console.log(">>> 7: Dimensões do viewport e visualizador:", {
+        // console.log(">>> 7: Dimensões do viewport e visualizador:", {
             viewport: {
                 width: viewportWidth,
                 height: viewportHeight,

@@ -32,23 +32,23 @@ function checkDependencies() {
 function initializeSelectionManager() {
     // Verificar se o gerenciador já foi inicializado
     if (window.rectangularSelectionManager) {
-        console.log('Gerenciador de seleção retangular já inicializado');
+        // console.log('Gerenciador de seleção retangular já inicializado');
         return;
     }
     
     // Verificar dependências
     if (!checkDependencies()) {
-        console.log('Aguardando dependências para inicializar o gerenciador de seleção retangular...');
+        // console.log('Aguardando dependências para inicializar o gerenciador de seleção retangular...');
         // Tentar novamente após um curto período
         setTimeout(initializeSelectionManager, 500);
         return;
     }
     
     try {
-        console.log('Inicializando gerenciador de seleção retangular de texto em imagens...');
+        // console.log('Inicializando gerenciador de seleção retangular de texto em imagens...');
         // Inicializar o gerenciador
         window.rectangularSelectionManager = new RectangularSelectionManager();
-        console.log('Gerenciador de seleção retangular inicializado com sucesso');
+        // console.log('Gerenciador de seleção retangular inicializado com sucesso');
     } catch (error) {
         console.error('Erro ao inicializar gerenciador de seleção retangular:', error);
     }

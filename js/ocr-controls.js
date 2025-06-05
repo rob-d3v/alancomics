@@ -46,14 +46,14 @@ class OCRControls {
         // Obter referência ao gerenciador de seleção retangular
         if (window.rectangularSelectionManager) {
             this.rectangularSelectionManager = window.rectangularSelectionManager;
-            console.log('OCRControls: Conectado ao gerenciador de seleção retangular');
+            // console.log('OCRControls: Conectado ao gerenciador de seleção retangular');
         } else {
             console.warn('OCRControls: Gerenciador de seleção retangular não encontrado');
             // Tentar novamente após um curto período
             setTimeout(() => {
                 if (window.rectangularSelectionManager) {
                     this.rectangularSelectionManager = window.rectangularSelectionManager;
-                    console.log('OCRControls: Conectado ao gerenciador de seleção retangular (tentativa 2)');
+                    // console.log('OCRControls: Conectado ao gerenciador de seleção retangular (tentativa 2)');
                 }
             }, 1000);
         }
@@ -86,14 +86,14 @@ class OCRControls {
         if (this.isOCREnabled) {
             // Ativar OCR
             this.ocrControls.classList.remove('disabled');
-            console.log('OCR ativado');
+            // console.log('OCR ativado');
             
             // Mostrar notificação
             this.showNotification('Seleção de texto em imagens ativada. Clique no botão "Selecionar trechos de texto" para iniciar.', 'info');
         } else {
             // Desativar OCR
             this.ocrControls.classList.add('disabled');
-            console.log('OCR desativado');
+            // console.log('OCR desativado');
             
             // Desativar modo de seleção se estiver ativo
             if (this.rectangularSelectionManager && this.rectangularSelectionManager.isSelectionModeActive) {

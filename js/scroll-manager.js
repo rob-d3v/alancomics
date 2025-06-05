@@ -75,7 +75,7 @@ class ScrollManager {
         setInterval(() => {
             if (window.scrollManagerActive === true && !this.isActive) {
                 this.activate();
-                console.log('ScrollManager: Reativado automaticamente');
+                // console.log('ScrollManager: Reativado automaticamente');
             }
         }, 2000);
         
@@ -99,7 +99,7 @@ class ScrollManager {
         // Adicionar ao documento
         document.head.appendChild(linkElement);
         
-        console.log('ScrollManager: Estilos de rolagem automática carregados');
+        // console.log('ScrollManager: Estilos de rolagem automática carregados');
     }
     
     /**
@@ -112,7 +112,7 @@ class ScrollManager {
         // Adicionar classe ao body para indicar que a rolagem automática está ativa
         document.body.classList.add('auto-scroll-active');
         
-        console.log('ScrollManager: Ativado com efeitos visuais aprimorados');
+        // console.log('ScrollManager: Ativado com efeitos visuais aprimorados');
     }
     
     /**
@@ -131,7 +131,7 @@ class ScrollManager {
         // Remover destaques visuais de qualquer elemento
         this.removeVisualEffects();
         
-        console.log('ScrollManager: Desativado');
+        // console.log('ScrollManager: Desativado');
     }
     
     /**
@@ -141,7 +141,7 @@ class ScrollManager {
         if (this.isActive) {
             this.isPaused = true;
             this.clearScrollTimer();
-            console.log('ScrollManager: Rolagem pausada');
+            // console.log('ScrollManager: Rolagem pausada');
         }
     }
     
@@ -153,7 +153,7 @@ class ScrollManager {
             this.isPaused = false;
             if (this.currentElement) {
                 this.scheduleScroll();
-                console.log('ScrollManager: Rolagem retomada');
+                // console.log('ScrollManager: Rolagem retomada');
             }
         }
     }

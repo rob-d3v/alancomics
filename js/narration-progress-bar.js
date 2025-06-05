@@ -57,7 +57,7 @@ class NarrationProgressBar {
         // Obter referência ao narrador principal
         if (window.comicNarrator) {
             this.narrator = window.comicNarrator;
-            console.log('NarrationProgressBar: Conectado ao narrador principal');
+            // console.log('NarrationProgressBar: Conectado ao narrador principal');
 
             // Estender os métodos do narrador para incluir a barra de progresso
             this.extendNarratorMethods();
@@ -73,7 +73,7 @@ class NarrationProgressBar {
             setTimeout(() => {
                 if (window.comicNarrator) {
                     this.narrator = window.comicNarrator;
-                    console.log('NarrationProgressBar: Conectado ao narrador principal (tentativa 2)');
+                    // console.log('NarrationProgressBar: Conectado ao narrador principal (tentativa 2)');
                     this.extendNarratorMethods();
                     this.createProgressBarElements();
                     this.addStyles();
@@ -109,7 +109,7 @@ class NarrationProgressBar {
                     
                     // Definir a variável global para garantir que outros componentes saibam que o scroll está ativo
                     window.scrollManagerActive = true;
-                    console.log('ScrollManager global ativado pela barra de progresso');
+                    // console.log('ScrollManager global ativado pela barra de progresso');
                 }
             }
             
@@ -163,7 +163,7 @@ class NarrationProgressBar {
                 
                 // Verificar se é a última página
                 if (this.currentPage >= this.pages.length - 1) {
-                    console.log('Última página alcançada');
+                    // console.log('Última página alcançada');
                     // Fixar o tempo total quando chegar na última página
                     if (window.narrationProgressBar.estimatedTotalTime === 0) {
                         window.narrationProgressBar.estimatedTotalTime = window.narrationProgressBar.elapsedTime;
@@ -618,7 +618,7 @@ class NarrationProgressBar {
         this.updateTimeInfo();
 
         // Log para debug
-        console.log(`Progresso da narração: ${this.currentItemIndex + 1}/${this.totalItems} (${clampedProgress.toFixed(1)}%)`);
+        // console.log(`Progresso da narração: ${this.currentItemIndex + 1}/${this.totalItems} (${clampedProgress.toFixed(1)}%)`);
     }
 
     /**
@@ -635,7 +635,7 @@ class NarrationProgressBar {
             // Verificar se a narração está completa para parar o timer
             if (this.narrationCompleted || 
                 (this.currentItemIndex >= this.totalItems - 1 && this.narrator && !this.narrator.isNarrating)) {
-                console.log('Narração completa, parando o timer de atualização');
+                // console.log('Narração completa, parando o timer de atualização');
                 this.fixFinalTime();
                 this.stopTimeUpdateTimer();
             }
@@ -658,7 +658,7 @@ class NarrationProgressBar {
     fixFinalTime() {
         if (this.finalTimeLocked) return;
         
-        console.log('Fixando tempo final da narração');
+        // console.log('Fixando tempo final da narração');
         
         // Se o tempo estimado for menor que o tempo decorrido, usar o tempo decorrido
         if (this.estimatedTotalTime < this.elapsedTime) {
@@ -772,7 +772,7 @@ class NarrationProgressBar {
         
         // Verificar se chegamos ao último item
         if (index >= this.totalItems - 1) {
-            console.log('Último item alcançado, verificando se narração terminou');
+            // console.log('Último item alcançado, verificando se narração terminou');
             // Se estamos no último item, verificar se a narração terminou
             if (this.narrator && !this.narrator.isNarrating) {
                 this.narrationCompleted = true;
@@ -781,7 +781,7 @@ class NarrationProgressBar {
         }
 
         // Log para debug
-        console.log(`Índice atual atualizado: ${this.currentItemIndex + 1}/${this.totalItems}`);
+        // console.log(`Índice atual atualizado: ${this.currentItemIndex + 1}/${this.totalItems}`);
     }
 
     /**
@@ -871,7 +871,7 @@ class NarrationProgressBar {
             this.progressBarContainer.classList.add('size-large');
         }
         
-        console.log(`Tamanho da barra de progresso: ${this.currentSizeIndex}`);
+        // console.log(`Tamanho da barra de progresso: ${this.currentSizeIndex}`);
     }
     
     /**
@@ -894,7 +894,7 @@ class NarrationProgressBar {
             this.progressBarContainer.classList.add('size-large');
         }
         
-        console.log(`Tamanho da barra de progresso: ${this.currentSizeIndex}`);
+        // console.log(`Tamanho da barra de progresso: ${this.currentSizeIndex}`);
     }
 
     /**

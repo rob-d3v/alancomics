@@ -347,6 +347,6 @@ class BackgroundProcessingQueue {
         }
         
         this.isProcessing = false;
-        console.log('BackgroundProcessingQueue: Processamento interrompido');
+        // console.log('BackgroundProcessingQueue: Processamento interrompido');
     }
 }

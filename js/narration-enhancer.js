@@ -187,7 +187,7 @@ class NarrationEnhancer {
             if (!this.scrollManager.isActive) {
                 this.scrollManager.activate();
                 window.scrollManagerActive = true;
-                console.log('ScrollManager: Reativado para narração contínua');
+                // console.log('ScrollManager: Reativado para narração contínua');
             }
             
             // Definir o elemento destacado para rolagem automática com efeitos visuais
@@ -327,7 +327,7 @@ class NarrationEnhancer {
         // Forçar a ativação do ScrollManager para garantir rolagem automática
         this.scrollManager.activate();
         window.scrollManagerActive = true;
-        console.log('ScrollManager ativado para narração com seleção de texto');
+        // console.log('ScrollManager ativado para narração com seleção de texto');
         
         // Iniciar a narração
         this.narrator.startNarration();
