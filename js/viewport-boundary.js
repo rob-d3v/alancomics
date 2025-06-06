@@ -130,17 +130,17 @@ class ViewportBoundary {
         const viewerRect = this.viewer.getBoundingClientRect();
 
         // console.log(">>> 7: Dimensões do viewport e visualizador:", {
-            viewport: {
-                width: viewportWidth,
-                height: viewportHeight,
-                scrollY: window.scrollY
-            },
-            viewer: {
-                top: viewerRect.top,
-                bottom: viewerRect.bottom,
-                height: viewerRect.height
-            }
-        });
+        //     viewport: {
+        //         width: viewportWidth,
+        //         height: viewportHeight,
+        //         scrollY: window.scrollY
+        //     },
+        //     viewer: {
+        //         top: viewerRect.top,
+        //         bottom: viewerRect.bottom,
+        //         height: viewerRect.height
+        //     }
+        // });
         
         // Calcular a interseção entre o viewport e o visualizador
         const top = Math.max(0, viewerRect.top);
@@ -229,6 +229,32 @@ class ViewportBoundary {
      */
     toggle() {
         this.setEnabled(!this.isEnabled);
+    }
+    
+    /**
+     * Método para limpar recursos quando necessário
+     */
+    destroy() {
+        // Remover event listeners
+        if (this.scrollTimeout) {
+            clearTimeout(this.scrollTimeout);
+        }
+        
+        // Desconectar observer
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        
+        // Remover elemento do DOM
+        if (this.boundaryElement) {
+            this.boundaryElement.remove();
+        }
+        
+        // Remover estilos
+        const styleElement = document.getElementById('viewport-boundary-styles');
+        if (styleElement) {
+            styleElement.remove();
+        }
     }
 }
 

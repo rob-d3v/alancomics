@@ -1411,7 +1411,7 @@ class RectangularSelectionManager {
         // mas não cria nem exibe a janela de depuração
         
         // Registrar informações no console apenas para fins de desenvolvimento
-        console.debug('OCR realizado em região:', { left, top, width, height });
+        // console.debug('OCR realizado em região:', { left, top, width, height });
         
         // Não criar nem exibir o container de depuração
         // Isso evita que a janela apareça e atrapalhe a experiência do usuário
